@@ -47,6 +47,10 @@ namespace ThinkingAnalytics.Wrapper
         private static extern void set_network_type(int type);
         [DllImport("__Internal")]
         private static extern void enable_log(bool is_enable);
+        [DllImport("__Internal")]
+        private static extern string get_device_id();
+        [DllImport("__Internal")]
+        private static extern void track_app_install(string app_id);
 
         private void init(string app_id, string serverUrl, bool enableLog)
         {
@@ -146,6 +150,17 @@ namespace ThinkingAnalytics.Wrapper
         {
             set_network_type((int)networkType);
         }
+
+        private string getDeviceId() 
+        {
+            return get_device_id();
+        }
+
+        private void trackAppInstall() 
+        {
+            track_app_install(token.appid);
+        }
+
 #endif
     }
 }

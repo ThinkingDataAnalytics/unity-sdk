@@ -105,8 +105,19 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling setNetworkType with networkType: " + (int)networkType);
         }
 
+        private string getDeviceId() {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling getDeviceId()");
+            return "editor device id";
+        }
+
+        private void trackAppInstall()
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling trackAppInstall()");
+        }
+
 #endif
         public readonly ThinkingAnalyticsAPI.Token token;
+        private IDynamicSuperProperties dynamicSuperProperties;
         public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, String serverUrl, bool enableLog)
         {
             this.token = token;
@@ -138,12 +149,20 @@ namespace ThinkingAnalytics.Wrapper
             logout();
         }
 
-
         public void Track(string eventName, Dictionary<string, object> properties)
         {
             if (TD_PropertiesChecker.CheckString(eventName) && TD_PropertiesChecker.CheckProperties(properties))
             {
-                track(eventName, properties);
+                if (null != dynamicSuperProperties)
+                {
+                    Dictionary<string, object> finalProperties = new Dictionary<string, object>();
+                    TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
+                    TD_PropertiesChecker.MergeProperties(properties, finalProperties);
+                    track(eventName, finalProperties);
+                } else
+                {
+                    track(eventName, properties);
+                }
             }
         }
 
@@ -151,7 +170,17 @@ namespace ThinkingAnalytics.Wrapper
         {
             if (TD_PropertiesChecker.CheckString(eventName) && TD_PropertiesChecker.CheckProperties(properties))
             {
-                track(eventName, properties, datetime);
+                if (null != dynamicSuperProperties)
+                {
+                    Dictionary<string, object> finalProperties = new Dictionary<string, object>();
+                    TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
+                    TD_PropertiesChecker.MergeProperties(properties, finalProperties);
+                    track(eventName, finalProperties, datetime);
+                }
+                else
+                {
+                    track(eventName, properties, datetime);
+                }
             }
         }
 
@@ -229,6 +258,27 @@ namespace ThinkingAnalytics.Wrapper
         public void SetNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
         {
             setNetworkType(networkType);
+        }
+
+        public string GetDeviceId()
+        {
+            return getDeviceId();
+        }
+
+        public void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        {
+            if (TD_PropertiesChecker.CheckProperties(dynamicSuperProperties.GetDynamicSuperProperties()))
+            {
+                this.dynamicSuperProperties = dynamicSuperProperties;
+            } else
+            {
+                TD_Log.d("TA.Wrapper(" + token.appid + ") - Cannot set dynamic super properties due to invalid properties.");
+            }
+        }
+
+        public void TrackAppInstall()
+        {
+            trackAppInstall();
         }
     }
 }

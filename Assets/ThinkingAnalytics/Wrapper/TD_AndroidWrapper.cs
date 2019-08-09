@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using ThinkingAnalytics.Utils;
 using UnityEngine;
@@ -131,6 +132,11 @@ namespace ThinkingAnalytics.Wrapper
             instance.Call("logout");
         }
 
+        private string getDeviceId()
+        {
+            return instance.Call<string>("getDeviceId");
+        }
+
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType) {
             AndroidJavaClass networkTypeClass = new AndroidJavaClass(NETWORK_TYPE_CLASS);
             switch (networkType)
@@ -145,6 +151,11 @@ namespace ThinkingAnalytics.Wrapper
                     instance.Call("setNetworkType", networkTypeClass.GetStatic<AndroidJavaObject>("NETWORKTYPE_ALL"));
                     break;
             }
+        }
+
+        private void trackAppInstall()
+        {
+            instance.Call("trackAppInstall");
         }
 #endif
     }

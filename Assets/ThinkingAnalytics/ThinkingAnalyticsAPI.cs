@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v1.0.0
+    Thinkingdata Unitiy SDK v1.1.0
     
     Copyright 2019, ThinkingData, Inc
 
@@ -33,6 +33,14 @@ using UnityEngine;
 
 namespace ThinkingAnalytics
 {
+    /// <summary>
+    /// Dynamic super properties interfaces.
+    /// </summary>
+    public interface IDynamicSuperProperties
+    {
+        Dictionary<string, object> GetDynamicSuperProperties();
+    }
+
     public class ThinkingAnalyticsAPI : MonoBehaviour
     {
         #region settings
@@ -52,9 +60,11 @@ namespace ThinkingAnalytics
 
         [Header("Configuration")]
         [Tooltip("是否打开 Log")]
-        public bool enableLog = false;
+        public bool enableLog = true;
         [Tooltip("设置网络类型")]
         public NetworkType networkType = NetworkType.DEFAULT;
+        [Tooltip("推迟上报(主动调用 StartTrack() 之后才会上报)")]
+        public bool postponeTrack = false;
 
 
         [Header("Project")]
@@ -152,7 +162,11 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Track(eventName, properties);
+                if (initComplete) {
+                    getInstance(appId).Track(eventName, properties);
+                } else {
+                    _queue.Add(new Event(EVENT_TYPE.TRACK, appId, eventName, properties, DateTime.Now));
+                }
             }
         }
 
@@ -167,7 +181,13 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Track(eventName, properties, date);
+                if (initComplete)
+                {
+                    getInstance(appId).Track(eventName, properties, date);
+                } else
+                {
+                    _queue.Add(new Event(EVENT_TYPE.TRACK, appId, eventName, properties, date));
+                }
             }
         }
 
@@ -245,7 +265,14 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserSet(properties);
+                if (initComplete)
+                {
+                    getInstance(appId).UserSet(properties);
+                }
+                else
+                {
+                    _queue.Add(new Event(EVENT_TYPE.USER_SET, appId, null, properties));
+                }
             }
         }
 
@@ -258,7 +285,14 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserSetOnce(properties);
+                if (initComplete)
+                {
+                    getInstance(appId).UserSetOnce(properties);
+                }
+                else
+                {
+                    _queue.Add(new Event(EVENT_TYPE.USER_SET_ONCE, appId, null, properties));
+                }
             }
         }
 
@@ -293,7 +327,14 @@ namespace ThinkingAnalytics
                         return;
                     }
                 }
-                getInstance(appId).UserAdd(properties);
+                if (initComplete)
+                {
+                    getInstance(appId).UserAdd(properties);
+                }
+                else
+                {
+                    _queue.Add(new Event(EVENT_TYPE.USER_ADD, appId, null, properties));
+                }
             }
         }
 
@@ -305,7 +346,14 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserDelete();
+                if (initComplete)
+                {
+                    getInstance(appId).UserDelete();
+                }
+                else
+                {
+                    _queue.Add(new Event(EVENT_TYPE.USER_DEL, appId, null, null));
+                }
             }
         }
 
@@ -320,6 +368,76 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).SetNetworkType(networkType);
             }
+        }
+
+        /// <summary>
+        /// Gets the device identifier.
+        /// </summary>
+        /// <returns>The device identifier.</returns>
+        public static string GetDeviceId()
+        {
+            if (tracking_enabled)
+            {
+                return getInstance("").GetDeviceId();
+            } 
+            return null;
+        }
+
+        /// <summary>
+        /// Sets the dynamic super properties.
+        /// </summary>
+        /// <param name="dynamicSuperProperties">Dynamic super properties interface.</param>
+        /// <param name="appId">App ID (optional).</param>
+        public static void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).SetDynamicSuperProperties(dynamicSuperProperties);
+            }
+        }
+
+        /// <summary>
+        /// Tracks the app install event.
+        /// </summary>
+        /// <param name="appId"> Optional APP ID.</param>
+        public static void TrackAppInstall(string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).TrackAppInstall();
+            }
+        }
+
+        /// <summary>
+        /// Make ThinkingAnalytics functional. If Post To Server Immediately is not checked, 
+        /// All track and user set/add/delete operations will be cached until this function is called.
+        /// </summary>
+        public static void StartTrack()
+        {
+            if (initComplete) return;
+            initComplete = true;
+            foreach(Event eventData in _queue)
+            {
+                switch(eventData.type)
+                {
+                    case EVENT_TYPE.TRACK:
+                        Track(eventData.eventName, eventData.properties, eventData.dateTime.Value, eventData.appId);
+                        break;
+                    case EVENT_TYPE.USER_SET:
+                        UserSet(eventData.properties, eventData.appId);
+                        break;
+                    case EVENT_TYPE.USER_SET_ONCE:
+                        UserSetOnce(eventData.properties, eventData.appId);
+                        break;
+                    case EVENT_TYPE.USER_ADD:
+                        UserAdd(eventData.properties, eventData.appId);
+                        break;
+                    case EVENT_TYPE.USER_DEL:
+                        UserDelete(eventData.appId);
+                        break;
+                }
+            }
+            _queue.Clear();
         }
 
         #region internal
@@ -350,6 +468,8 @@ namespace ThinkingAnalytics
                         sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token, serverUrl, enableLog));
                     }
                 }
+
+                initComplete = !postponeTrack;
 
                 if (sInstances.Count == 0)
                 {
@@ -401,7 +521,7 @@ namespace ThinkingAnalytics
             {
                 if (instance.token.autoTrack)
                 {
-                    instance.Track("ta_app_end", null);
+                    Track("ta_app_end", instance.token.appid);
                 }
                 instance.Flush();
             }
@@ -412,11 +532,41 @@ namespace ThinkingAnalytics
             {
                 if (instance.token.autoTrack)
                 {
-                    instance.Track("ta_app_start", null);
+                    Track("ta_app_start", instance.token.appid);
                     instance.TimeEvent("ta_app_end");
                 }
             }
         }
+
+        private static bool initComplete = false;
+        private enum EVENT_TYPE 
+        { 
+            TRACK,
+            USER_SET,
+            USER_SET_ONCE,
+            USER_ADD,
+            USER_DEL
+        }
+
+        private struct Event 
+        {
+            public EVENT_TYPE type;
+            public string appId;
+            public string eventName;
+            public Dictionary<string, object> properties;
+            public DateTime? dateTime;
+
+            public Event(EVENT_TYPE type, string appId, string eventName, Dictionary<string, object> properties, DateTime? dateTime = null)
+            {
+                this.type = type;
+                this.appId = appId;
+                this.eventName = eventName;
+                this.properties = properties;
+                this.dateTime = dateTime;
+            }
+        }
+
+        private static List<Event> _queue = new List<Event>();
 
         #endregion
     }

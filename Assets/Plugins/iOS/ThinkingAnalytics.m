@@ -157,3 +157,13 @@ void user_delete(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] user_delete];
 }
+
+const char *get_device_id() {
+    NSString *distinct_id =[[ThinkingAnalyticsSDK sharedInstance] getDeviceId];
+    return strdup([distinct_id UTF8String]);
+}
+
+void track_app_install(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: ThinkingAnalyticsEventTypeAppInstall];
+}

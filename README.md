@@ -3,11 +3,11 @@
 本指南将会介绍如何使用 Unity SDK 接入您的项目。最新版本为: 1.0.0.
 
 #### 1. 初始化 SDK
-1.1 下载 [Unity SDK ](http://download.thinkingdata.cn/client/release/ta_unity_sdk.zip)资源文件，并导入资源文件到您的项目中：Assets>Import Package > Custom Package，选中您刚刚下载的文件
+1.1 下载 [Unity SDK ](https://thinkingdata.cn/thinkingdata.package)资源文件，并导入资源文件到您的项目中：Assets>Import Package > Custom Package，选中您刚刚下载的文件
 
 1.2 添加 ThinkingAnalytics GameObject, 并配置服务器地址和 APP ID
 
-<img src="http://doc.thinkinggame.cn/tgamanual/assets/unity_sdk_installation_1.png" width = "50%"/>
+<img src="http://app:8888/thinking-analytics/data-collector/unity-sdk/raw/master/IMG/unity-sdk-configuration.png" width = "50%"/>
 
 >    注意：Android 插件使用 Gradle 集成，因此目前只支持 Unity 5.4 之后的版本。 
 
@@ -101,6 +101,24 @@ ThinkingAnalyticsAPI.UnsetSuperProperty("SUPER_CHANNEL");
 ThinkingAnalyticsAPI.ClearSuperProperties();
 ```
 
+如果公共属性的值不是常量，您可以通过设置动态公共属性的方式实现。动态公共属性的优先级大于公共事件属性。设置动态公共属性需要实现 IDynamicSuperProperties 接口。方式如下：
+```
+using ThinkingAnalytics;
+
+// 定义动态公共属性实现，此例为设置 UTC 时间的动态公共属性
+public class DynamicProp : IDynamicSuperProperties
+{
+    public Dictionary<string, object> GetDynamicSuperProperties()
+    {
+        return new Dictionary<string, object>() {
+            {"KEY_UTCTime", DateTime.UtcNow}
+        };
+    }
+}
+
+ThinkingAnalyticsAPI.SetDynamicSuperProperties(new DynamicProp());
+```
+
 3.3 记录事件时长
 
 您可以调用`TimeEvent()`来开始计时，配置您想要计时的事件名称，当您上传该事件时，将会自动在您的事件属性中加入`#duration`这一属性来表示记录的时长，单位为秒。
@@ -168,6 +186,12 @@ ThinkingAnalyticsAPI.UserDelete();
 - ta_app_start 每次用户获得焦点（即在游戏中）
 - ta_app_end 当游戏进入`Pause`状态，并附加`#duration`属性，记录本次游戏时长
 
+1.1.0 版本开始，可以通过接口调用的方式采集安装事件：
+```
+// 采集 APP 安装事件
+ThinkingAnalyticsAPI.TrackAppInstall();
+```
+
 #### 6 多项目 ID 支持
 
 在配置 SDK 时，可以添加多个 APP ID，之后在调用 API 时，最后附加一个参数指定 APP ID. 以 `Identify()` 接口为例：
@@ -195,7 +219,11 @@ ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
 ThinkingAnalyticsAPI.GetDeviceId()
 ```
 
-CHANGELOG:
+7.4 Postpone Track
 
-**1.0.0** (2019-06-20)
-- 初始版本
+如果您勾选了 Postpone Track 选项，意味着所有的上报请求（包括用户属性设置和事件追踪）都会被缓存，直到您主动调用:
+```
+ThinkingAnalyticsAPI.StartTrack();
+```
+
+这个设置可以满足希望在上报之前完成设置访客ID，公共属性等初始化的场景。

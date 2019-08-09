@@ -4,9 +4,19 @@ using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System;
 
-public class TAExample : MonoBehaviour
+public class TAExample : MonoBehaviour, IDynamicSuperProperties
 {
+
     public GUISkin skin;
+
+    // 动态公共属性接口
+    public Dictionary<string, object> GetDynamicSuperProperties()
+    {
+       return new Dictionary<string, object>() {
+           {"KEY_UTCTime", DateTime.UtcNow}
+       };
+
+    }
 
     void OnGUI() {
         GUI.skin = this.skin;
@@ -78,6 +88,11 @@ public class TAExample : MonoBehaviour
             ThinkingAnalyticsAPI.Flush();
         }
 
+        if (GUILayout.Button("START")) // an engage call
+        {
+            ThinkingAnalyticsAPI.StartTrack();
+        }
+
         Scene scene = SceneManager.GetActiveScene();
 
         if (scene.name == "scene1")
@@ -103,10 +118,15 @@ public class TAExample : MonoBehaviour
         // 设置 Distinct ID
         ThinkingAnalyticsAPI.Identify("unity_id");
         ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
+        ThinkingAnalyticsAPI.TrackAppInstall();
         Debug.Log("TA.TAExample - current disctinct ID is: " + ThinkingAnalyticsAPI.GetDistinctId());
+        Debug.Log("TA.TAExample - the device ID is: " + ThinkingAnalyticsAPI.GetDeviceId());
 
         // 清除公共事件属性
         ThinkingAnalyticsAPI.ClearSuperProperties();
+
+        // 设置动态公共属性，传 this 是因为 this 实现了 IDynamicSuperProperties
+        ThinkingAnalyticsAPI.SetDynamicSuperProperties(this);
 
         // Track 简单事件
         Scene scene = SceneManager.GetActiveScene();
