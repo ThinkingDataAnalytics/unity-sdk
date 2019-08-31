@@ -1,0 +1,6 @@
+framework module ThinkingSDK {
+  umbrella header "ThinkingSDK.h"
+
+  export *
+  module * { export * }
+}

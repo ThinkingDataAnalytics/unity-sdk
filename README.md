@@ -1,13 +1,13 @@
 ## Unity SDK 使用指南
 
-本指南将会介绍如何使用 Unity SDK 接入您的项目。最新版本为: 1.0.0.
+本指南将会介绍如何使用 Unity SDK 接入您的项目。最新版本为: 1.2.0.
 
 #### 1. 初始化 SDK
 1.1 下载 [Unity SDK ](https://thinkingdata.cn/thinkingdata.package)资源文件，并导入资源文件到您的项目中：Assets>Import Package > Custom Package，选中您刚刚下载的文件
 
 1.2 添加 ThinkingAnalytics GameObject, 并配置服务器地址和 APP ID
 
-<img src="http://app:8888/thinking-analytics/data-collector/unity-sdk/raw/master/IMG/unity-sdk-configuration.png" width = "50%"/>
+<img src="https://doc.thinkingdata.cn/tdamanual/assets/unity_sdk_installation_1.png" width = "50%"/>
 
 >    注意：Android 插件使用 Gradle 集成，因此目前只支持 Unity 5.4 之后的版本。 
 

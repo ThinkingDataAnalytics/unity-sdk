@@ -10,8 +10,7 @@ namespace ThinkingAnalytics.Wrapper
     {
 #if UNITY_ANDROID && !(UNITY_EDITOR)
         private static AndroidJavaClass agent;
-        private static readonly string SDK_CLASS = "com.thinking.analyselibrary.ThinkingAnalyticsSDK";
-        private static readonly string NETWORK_TYPE_CLASS = "com.thinking.analyselibrary.ThinkingAnalyticsSDK$ThinkingdataNetworkType";
+        private static readonly string SDK_CLASS = "cn.thinkingdata.android.ThinkingAnalyticsSDK";
         private static readonly string JSON_CLASS = "org.json.JSONObject";
         private AndroidJavaObject instance;
         /// <summary>
@@ -138,17 +137,16 @@ namespace ThinkingAnalytics.Wrapper
         }
 
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType) {
-            AndroidJavaClass networkTypeClass = new AndroidJavaClass(NETWORK_TYPE_CLASS);
             switch (networkType)
             {
                 case ThinkingAnalyticsAPI.NetworkType.DEFAULT:
-                    instance.Call("setNetworkType", networkTypeClass.GetStatic<AndroidJavaObject>("NETWORKTYPE_DEFAULT"));
+                    instance.Call("setNetworkType", 0);
                     break;
                 case ThinkingAnalyticsAPI.NetworkType.WIFI:
-                    instance.Call("setNetworkType", networkTypeClass.GetStatic<AndroidJavaObject>("NETWORKTYPE_WIFI"));
+                    instance.Call("setNetworkType", 1);
                     break;
                 case ThinkingAnalyticsAPI.NetworkType.ALL:
-                    instance.Call("setNetworkType", networkTypeClass.GetStatic<AndroidJavaObject>("NETWORKTYPE_ALL"));
+                    instance.Call("setNetworkType", 2);
                     break;
             }
         }
@@ -156,6 +154,39 @@ namespace ThinkingAnalytics.Wrapper
         private void trackAppInstall()
         {
             instance.Call("trackAppInstall");
+        }
+
+        private void optOutTracking()
+        {
+            instance.Call("optOutTracking");
+        }
+
+        private void optOutTrackingAndDeleteUser()
+        {
+            instance.Call("optOutTrackingAndDeleteUser");
+        }
+
+        private void optInTracking()
+        {
+            instance.Call("optInTracking");
+        }
+
+        private void enableTracking(bool enabled)
+        {
+            instance.Call("enableTracking", enabled);
+        }
+
+        private void setInstance(AndroidJavaObject anotherInstance)
+        {
+            this.instance = anotherInstance;
+        }
+
+        private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
+        {
+            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken);
+            AndroidJavaObject lightInstance = instance.Call<AndroidJavaObject>("createLightInstance");
+            result.setInstance(lightInstance);
+            return result;
         }
 #endif
     }

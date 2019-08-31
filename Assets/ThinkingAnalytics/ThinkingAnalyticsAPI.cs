@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v1.1.0
+    Thinkingdata Unitiy SDK v1.2.0
     
     Copyright 2019, ThinkingData, Inc
 
@@ -27,6 +27,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using ThinkingAnalytics.Utils;
 using ThinkingAnalytics.Wrapper;
 using UnityEngine;
@@ -49,6 +50,12 @@ namespace ThinkingAnalytics
         {
             public string appid;
             public bool autoTrack;
+
+            public Token(string appId, bool autoTrackFlag)
+            {
+                appid = appId;
+                autoTrack = autoTrackFlag;
+            }
         }
 
         public enum NetworkType
@@ -440,6 +447,80 @@ namespace ThinkingAnalytics
             _queue.Clear();
         }
 
+        /// <summary>
+        /// 停止上报数据，并且清空本地缓存数据(未上报的数据、已设置的访客ID、账号ID、公共属性)
+        /// </summary>
+        /// <param name="appId">项目ID</param>
+        public static void OptOutTracking(string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).OptOutTracking();
+            }
+        }
+
+        /// <summary>
+        /// 停止上报数据，清空本地缓存数据，并且发送 user_del 到服务端.
+        /// </summary>
+        /// <param name="appId">项目ID</param>
+        public static void OptOutTrackingAndDeleteUser(string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).OptOutTrackingAndDeleteUser();
+            }
+        }
+
+        /// <summary>
+        /// 恢复上报数据
+        /// </summary>
+        /// <param name="appId">项目ID</param>
+        public static void OptInTracking(string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).OptInTracking();
+            }
+        }
+
+        /// <summary>
+        /// 暂停/恢复上报数据，本地缓存不会被清空
+        /// </summary>
+        /// <param name="enabled">是否打开上报数据</param>
+        /// <param name="appId">项目ID</param>
+        public static void EnableTracking(bool enabled, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).EnableTracking(enabled);
+            }
+        }
+
+        /// <summary>
+        /// 创建轻量级实例，轻量级实例与主实例共享项目ID. 访客ID、账号ID、公共属性不共享
+        /// </summary>
+        /// <param name="appId">项目ID</param>
+        /// <returns>轻量级实例的 token </returns>
+        public static string CreateLightInstance(string appId = "") {
+            if (tracking_enabled)
+            {
+                ThinkingAnalyticsWrapper lightInstance = getInstance(appId).CreateLightInstance();
+                instance_lock.EnterWriteLock();
+                try
+                {
+                    sInstances.Add(lightInstance.GetAppId(), lightInstance);
+                } finally
+                {
+                    instance_lock.ExitWriteLock();
+                }
+                return lightInstance.GetAppId();
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         #region internal
 
         void Awake()
@@ -461,28 +542,38 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 default_appid = tokens[0].appid;
-                foreach (Token token in tokens)
+                instance_lock.EnterWriteLock();
+                try
                 {
-                    if (!string.IsNullOrEmpty(token.appid))
+                    foreach (Token token in tokens)
                     {
-                        sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token, serverUrl, enableLog));
+                        if (!string.IsNullOrEmpty(token.appid))
+                        {
+                            sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token, serverUrl, enableLog));
+                        }
                     }
+
+                    initComplete = !postponeTrack;
+
+                    if (sInstances.Count == 0)
+                    {
+                        tracking_enabled = false;
+                    }
+                    else
+                    {
+                        sInstances[default_appid].SetNetworkType(networkType);
+                        if (!running)
+                        {
+                            running = true;
+                            autoTrackStart();
+                        }
+                    }
+
+                } finally
+                {
+                    instance_lock.ExitWriteLock();
                 }
 
-                initComplete = !postponeTrack;
-
-                if (sInstances.Count == 0)
-                {
-                    tracking_enabled = false;
-                } else
-                {
-                    sInstances[default_appid].SetNetworkType(networkType);
-                    if (!running)
-                    {
-                        running = true;
-                        autoTrackStart();
-                    }
-                }
             }
         }
 
@@ -503,39 +594,63 @@ namespace ThinkingAnalytics
         private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID
         private static bool tracking_enabled = true;
         private static bool running = false; // 是否在游戏中（Application focused）
+        private static ReaderWriterLockSlim instance_lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
         private static readonly Dictionary<string, ThinkingAnalyticsWrapper> sInstances = 
             new Dictionary<string, ThinkingAnalyticsWrapper>();
 
         private static ThinkingAnalyticsWrapper getInstance(string appid)
         {
-            if (sInstances.Count > 0 && sInstances.ContainsKey(appid)) 
+            instance_lock.EnterReadLock();
+            try
             {
-                return sInstances[appid];
+                if (sInstances.Count > 0 && sInstances.ContainsKey(appid))
+                {
+                    return sInstances[appid];
+                }
+                return sInstances[default_appid];
+            } finally
+            {
+                instance_lock.ExitReadLock();
             }
-            return sInstances[default_appid];
         }
 
         private static void autoTrackEnd()
         {
-            foreach (ThinkingAnalyticsWrapper instance in sInstances.Values)
+            instance_lock.EnterReadLock();
+            try
             {
-                if (instance.token.autoTrack)
+                foreach (ThinkingAnalyticsWrapper instance in sInstances.Values)
                 {
-                    Track("ta_app_end", instance.token.appid);
+                    if (instance.token.autoTrack)
+                    {
+                        Track("ta_app_end", instance.token.appid);
+                    }
+                    instance.Flush();
                 }
-                instance.Flush();
+            } finally
+            {
+                instance_lock.ExitReadLock();
             }
+
         }
         private static void autoTrackStart()
         {
-            foreach (ThinkingAnalyticsWrapper instance in sInstances.Values)
+            instance_lock.EnterReadLock();
+            try
             {
-                if (instance.token.autoTrack)
+                foreach (ThinkingAnalyticsWrapper instance in sInstances.Values)
                 {
-                    Track("ta_app_start", instance.token.appid);
-                    instance.TimeEvent("ta_app_end");
+                    if (instance.token.autoTrack)
+                    {
+                        Track("ta_app_start", instance.token.appid);
+                        instance.TimeEvent("ta_app_end");
+                    }
                 }
+            } finally
+            {
+                instance_lock.ExitReadLock();
             }
+
         }
 
         private static bool initComplete = false;

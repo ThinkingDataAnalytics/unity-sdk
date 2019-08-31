@@ -115,13 +115,47 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling trackAppInstall()");
         }
 
+        private void optOutTracking()
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling optOutTracking()");
+        }
+
+        private void optOutTrackingAndDeleteUser()
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling optOutTrackingAndDeleteUser()");
+        }
+
+        private void optInTracking()
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling optInTracking()");
+        }
+
+        private void enableTracking(bool enabled)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling enableTracking() with enabled: " + enabled);
+        }
+
+        private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling createLightInstance()");
+            return new ThinkingAnalyticsWrapper(delegateToken);
+        }
+
 #endif
         public readonly ThinkingAnalyticsAPI.Token token;
         private IDynamicSuperProperties dynamicSuperProperties;
+
+        private static System.Random rnd = new System.Random();
+
         public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, String serverUrl, bool enableLog)
         {
             this.token = token;
             init(token.appid, serverUrl, enableLog);
+        }
+
+        private ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token)
+        {
+            this.token = token;
         }
 
         public void EnableLog(bool enableLog)
@@ -279,6 +313,36 @@ namespace ThinkingAnalytics.Wrapper
         public void TrackAppInstall()
         {
             trackAppInstall();
+        }
+
+        public void OptOutTracking()
+        {
+            optOutTracking();
+        }
+
+        public void OptOutTrackingAndDeleteUser()
+        {
+            optOutTrackingAndDeleteUser();
+        }
+
+        public void OptInTracking()
+        {
+            optInTracking();
+        }
+
+        public void EnableTracking(bool enabled)
+        {
+            enableTracking(enabled);
+        }
+
+        public ThinkingAnalyticsWrapper CreateLightInstance()
+        {
+            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), false));
+        }
+
+        internal string GetAppId()
+        {
+            return token.appid;
         }
     }
 }

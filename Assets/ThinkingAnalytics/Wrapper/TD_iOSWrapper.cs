@@ -51,6 +51,16 @@ namespace ThinkingAnalytics.Wrapper
         private static extern string get_device_id();
         [DllImport("__Internal")]
         private static extern void track_app_install(string app_id);
+        [DllImport("__Internal")]
+        private static extern void enable_tracking(string app_id, bool enabled);
+        [DllImport("__Internal")]
+        private static extern void opt_out_tracking(string app_id);
+        [DllImport("__Internal")]
+        private static extern void opt_out_tracking_and_delete_user(string app_id);
+        [DllImport("__Internal")]
+        private static extern void opt_in_tracking(string app_id);
+        [DllImport("__Internal")]
+        private static extern void create_light_instance(string app_id, string delegate_token);
 
         private void init(string app_id, string serverUrl, bool enableLog)
         {
@@ -159,6 +169,32 @@ namespace ThinkingAnalytics.Wrapper
         private void trackAppInstall() 
         {
             track_app_install(token.appid);
+        }
+
+        private void optOutTracking()
+        {
+            opt_out_tracking(token.appid);
+        }
+
+        private void optOutTrackingAndDeleteUser()
+        {
+            opt_out_tracking_and_delete_user(token.appid);
+        }
+
+        private void optInTracking()
+        {
+            opt_in_tracking(token.appid);
+        }
+
+        private void enableTracking(bool enabled)
+        {
+            enable_tracking(token.appid, enabled);
+        }
+
+        private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
+        {
+            create_light_instance(token.appid, delegateToken.appid);
+            return new ThinkingAnalyticsWrapper(delegateToken);
         }
 
 #endif

@@ -1,8 +1,27 @@
 #import "ThinkingAnalyticsSDK.h"
+#import <pthread.h>
 
 #define NETWORK_TYPE_DEFAULT 1
 #define NETWORK_TYPE_WIFI 2
 #define NETWORK_TYPE_ALL 3
+
+static NSMutableDictionary *light_instances;
+static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
+
+ThinkingAnalyticsSDK* getInstance(NSString *app_id) {
+    ThinkingAnalyticsSDK *result = nil;
+
+    pthread_rwlock_rdlock(&rwlock);
+    if (light_instances[app_id] != nil) {
+        result = light_instances[app_id];
+    }
+    pthread_rwlock_unlock(&rwlock);
+
+    if (result != nil) return result;
+
+    return [ThinkingAnalyticsSDK sharedInstanceWithAppid: app_id];
+}
+
 void convertToDictionary(const char *json, NSDictionary **properties_dict) {
     NSString *json_string = json != NULL ? [NSString stringWithUTF8String:json] : nil;
     if (json_string) {
@@ -48,24 +67,24 @@ void set_network_type(int type) {
 void identify(const char *app_id, const char *unique_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *id_string = unique_id != NULL ? [NSString stringWithUTF8String:unique_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] identify:id_string];
+    [getInstance(app_id_string) identify:id_string];
 }
 
 const char *get_distinct_id(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    NSString *distinct_id =[[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] getDistinctId];
+    NSString *distinct_id =[getInstance(app_id_string) getDistinctId];
     return strdup([distinct_id UTF8String]);
 }
 
 void login(const char *app_id, const char *account_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *id_string = account_id != NULL ? [NSString stringWithUTF8String:account_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] login:id_string];
+    [getInstance(app_id_string) login:id_string];
 }
 
 void logout(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] logout];
+    [getInstance(app_id_string) logout];
 }
 
 void track(const char *app_id, const char *event_name, const char *properties, long time_stamp_millis) {
@@ -77,16 +96,16 @@ void track(const char *app_id, const char *event_name, const char *properties, l
 
     if (time_stamp_millis > 0) {
         NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
-        [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] track:event_name_string  properties:properties_dict time:time];
+        [getInstance(app_id_string) track:event_name_string  properties:properties_dict time:time];
     } else {
-        [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] track:event_name_string  properties:properties_dict];
+        [getInstance(app_id_string) track:event_name_string  properties:properties_dict];
     }
 }
 
 void flush(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     if (app_id_string) {
-        [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] flush];
+        [getInstance(app_id_string) flush];
     }
 }
 
@@ -95,24 +114,24 @@ void set_super_properties(const char *app_id, const char *properties) {
     NSDictionary *properties_dict = nil;
     convertToDictionary(properties, &properties_dict);
     if (properties_dict) {
-        [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] setSuperProperties:properties_dict];
+        [getInstance(app_id_string) setSuperProperties:properties_dict];
     }
 }
 
 void unset_super_property(const char *app_id, const char *property_name) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *property_name_string = property_name != NULL ? [NSString stringWithUTF8String:property_name] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] unsetSuperProperty:property_name_string];
+    [getInstance(app_id_string) unsetSuperProperty:property_name_string];
 }
 
 void clear_super_properties(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] clearSuperProperties];
+    [getInstance(app_id_string) clearSuperProperties];
 }
 
 const char *get_super_properties(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    NSDictionary *property_dict = [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] currentSuperProperties];
+    NSDictionary *property_dict = [getInstance(app_id_string) currentSuperProperties];
     // nsdictionary --> nsdata
     NSData *data = [NSJSONSerialization dataWithJSONObject:property_dict options:kNilOptions error:nil];
     // nsdata -> nsstring
@@ -123,7 +142,7 @@ const char *get_super_properties(const char *app_id) {
 void time_event(const char *app_id, const char *event_name) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *event_name_string = event_name != NULL ? [NSString stringWithUTF8String:event_name] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] timeEvent:event_name_string];
+    [getInstance(app_id_string) timeEvent:event_name_string];
 }
 
 void user_set(const char *app_id, const char *properties) {
@@ -131,7 +150,7 @@ void user_set(const char *app_id, const char *properties) {
     NSDictionary *properties_dict = nil;
     convertToDictionary(properties, &properties_dict);
     if (properties_dict) {
-        [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] user_set:properties_dict];
+        [getInstance(app_id_string) user_set:properties_dict];
     }
 }
 
@@ -140,7 +159,7 @@ void user_set_once(const char *app_id, const char *properties) {
     NSDictionary *properties_dict = nil;
     convertToDictionary(properties, &properties_dict);
     if (properties_dict) {
-        [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] user_setOnce:properties_dict];
+        [getInstance(app_id_string) user_setOnce:properties_dict];
     }
 }
 
@@ -149,13 +168,13 @@ void user_add(const char *app_id, const char *properties) {
     NSDictionary *properties_dict = nil;
     convertToDictionary(properties, &properties_dict);
     if (properties_dict) {
-        [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] user_add:properties_dict];
+        [getInstance(app_id_string) user_add:properties_dict];
     }
 }
 
 void user_delete(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] user_delete];
+    [getInstance(app_id_string) user_delete];
 }
 
 const char *get_device_id() {
@@ -165,5 +184,39 @@ const char *get_device_id() {
 
 void track_app_install(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: ThinkingAnalyticsEventTypeAppInstall];
+    [getInstance(app_id_string) enableAutoTrack: ThinkingAnalyticsEventTypeAppInstall];
+}
+
+void enable_tracking(const char *app_id, BOOL enabled) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [getInstance(app_id_string) enableTracking:enabled];
+}
+
+void opt_out_tracking(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [getInstance(app_id_string)  optOutTracking];
+}
+
+void opt_out_tracking_and_delete_user(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [getInstance(app_id_string)  optOutTrackingAndDeleteUser];
+}
+
+void opt_in_tracking(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [getInstance(app_id_string)  optInTracking];
+}
+
+void create_light_instance(const char *app_id, const char *delegate_app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSString *delegate_app_id_string = delegate_app_id != NULL ? [NSString stringWithUTF8String:delegate_app_id] : nil;
+    ThinkingAnalyticsSDK *light = [getInstance(app_id_string) createLightInstance];
+
+    pthread_rwlock_wrlock(&rwlock);
+    if (light_instances == nil) {
+        light_instances = [NSMutableDictionary dictionary];
+    }
+
+    [light_instances setObject:light forKey:delegate_app_id_string];
+    pthread_rwlock_unlock(&rwlock);
 }

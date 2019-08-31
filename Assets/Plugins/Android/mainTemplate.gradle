@@ -26,7 +26,7 @@ apply plugin: 'com.android.application'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.thinking.analyselibrary:ThinkingAnalyticsSDK:2.0.2'
+    implementation 'cn.thinkingdata.android:ThinkingAnalyticsSDK:2.1.0'
 **DEPS**}
 
 android {
