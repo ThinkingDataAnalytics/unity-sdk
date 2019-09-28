@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v1.2.0
+    Thinkingdata Unitiy SDK v1.2.1
     
     Copyright 2019, ThinkingData, Inc
 
@@ -550,28 +550,32 @@ namespace ThinkingAnalytics
                         if (!string.IsNullOrEmpty(token.appid))
                         {
                             sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token, serverUrl, enableLog));
+                            if (token.autoTrack)
+                            {
+                                sAutoTrackIDs.Add(token.appid);
+                            }
                         }
                     }
-
-                    initComplete = !postponeTrack;
-
-                    if (sInstances.Count == 0)
-                    {
-                        tracking_enabled = false;
-                    }
-                    else
-                    {
-                        sInstances[default_appid].SetNetworkType(networkType);
-                        if (!running)
-                        {
-                            running = true;
-                            autoTrackStart();
-                        }
-                    }
-
-                } finally
+                }
+                finally
                 {
                     instance_lock.ExitWriteLock();
+                }
+
+                initComplete = !postponeTrack;
+
+                if (sInstances.Count == 0)
+                {
+                    tracking_enabled = false;
+                }
+                else
+                {
+                    getInstance(default_appid).SetNetworkType(networkType);
+                    if (!running)
+                    {
+                        running = true;
+                        autoTrackStart();
+                    }
                 }
 
             }
@@ -594,9 +598,10 @@ namespace ThinkingAnalytics
         private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID
         private static bool tracking_enabled = true;
         private static bool running = false; // 是否在游戏中（Application focused）
-        private static ReaderWriterLockSlim instance_lock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+        private static ReaderWriterLockSlim instance_lock = new ReaderWriterLockSlim();
         private static readonly Dictionary<string, ThinkingAnalyticsWrapper> sInstances = 
             new Dictionary<string, ThinkingAnalyticsWrapper>();
+        private static readonly List<string> sAutoTrackIDs = new List<string>(); // added to remove recursive lock
 
         private static ThinkingAnalyticsWrapper getInstance(string appid)
         {
@@ -616,41 +621,18 @@ namespace ThinkingAnalytics
 
         private static void autoTrackEnd()
         {
-            instance_lock.EnterReadLock();
-            try
+            foreach (string appId in sAutoTrackIDs)
             {
-                foreach (ThinkingAnalyticsWrapper instance in sInstances.Values)
-                {
-                    if (instance.token.autoTrack)
-                    {
-                        Track("ta_app_end", instance.token.appid);
-                    }
-                    instance.Flush();
-                }
-            } finally
-            {
-                instance_lock.ExitReadLock();
+                Track("ta_app_end", appId);
             }
-
         }
         private static void autoTrackStart()
         {
-            instance_lock.EnterReadLock();
-            try
+            foreach (string appId in sAutoTrackIDs)
             {
-                foreach (ThinkingAnalyticsWrapper instance in sInstances.Values)
-                {
-                    if (instance.token.autoTrack)
-                    {
-                        Track("ta_app_start", instance.token.appid);
-                        instance.TimeEvent("ta_app_end");
-                    }
-                }
-            } finally
-            {
-                instance_lock.ExitReadLock();
+                Track("ta_app_start", appId);
+                TimeEvent("ta_app_end", appId);
             }
-
         }
 
         private static bool initComplete = false;
