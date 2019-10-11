@@ -3,7 +3,7 @@
 本指南将会介绍如何使用 Unity SDK 接入您的项目。
 
 #### 1. 初始化 SDK
-1.1 下载 [Unity SDK ](https://thinkingdata.cn/thinkingdata.package)资源文件，并导入资源文件到您的项目中：Assets>Import Package > Custom Package，选中您刚刚下载的文件
+1.1 下载 [Unity SDK ](http://download.thinkingdata.cn/client/release/ta_unity_sdk.zip)资源文件，并导入资源文件到您的项目中：Assets > Import Package > Custom Package，选中您刚刚下载的文件
 
 1.2 添加 ThinkingAnalytics GameObject, 并配置服务器地址和 APP ID
 
