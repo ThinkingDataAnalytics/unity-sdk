@@ -22,7 +22,7 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern void logout(string app_id);
         [DllImport("__Internal")]
-        private static extern void track(string app_id, string event_name, string properties, long time_stamp_millis);
+        private static extern void track(string app_id, string event_name, string properties, long time_stamp_millis, string timezone);
         [DllImport("__Internal")]
         private static extern void set_super_properties(string app_id, string properties);
         [DllImport("__Internal")]
@@ -35,6 +35,8 @@ namespace ThinkingAnalytics.Wrapper
         private static extern void time_event(string app_id, string event_name);
         [DllImport("__Internal")]
         private static extern void user_set(string app_id, string properties);
+        [DllImport("__Internal")]
+        private static extern void user_unset(string app_id, string properties);
         [DllImport("__Internal")]
         private static extern void user_set_once(string app_id, string properties);
         [DllImport("__Internal")]
@@ -95,8 +97,8 @@ namespace ThinkingAnalytics.Wrapper
         }
 
         private void track(string eventName, Dictionary<string, object> properties)
-        {
-            track(token.appid, eventName, TD_MiniJSON.Serialize(properties), 0);
+        {  
+            track(token.appid, eventName, TD_MiniJSON.Serialize(properties), 0, "");
         }
 
         private void track(string eventName, Dictionary<string, object> properties, DateTime dateTime)
@@ -106,7 +108,20 @@ namespace ThinkingAnalytics.Wrapper
             DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
 
-            track(token.appid, eventName, TD_MiniJSON.Serialize(properties), currentMillis);
+            string tz = "";
+            switch(dateTime.Kind)
+            {
+                case DateTimeKind.Local:
+                    tz = "Local";
+                    break;
+                case DateTimeKind.Utc:
+                    tz = "UTC";
+                    break;
+                case DateTimeKind.Unspecified:
+                    break;
+            }
+           
+            track(token.appid, eventName, TD_MiniJSON.Serialize(properties), currentMillis, tz);
         }
 
         private void setSuperProperties(Dictionary<string, object> superProperties)
@@ -139,6 +154,15 @@ namespace ThinkingAnalytics.Wrapper
         private void userSet(Dictionary<string, object> properties)
         {
             user_set(token.appid, TD_MiniJSON.Serialize(properties));
+        }
+
+
+        private void userUnset(List<string> properties)
+        {
+            foreach (string property in properties)
+            {
+                user_unset(token.appid, property);
+            }
         }
 
         private void userSetOnce(Dictionary<string, object> properties)

@@ -87,18 +87,34 @@ void logout(const char *app_id) {
     [getInstance(app_id_string) logout];
 }
 
-void track(const char *app_id, const char *event_name, const char *properties, long time_stamp_millis) {
+void track(const char *app_id, const char *event_name, const char *properties, long time_stamp_millis, const char *timezone) {
     NSString *event_name_string = event_name != NULL ? [NSString stringWithUTF8String:event_name] : nil;
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-
+    
     NSDictionary *properties_dict = nil;
     convertToDictionary(properties, &properties_dict);
-
-    if (time_stamp_millis > 0) {
-        NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
-        [getInstance(app_id_string) track:event_name_string  properties:properties_dict time:time];
+    
+    NSString *time_zone_string = timezone != NULL ? [NSString stringWithUTF8String:timezone] : nil;
+    NSTimeZone *tz;
+    if ([time_zone_string isEqualToString:@"UTC"]) {
+        tz = [NSTimeZone timeZoneWithName:@"UTC"];
+    } else if ([time_zone_string isEqualToString:@"Local"]) {
+        tz = [NSTimeZone localTimeZone];
+    }
+    
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    
+    if (tz) {
+        [getInstance(app_id_string) track:event_name_string  properties:properties_dict time:time timeZone:tz];
     } else {
-        [getInstance(app_id_string) track:event_name_string  properties:properties_dict];
+        if (time_stamp_millis > 0) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            [getInstance(app_id_string) track:event_name_string  properties:properties_dict time:time];
+#pragma clang diagnostic pop
+        } else {
+            [getInstance(app_id_string) track:event_name_string  properties:properties_dict];
+        }
     }
 }
 
@@ -152,6 +168,12 @@ void user_set(const char *app_id, const char *properties) {
     if (properties_dict) {
         [getInstance(app_id_string) user_set:properties_dict];
     }
+}
+
+void user_unset(const char *app_id, const char *properties) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSString *properties_string = properties != NULL ? [NSString stringWithUTF8String:properties] : nil;
+    [getInstance(app_id_string) user_unset:properties_string];
 }
 
 void user_set_once(const char *app_id, const char *properties) {

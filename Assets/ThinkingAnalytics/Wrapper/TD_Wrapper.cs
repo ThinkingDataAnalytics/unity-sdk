@@ -86,6 +86,11 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userSetOnce with properties: " + TD_MiniJSON.Serialize(properties));
         }
 
+        private void userUnset(List<string> properties)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userUnset with properties: " + string.Join(", ", properties.ToArray()));
+        }
+
         private void userAdd(Dictionary<string, object> properties)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userAdd with properties: " + TD_MiniJSON.Serialize(properties));
@@ -269,6 +274,14 @@ namespace ThinkingAnalytics.Wrapper
                 userSetOnce(properties);
             }
 
+        }
+
+        public void UserUnset(List<string> properties)
+        {
+            if (TD_PropertiesChecker.CheckProperteis(properties))
+            {
+                userUnset(properties);
+            }
         }
 
         public void UserAdd(Dictionary<string, object> properties)

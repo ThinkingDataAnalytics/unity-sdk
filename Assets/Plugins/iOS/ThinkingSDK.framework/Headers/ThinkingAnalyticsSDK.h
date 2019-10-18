@@ -182,7 +182,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 /**
  自定义事件埋点
 
- @param event 事件名称
+ @param event         事件名称
  */
 - (void)track:(NSString *)event;
 
@@ -190,19 +190,29 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 /**
  自定义事件埋点
 
- @param event 事件名称
+ @param event         事件名称
  @param propertieDict 事件属性
  */
-- (void)track:(NSString *)event properties:(NSDictionary *)propertieDict;
+- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict;
 
 /**
  自定义事件埋点
 
- @param event 事件名称
+ @param event         事件名称
  @param propertieDict 事件属性
- @param time 事件触发时间
+ @param time          事件触发时间
  */
-- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time;
+- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time __attribute__((deprecated("使用track:properties:time:timeZone:方法传入")));
+
+/**
+ 自定义事件埋点
+ 
+ @param event         事件名称
+ @param propertieDict 事件属性
+ @param time          事件触发时间
+ @param timeZone      事件触发时间时区
+ */
+- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time timeZone:(NSTimeZone*)timeZone;
 
 /**
  记录事件时长
@@ -245,6 +255,13 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 - (void)user_set:(NSDictionary *)property;
 
 /**
+ 重置用户属性
+ 
+ @param propertyName 用户属性
+ */
+- (void)user_unset:(NSString *)propertyName;
+
+/**
  设置单次用户属性
 
  @param property 用户属性
@@ -261,7 +278,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 /**
  对数值类型用户属性进行累加操作
 
- @param propertyName 属性名称
+ @param propertyName  属性名称
  @param propertyValue 属性值
  */
 - (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue;

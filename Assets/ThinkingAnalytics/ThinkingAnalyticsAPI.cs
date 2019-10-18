@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v1.2.2
+    Thinkingdata Unitiy SDK v1.3.0
     
     Copyright 2019, ThinkingData, Inc
 
@@ -178,7 +178,7 @@ namespace ThinkingAnalytics
         }
 
         /// <summary>
-        /// track 事件及事件属性，并指定 #event_time 属性. 该事件会先缓存在本地，达到触发上报条件或者主动调用 Flush 时会上报到服务器.
+        /// track 事件及事件属性，并指定 #event_time 属性. 该事件会先缓存在本地，达到触发上报条件或者主动调用 Flush 时会上报到服务器. 从 v1.3.0 开始，会考虑 date 的时区信息。支持 UTC 和 local 时区.
         /// </summary>
         /// <param name="eventName">事件名称</param>
         /// <param name="properties">事件属性</param>
@@ -279,6 +279,38 @@ namespace ThinkingAnalytics
                 else
                 {
                     _queue.Add(new Event(EVENT_TYPE.USER_SET, appId, null, properties));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 重置一个用户属性.
+        /// </summary>
+        /// <param name="property">用户属性名称</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserUnset(string property, string appId = "")
+        {
+            List<string> properties = new List<string>();
+            properties.Add(property);
+            UserUnset(properties, appId);
+        }
+
+        /// <summary>
+        /// 重置一组用户属性
+        /// </summary>
+        /// <param name="properties">用户属性列表</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserUnset(List<string> properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                if (initComplete)
+                {
+                    getInstance(appId).UserUnset(properties);
+                }
+                else
+                {
+                    _queue.Add(new Event(EVENT_TYPE.USER_SET, appId, properties));
                 }
             }
         }
@@ -441,6 +473,9 @@ namespace ThinkingAnalytics
                         break;
                     case EVENT_TYPE.USER_DEL:
                         UserDelete(eventData.appId);
+                        break;
+                    case EVENT_TYPE.USER_UNSET:
+                        UserUnset(eventData.propertiesList, eventData.appId);
                         break;
                 }
             }
@@ -642,7 +677,8 @@ namespace ThinkingAnalytics
             USER_SET,
             USER_SET_ONCE,
             USER_ADD,
-            USER_DEL
+            USER_DEL,
+            USER_UNSET,
         }
 
         private struct Event 
@@ -651,6 +687,7 @@ namespace ThinkingAnalytics
             public string appId;
             public string eventName;
             public Dictionary<string, object> properties;
+            public List<string> propertiesList;
             public DateTime? dateTime;
 
             public Event(EVENT_TYPE type, string appId, string eventName, Dictionary<string, object> properties, DateTime? dateTime = null)
@@ -660,6 +697,18 @@ namespace ThinkingAnalytics
                 this.eventName = eventName;
                 this.properties = properties;
                 this.dateTime = dateTime;
+                this.propertiesList = null;
+            }
+
+            // for UserUnset operation
+            public Event(EVENT_TYPE type, string appId, List<string> properties)
+            {
+                this.type = type;
+                this.appId = appId;
+                this.propertiesList = properties;
+                this.properties = null;
+                this.dateTime = null;
+                this.eventName = null;
             }
         }
 

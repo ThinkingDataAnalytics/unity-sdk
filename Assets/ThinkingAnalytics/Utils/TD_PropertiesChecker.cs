@@ -58,6 +58,23 @@ namespace ThinkingAnalytics.Utils
             return true;
         }
 
+        public static bool CheckProperteis(List<string> properties)
+        {
+            if (properties == null)
+            {
+                return true;
+            }
+
+            foreach(string value in properties)
+            {
+                if (!CheckString(value))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public static bool CheckString(string eventName)
         {
             if (string.IsNullOrEmpty(eventName))

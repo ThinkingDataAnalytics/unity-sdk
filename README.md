@@ -15,7 +15,7 @@
 
 当您配置好服务器地址和 APP ID 后，就可以开始使用 ThinkingAnalytics namespace 上传事件了，我们也提供了 Sample 供您参考。
 
-```
+```c#
 using ThinkingAnalytics;
 
 ThinkingAnalyticsAPI.Track("unity_start");
@@ -27,19 +27,19 @@ ThinkingAnalyticsAPI.Track("unity_start");
 2.1 设置访客 ID（可选）
 
 如果您的 APP 对每个用户有自己的访客ID管理体系，则您可以调用`Identify`来设置访客 ID:
-```
+```c#
 ThinkingAnalyticsAPI.Identify("unity_id");
 ```
 
 如果需要获得访客 ID，可以调用`GetDistinctId`获取：
-```
+```c#
 ThinkingAnalyticsAPI.GetDistinctId();
 ```
 
 2.2 设置账号 ID
 
 在用户进行登录时，可调用`Login`来设置用户的账号 ID，在设置完账号 ID 后，将会以账号 ID 作为身份识别 ID，并且设置的账号 ID 将会在调用`Logout`之前一直保留：
-```
+```c#
 // 设置账号 ID
 ThinkingAnalyticsAPI.Login("unity_user");
 
@@ -58,7 +58,7 @@ ThinkingAnalyticsAPI.Logout();
 - 事件属性`Key`为属性名称，为`string`类型，规定只能以字母开头，包含数字，字母和下划线“_”，长度最大为50个字符，对字母大小写不敏感；
 - 属性值支持四种类型：字符串、数值类、bool、DateTime。
 
-```
+```c#
 Dictionary<string, object> properties = new Dictionary<string, object>()
     {
         {"KEY_DateTime", DateTime.Now.AddDays(1)},
@@ -70,18 +70,20 @@ ThinkingAnalyticsAPI.Track("TEST_EVENT", properties);
 ```
 
 当您调用 `Track()` 时，SDK 会取系统当前时间作为 `#event_time` 属性值，如果您需要指定事件时间，可以传入 `DateTime`:
-```
+```c#
 DateTime dateTime = DateTime.Now.AddDays(-1);
 ThinkingAnalyticsAPI.Track("TEST_EVENT", properties, dateTime);
 ```
 
 > 注意：尽管事件可以设置触发时间，但是接收端会做如下的限制：只接收相对服务器时间在前 10 天至后 4 天的数据，超过时限的数据将会被视为异常数据，整条数据无法入库。
 
+v1.3.0+ 版本开始，SDK 支持上传事件的时间偏移（对应预置属性 #zone_offset），但是如果传入的 dateTime 的 Kind 属性为 DataTimeKind.Unspecified，则不会上报时间偏移。
+
 3.2 设置公共属性
 
 对于一些重要的属性，譬如用户的会员等级、来源渠道等，这些属性需要设置在每个事件中，此时您可以将这些属性设置为公共事件属性。公共事件属性指的就是每个事件都会带有的属性，您可以调用`SetSuperProperties`来设置公共事件属性，我们推荐您在发送事件前，先设置公共事件属性。
 
-```
+```c#
 Dictionary<string, object> superProperties = new Dictionary<string, object>()
     {
         {"SUPER_LEVEL", 0},
@@ -93,7 +95,7 @@ ThinkingAnalyticsAPI.SetSuperProperties(superProperties);
 
 如果您需要删除某个公共事件属性，您可以调用`UnsetSuperProperty()`清除其中一个公共事件属性；如果您想要清空所有公共事件属性，则可以调用`ClearSuperProperties()`.
 
-```
+```c#
 // 清除属性名为 SUPER_CHANNEL 的公共属性
 ThinkingAnalyticsAPI.UnsetSuperProperty("SUPER_CHANNEL");
 
@@ -102,7 +104,7 @@ ThinkingAnalyticsAPI.ClearSuperProperties();
 ```
 
 如果公共属性的值不是常量，您可以通过设置动态公共属性的方式实现。动态公共属性的优先级大于公共事件属性。设置动态公共属性需要实现 IDynamicSuperProperties 接口。方式如下：
-```
+```c#
 using ThinkingAnalytics;
 
 // 定义动态公共属性实现，此例为设置 UTC 时间的动态公共属性
@@ -122,7 +124,7 @@ ThinkingAnalyticsAPI.SetDynamicSuperProperties(new DynamicProp());
 3.3 记录事件时长
 
 您可以调用`TimeEvent()`来开始计时，配置您想要计时的事件名称，当您上传该事件时，将会自动在您的事件属性中加入`#duration`这一属性来表示记录的时长，单位为秒。
-```
+```c#
 // 调用 TimeEvent 开启对 TIME_EVENT 事件的计时
 ThinkingAnalyticsAPI.TimeEvent("TIME_EVENT");
 
@@ -138,7 +140,7 @@ TDA 平台目前支持的用户属性设置接口为`UserSet`、`UserSetOnce`、
 4.1 UserSet
 
 对于一般的用户属性，您可以调用`UserSet`来进行设置，使用该接口上传的属性将会覆盖原有的属性值，如果之前不存在该用户属性，则会新建该用户属性。
-```
+```c#
 ThinkingAnalyticsAPI.UserSet(new Dictionary<string, object>()
     {
         {"USER_PROP_NUM", 0},
@@ -153,7 +155,7 @@ ThinkingAnalyticsAPI.UserSet(new Dictionary<string, object>()
 4.2 UserSetOnce
 
 如果您要上传的用户属性只要设置一次，则可以调用`UserSetOnce`来进行设置，当该属性之前已经有值的时候，将会忽略这条信息：
-```
+```c#
 ThinkingAnalyticsAPI.UserSetOnce(new Dictionary<string, object>()
     {
         {"USER_PROP_NUM", -50},
@@ -165,7 +167,7 @@ ThinkingAnalyticsAPI.UserSetOnce(new Dictionary<string, object>()
 4.3 UserAdd
 
 当您要上传数值型的属性时，您可以调用`UserAdd`来对该属性进行累加操作，如果该属性还未被设置，则会赋值`0`后再进行计算，可传入负值，等同于相减操作。
-```
+```c#
 ThinkingAnalyticsAPI.UserAdd(new Dictionary<string, object>()
     {
         {"USER_PROP_NUM", -100.9},
@@ -177,8 +179,24 @@ ThinkingAnalyticsAPI.UserAdd(new Dictionary<string, object>()
 4.4 UserDelete
 
 如果您要删除某个用户，可以调用`UserDelete`将这名用户删除，您将无法再查询该名用户的用户属性，但该用户产生的事件仍然可以被查询到。
-```
+```c#
 ThinkingAnalyticsAPI.UserDelete();
+```
+
+4.5 UserUnset
+
+如果您需要重置用户的某个属性，可以调用`UserUnset`将已经设置的属性删除。此接口支持传入字符串或者列表类型的参数:
+```c#
+// 删除单个用户属性
+ThinkingAnalyticsAPI.UserUnset("userPropertyName");
+
+// 删除多个用户属性
+List<string> listProps = new List<string>();
+listProps.Add("aaa");
+listProps.Add("bbb");
+listProps.Add("ccc");
+
+ThinkingAnalyticsAPI.UserUnset(listProps);
 ```
 
 #### 5 自动采集事件
@@ -187,7 +205,7 @@ ThinkingAnalyticsAPI.UserDelete();
 - ta_app_end 当游戏进入`Pause`状态，并附加`#duration`属性，记录本次游戏时长
 
 1.1.0 版本开始，可以通过接口调用的方式采集安装事件：
-```
+```c#
 // 采集 APP 安装事件
 ThinkingAnalyticsAPI.TrackAppInstall();
 ```
@@ -195,7 +213,7 @@ ThinkingAnalyticsAPI.TrackAppInstall();
 #### 6 多项目 ID 支持
 
 在配置 SDK 时，可以添加多个 APP ID，之后在调用 API 时，最后附加一个参数指定 APP ID. 以 `Identify()` 接口为例：
-```
+```c#
 // 为 APP ID 为 “debug-appid” 的项目设置访客 ID
 ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
 ```
@@ -215,14 +233,14 @@ ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
 如果勾选了 Enable Log 选项，将会开启日志，打印上报情况，以方便您的调试。您也可以在 Editor 模式下，检验事件上报是否正确，对于不符合条件的属性，会以`warning`日志显示在控制台中。
 
 7.3 获取设备ID
-```
+```c#
 ThinkingAnalyticsAPI.GetDeviceId()
 ```
 
 7.4 Postpone Track
 
 如果您勾选了 Postpone Track 选项，意味着所有的上报请求（包括用户属性设置和事件追踪）都会被缓存，直到您主动调用:
-```
+```c#
 ThinkingAnalyticsAPI.StartTrack();
 ```
 

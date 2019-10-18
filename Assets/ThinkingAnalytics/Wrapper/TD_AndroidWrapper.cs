@@ -55,7 +55,21 @@ namespace ThinkingAnalytics.Wrapper
             long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
 
             AndroidJavaObject date = new AndroidJavaObject("java.util.Date", currentMillis);
-            instance.Call("track", eventName, GetJSONObject(properties), date);
+            AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
+            AndroidJavaObject tz = null;
+
+            switch(dateTime.Kind)
+            {
+                case DateTimeKind.Local:
+                    tz = tzClass.CallStatic<AndroidJavaObject>("getDefault");
+                    break;
+                case DateTimeKind.Utc:
+                    tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", "UTC");
+                    break;
+                case DateTimeKind.Unspecified:
+                    break;
+            }
+            instance.Call("track", eventName, GetJSONObject(properties), date, tz);
         }
         private void track(string eventName, Dictionary<string, object> properties)
         {
@@ -118,6 +132,12 @@ namespace ThinkingAnalytics.Wrapper
             instance.Call("user_set", GetJSONObject(properties));
 
         }
+
+        private void userUnset(List<string> properties)
+        {
+            instance.Call("user_unset", properties.ToArray());
+        }
+
         private void userAdd(Dictionary<string, object> properties)
         {
             instance.Call("user_add", GetJSONObject(properties));
