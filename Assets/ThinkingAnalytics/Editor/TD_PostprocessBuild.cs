@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿#if UNITY_IPHONE
+
+using System.IO;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.iOS.Xcode;
@@ -30,3 +32,5 @@ namespace ThinkingAnalytics.Editors
         }
     }
  }
+
+ #endif
