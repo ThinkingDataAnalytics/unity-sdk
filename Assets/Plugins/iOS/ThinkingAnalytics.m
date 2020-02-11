@@ -38,10 +38,18 @@ char* strdup(const char* string) {
 }
 
 
-void start(const char *app_id, const char *url) {
+void start(const char *app_id, const char *url, int mode) { 
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *url_string = url != NULL ? [NSString stringWithUTF8String:url] : nil;
-    [ThinkingAnalyticsSDK startWithAppId:app_id_string withUrl: url_string];
+    TDConfig *config = [[TDConfig alloc] init];
+    if (mode == 1) { 
+        // DEBUG
+        config.debugMode = ThinkingAnalyticsDebug;
+    } else if (mode == 2) { 
+        // DEBUG_ONLY
+        config.debugMode = ThinkingAnalyticsDebugOnly;
+    }
+    [ThinkingAnalyticsSDK startWithAppId:app_id_string withUrl: url_string withConfig:config];
 }
 
 void enable_log(BOOL enable_log) {
@@ -197,6 +205,15 @@ void user_add(const char *app_id, const char *properties) {
 void user_delete(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [getInstance(app_id_string) user_delete];
+}
+
+void user_append(const char *app_id, const char *properties) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    if (properties_dict) {
+        [getInstance(app_id_string) user_append:properties_dict];
+    }
 }
 
 const char *get_device_id() {

@@ -9,9 +9,9 @@ namespace ThinkingAnalytics.Wrapper
     public partial class ThinkingAnalyticsWrapper
     {
 #if UNITY_ANDROID && !(UNITY_EDITOR)
-        private static AndroidJavaClass agent;
-        private static readonly string SDK_CLASS = "cn.thinkingdata.android.ThinkingAnalyticsSDK";
         private static readonly string JSON_CLASS = "org.json.JSONObject";
+        private static readonly AndroidJavaClass sdkClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK");
+        private static readonly AndroidJavaClass configClass = new AndroidJavaClass("cn.thinkingdata.android.TDConfig");
         private AndroidJavaObject instance;
         /// <summary>
         /// Convert Dictionary object to JSONObject in Java.
@@ -31,15 +31,16 @@ namespace ThinkingAnalytics.Wrapper
             }
         }
 
-        private void enable_log(bool enableLog) { 
+        private static void enable_log(bool enableLog) {
+            sdkClass.CallStatic("enableTrackLog", enableLog);
         }
 
-        private void init(string token, string serverUrl, bool enableLog)
+        private void init()
         {
-            agent = new AndroidJavaClass(SDK_CLASS);
-            agent.CallStatic("enableTrackLog", enableLog);
             AndroidJavaObject context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"); //获得Context
-            instance = agent.CallStatic<AndroidJavaObject>("sharedInstance", context, token, serverUrl);
+            AndroidJavaObject config = configClass.CallStatic<AndroidJavaObject>("getInstance", context, token.appid, token.serverUrl);
+            config.Call("setModeInt", (int) token.mode);
+            instance = sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", config);
         }
 
         private void flush()
@@ -142,6 +143,12 @@ namespace ThinkingAnalytics.Wrapper
         {
             instance.Call("user_add", GetJSONObject(properties));
         }
+
+        private void userAppend(Dictionary<string, object> properties)
+        {
+            instance.Call("user_append", GetJSONObject(properties));
+        }
+
         private void userDelete()
         {
             instance.Call("user_delete");

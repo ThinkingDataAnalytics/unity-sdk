@@ -12,7 +12,7 @@ namespace ThinkingAnalytics.Wrapper
     {
 #if UNITY_IOS && !(UNITY_EDITOR)
         [DllImport("__Internal")]
-        private static extern void start(string app_id, string server_url);
+        private static extern void start(string app_id, string server_url, int mode);
         [DllImport("__Internal")]
         private static extern void identify(string app_id, string unique_id);
         [DllImport("__Internal")]
@@ -44,6 +44,8 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern void user_delete(string app_id);
         [DllImport("__Internal")]
+        private static extern void user_append(string app_id, string properties);
+        [DllImport("__Internal")]
         private static extern void flush(string app_id);
         [DllImport("__Internal")]
         private static extern void set_network_type(int type);
@@ -64,10 +66,9 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern void create_light_instance(string app_id, string delegate_token);
 
-        private void init(string app_id, string serverUrl, bool enableLog)
+        private void init()
         {
-            start(app_id, serverUrl);
-            enable_log(enableLog);
+            start(token.appid, token.serverUrl, (int)token.mode);
         }
 
         private void identify(string uniqueId)
@@ -178,6 +179,11 @@ namespace ThinkingAnalytics.Wrapper
         private void userDelete()
         {
             user_delete(token.appid);
+        }
+
+        private void userAppend(Dictionary<string, object> properties)
+        {
+            user_append(token.appid, TD_MiniJSON.Serialize(properties));
         }
 
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)

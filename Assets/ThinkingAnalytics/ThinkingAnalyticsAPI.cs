@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v1.3.1
+    Thinkingdata Unitiy SDK v1.4.0
     
     Copyright 2019, ThinkingData, Inc
 
@@ -49,13 +49,24 @@ namespace ThinkingAnalytics
         public struct Token
         {
             public string appid;
+            public string serverUrl;
             public bool autoTrack;
+            public TAMode mode;
 
-            public Token(string appId, bool autoTrackFlag)
+            public Token(string appId, string serverUrl, bool autoTrackFlag, TAMode mode)
             {
                 appid = appId;
+                this.serverUrl = serverUrl;
                 autoTrack = autoTrackFlag;
+                this.mode = mode;
             }
+        }
+
+        public enum TAMode
+        {
+            NORMAL = 0,
+            DEBUG = 1,
+            DEBUG_ONLY = 2
         }
 
         public enum NetworkType
@@ -75,10 +86,8 @@ namespace ThinkingAnalytics
 
 
         [Header("Project")]
-        [Tooltip("服务端地址")]
-        public string serverUrl = "https://server_url";
+        [Tooltip("项目相关配置, APP ID 会在项目申请时给出")]
         [HideInInspector]
-        [Tooltip("APP ID，会在项目申请时给出")]
         public Token[] tokens = new Token[1];
 
         #endregion
@@ -378,6 +387,35 @@ namespace ThinkingAnalytics
         }
 
         /// <summary>
+        /// 对 List 类型的用户属性进行追加.
+        /// </summary>
+        /// <param name="properties">用户属性</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserAppend(Dictionary<string, object> properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                foreach (KeyValuePair<string, object> kv in properties)
+                {
+                    if (!TD_PropertiesChecker.IsList(kv.Value))
+                    {
+                        TD_Log.w("TA.API - userAppend allowed only List or Array values. value invalid for: " + kv.Key);
+                        return;
+                    }
+                }
+                if (initComplete)
+                {
+                    getInstance(appId).UserAppend(properties);
+                }
+                else
+                {
+                    _queue.Add(new Event(EVENT_TYPE.USER_APPEND, appId, null, properties));
+                }
+
+            }
+        }
+
+        /// <summary>
         /// 删除用户数据. 之后再查询该名用户的用户属性，但该用户产生的事件仍然可以被查询到
         /// </summary>
         /// <param name="appId">项目 ID(可选)</param>
@@ -476,6 +514,9 @@ namespace ThinkingAnalytics
                         break;
                     case EVENT_TYPE.USER_UNSET:
                         UserUnset(eventData.propertiesList, eventData.appId);
+                        break;
+                    case EVENT_TYPE.USER_APPEND:
+                        UserAppend(eventData.properties, eventData.appId);
                         break;
                 }
             }
@@ -580,11 +621,12 @@ namespace ThinkingAnalytics
                 instance_lock.EnterWriteLock();
                 try
                 {
+                    ThinkingAnalyticsWrapper.EnableLog(enableLog);
                     foreach (Token token in tokens)
                     {
                         if (!string.IsNullOrEmpty(token.appid))
                         {
-                            sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token, serverUrl, enableLog));
+                            sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token));
                             if (token.autoTrack)
                             {
                                 sAutoTrackIDs.Add(token.appid);
@@ -679,6 +721,7 @@ namespace ThinkingAnalytics
             USER_ADD,
             USER_DEL,
             USER_UNSET,
+            USER_APPEND,
         }
 
         private struct Event 

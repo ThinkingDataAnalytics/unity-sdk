@@ -23,6 +23,12 @@ namespace ThinkingAnalytics.Utils
                 || AObject is float;
         }
 
+        public static bool IsList(object obj) {
+            if (obj == null)
+                return false;
+            return (obj.GetType().IsGenericType && obj.GetType().GetGenericTypeDefinition() == typeof(List<>)) || obj is Array;
+        }
+
         public static bool CheckProperties<V>(Dictionary<string, V> properties)
         {
             if (properties == null)
@@ -35,9 +41,9 @@ namespace ThinkingAnalytics.Utils
                     return false;
                 }
 
-                if (!(kv.Value is string || kv.Value is DateTime || kv.Value is bool || IsNumeric(kv.Value) ))
+                if (!(kv.Value is string || kv.Value is DateTime || kv.Value is bool || IsNumeric(kv.Value) || IsList(kv.Value)))
                 {
-                    TD_Log.w("TA.PropertiesChecker - property values must be one of: string, numberic, Boolean, DateTime");
+                    TD_Log.w("TA.PropertiesChecker - property values must be one of: string, numberic, Boolean, DateTime, Array");
                     return false;
                 }
 

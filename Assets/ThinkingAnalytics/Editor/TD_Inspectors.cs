@@ -23,34 +23,33 @@ namespace ThinkingAnalytics.Editors
                 onAddCallback = AddListElement
             };
 
+            _stringArray.elementHeight = 120;
+
             _stringArray.serializedProperty.isExpanded = true;
         }
 
         void DrawListHeader(Rect rect)
         {
-            var spacing = 20f;
             var arect = rect;
-            arect.height = EditorGUIUtility.singleLineHeight;
+            arect.height = EditorGUIUtility.singleLineHeight + 10;
             arect.x += 14;
-            arect.width = 60;
-            GUI.Label(arect, "Token ID");
+            arect.width = 80;
+            GUIStyle style = new GUIStyle();
+            style.fontStyle = FontStyle.Bold;
 
-            arect.x += arect.width + spacing; ;
-            arect.width = 200;
-            EditorGUI.LabelField(arect, "APP ID");
-            arect.x += arect.width + spacing;
-            arect.width = 100;
-            EditorGUI.LabelField(arect, "Auto Track");
+            GUI.Label(arect, "Instance Configurations",style);
         }
 
         void DrawListElement(Rect rect, int index, bool isActive, bool isFocused)
         {
-            var spacing = 20f;
+            var spacing = 5;
+            var xSpacing = 85;
             var arect = rect;
             SerializedProperty item = _stringArray.serializedProperty.GetArrayElementAtIndex(index);
             var serElem = this._stringArray.serializedProperty.GetArrayElementAtIndex(index);
             arect.height = EditorGUIUtility.singleLineHeight;
-            arect.width = 60;
+            arect.width = 240;
+
             if (index == 0)
             {
                 EditorGUI.PropertyField(arect, item, new GUIContent((index + 1) + " (default)"));
@@ -60,12 +59,36 @@ namespace ThinkingAnalytics.Editors
                 EditorGUI.PropertyField(arect, item, new GUIContent("" + (index + 1)));
 
             }
-            arect.x += arect.width + spacing;
-            arect.width = 200;
+            arect.y += EditorGUIUtility.singleLineHeight + spacing;
+            GUIStyle style = new GUIStyle();
+            style.fontStyle = FontStyle.Bold;
+
+
+            EditorGUI.LabelField(arect, "APP ID:", style);
+            arect.x += xSpacing;
             EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("appid"), GUIContent.none);
-            arect.x += arect.width + spacing;
-            arect.width = 50;
-            EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("autoTrack"),GUIContent.none);
+
+            arect.y += EditorGUIUtility.singleLineHeight + spacing;
+            arect.x -= xSpacing;
+
+            EditorGUI.LabelField(arect, "SERVER URL:", style);
+            arect.x += xSpacing;
+            EditorGUI.PropertyField(new Rect(arect.x, arect.y, arect.width, arect.height), serElem.FindPropertyRelative("serverUrl"), GUIContent.none);
+
+            arect.y += EditorGUIUtility.singleLineHeight + spacing;
+            arect.x -= xSpacing;
+
+            EditorGUI.LabelField(arect, "MODE:", style);
+            arect.x += xSpacing;
+            EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("mode"), GUIContent.none);
+
+            arect.y += EditorGUIUtility.singleLineHeight + spacing;
+            arect.x -= xSpacing;
+
+            EditorGUI.LabelField(arect, "AUTO TRACK:", style);
+            arect.x += xSpacing;
+            EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("autoTrack"), GUIContent.none);
+
         }
 
         void AddListElement(ReorderableList list)

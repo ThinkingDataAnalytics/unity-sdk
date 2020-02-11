@@ -9,14 +9,13 @@ namespace ThinkingAnalytics.Wrapper
     {
 #if (UNITY_EDITOR || (!UNITY_IOS && !UNITY_ANDROID))
         private string uniqueId;
-        private void init(string appid, string serverUrl, bool enableLog)
+        private void init()
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - Thinking for using ThinkingAnalytics SDK for tracking data.");
-            enable_log(enableLog);
         }
-        private void enable_log(bool enableLog)
+        private static void enable_log(bool enableLog)
         {
-            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling enable_log with enableLog: " + enableLog);
+            TD_Log.d("TA.Wrapper - calling enable_log with enableLog: " + enableLog);
         }
 
         private void identify(string uniqueId)
@@ -96,6 +95,11 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userAdd with properties: " + TD_MiniJSON.Serialize(properties));
         }
 
+        private void userAppend(Dictionary<string, object> properties)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userAppend with properties: " + TD_MiniJSON.Serialize(properties));
+        }
+
         private void userDelete()
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userDelete");
@@ -143,7 +147,7 @@ namespace ThinkingAnalytics.Wrapper
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling createLightInstance()");
-            return new ThinkingAnalyticsWrapper(delegateToken);
+            return new ThinkingAnalyticsWrapper(delegateToken.appid, delegateToken.serverUrl, delegateToken.mode);
         }
 
 #endif
@@ -152,18 +156,17 @@ namespace ThinkingAnalytics.Wrapper
 
         private static System.Random rnd = new System.Random();
 
-        public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, String serverUrl, bool enableLog)
+        public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token)
         {
             this.token = token;
-            init(token.appid, serverUrl, enableLog);
+            init();
         }
 
-        private ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token)
-        {
-            this.token = token;
+        private ThinkingAnalyticsWrapper(string appId, string serverUrl, ThinkingAnalyticsAPI.TAMode mode) {
+            token = new ThinkingAnalyticsAPI.Token(appId, serverUrl, false, mode);
         }
 
-        public void EnableLog(bool enableLog)
+        public static void EnableLog(bool enableLog)
         {
             enable_log(enableLog);
         }
@@ -190,53 +193,48 @@ namespace ThinkingAnalytics.Wrapper
 
         public void Track(string eventName, Dictionary<string, object> properties)
         {
-            if (TD_PropertiesChecker.CheckString(eventName) && TD_PropertiesChecker.CheckProperties(properties))
+            TD_PropertiesChecker.CheckString(eventName);
+            TD_PropertiesChecker.CheckProperties(properties);
+            if (null != dynamicSuperProperties)
             {
-                if (null != dynamicSuperProperties)
-                {
-                    Dictionary<string, object> finalProperties = new Dictionary<string, object>();
-                    TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
-                    TD_PropertiesChecker.MergeProperties(properties, finalProperties);
-                    track(eventName, finalProperties);
-                } else
-                {
-                    track(eventName, properties);
-                }
+                Dictionary<string, object> finalProperties = new Dictionary<string, object>();
+                TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
+                TD_PropertiesChecker.MergeProperties(properties, finalProperties);
+                track(eventName, finalProperties);
+            } 
+            else
+            {
+                track(eventName, properties);
             }
         }
 
         public void Track(string eventName, Dictionary<string, object> properties, DateTime datetime)
         {
-            if (TD_PropertiesChecker.CheckString(eventName) && TD_PropertiesChecker.CheckProperties(properties))
+            TD_PropertiesChecker.CheckString(eventName);
+            TD_PropertiesChecker.CheckProperties(properties);
+            if (null != dynamicSuperProperties)
             {
-                if (null != dynamicSuperProperties)
-                {
-                    Dictionary<string, object> finalProperties = new Dictionary<string, object>();
-                    TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
-                    TD_PropertiesChecker.MergeProperties(properties, finalProperties);
-                    track(eventName, finalProperties, datetime);
-                }
-                else
-                {
-                    track(eventName, properties, datetime);
-                }
+                Dictionary<string, object> finalProperties = new Dictionary<string, object>();
+                TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
+                TD_PropertiesChecker.MergeProperties(properties, finalProperties);
+                track(eventName, finalProperties, datetime);
+            }
+            else
+            {
+                track(eventName, properties, datetime);
             }
         }
 
         public void SetSuperProperties(Dictionary<string, object> superProperties)
         {
-            if (TD_PropertiesChecker.CheckProperties(superProperties))
-            {
-                setSuperProperties(superProperties);
-            }
+            TD_PropertiesChecker.CheckProperties(superProperties);
+            setSuperProperties(superProperties);
         }
 
         public void UnsetSuperProperty(string superPropertyName)
         {
-            if (TD_PropertiesChecker.CheckString(superPropertyName))
-            {
-                unsetSuperProperty(superPropertyName);
-            }
+            TD_PropertiesChecker.CheckString(superPropertyName);
+            unsetSuperProperty(superPropertyName);
         }
 
         public void ClearSuperProperty()
@@ -247,10 +245,8 @@ namespace ThinkingAnalytics.Wrapper
 
         public void TimeEvent(string eventName)
         {
-            if (TD_PropertiesChecker.CheckString(eventName))
-            {
-                timeEvent(eventName);
-            }
+            TD_PropertiesChecker.CheckString(eventName);
+            timeEvent(eventName);
         }
 
         public Dictionary<string, object> GetSuperProperties()
@@ -260,36 +256,32 @@ namespace ThinkingAnalytics.Wrapper
 
         public void UserSet(Dictionary<string, object> properties)
         {
-            if (TD_PropertiesChecker.CheckProperties(properties))
-            {
-                userSet(properties);
-
-            }
+            TD_PropertiesChecker.CheckProperties(properties);
+            userSet(properties);
         }
 
         public void UserSetOnce(Dictionary<string, object> properties)
         {
-            if (TD_PropertiesChecker.CheckProperties(properties))
-            {
-                userSetOnce(properties);
-            }
-
+            TD_PropertiesChecker.CheckProperties(properties);
+            userSetOnce(properties);
         }
 
         public void UserUnset(List<string> properties)
         {
-            if (TD_PropertiesChecker.CheckProperteis(properties))
-            {
-                userUnset(properties);
-            }
+            TD_PropertiesChecker.CheckProperteis(properties);
+            userUnset(properties);
         }
 
         public void UserAdd(Dictionary<string, object> properties)
         {
-            if (TD_PropertiesChecker.CheckProperties(properties))
-            {
-                userAdd(properties);
-            }
+            TD_PropertiesChecker.CheckProperties(properties);
+            userAdd(properties);
+        }
+
+        public void UserAppend(Dictionary<string, object> properties)
+        {
+            TD_PropertiesChecker.CheckProperties(properties);
+            userAppend(properties);
         }
 
         public void UserDelete()
@@ -314,13 +306,11 @@ namespace ThinkingAnalytics.Wrapper
 
         public void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
         {
-            if (TD_PropertiesChecker.CheckProperties(dynamicSuperProperties.GetDynamicSuperProperties()))
-            {
-                this.dynamicSuperProperties = dynamicSuperProperties;
-            } else
+            if (!TD_PropertiesChecker.CheckProperties(dynamicSuperProperties.GetDynamicSuperProperties()))
             {
                 TD_Log.d("TA.Wrapper(" + token.appid + ") - Cannot set dynamic super properties due to invalid properties.");
             }
+            this.dynamicSuperProperties = dynamicSuperProperties;
         }
 
         public void TrackAppInstall()
@@ -350,7 +340,7 @@ namespace ThinkingAnalytics.Wrapper
 
         public ThinkingAnalyticsWrapper CreateLightInstance()
         {
-            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), false));
+            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), token.serverUrl, false, token.mode));
         }
 
         internal string GetAppId()
