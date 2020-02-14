@@ -1,4 +1,4 @@
-#import "ThinkingAnalyticsSDK.h"
+#import <ThinkingSDK/ThinkingAnalyticsSDK.h>
 #import <pthread.h>
 
 #define NETWORK_TYPE_DEFAULT 1

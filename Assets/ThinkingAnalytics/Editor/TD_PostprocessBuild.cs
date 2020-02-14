@@ -22,10 +22,13 @@ namespace ThinkingAnalytics.Editors
             PBXProject proj = new PBXProject();
             proj.ReadFromString(File.ReadAllText(projPath));
 
+            #if UNITY_2019_3_OR_NEWER
+            string target = proj.GetUnityMainTargetGuid(); 
+            #else
             string targetName = PBXProject.GetUnityTargetName();
-            string target = proj.TargetGuidByName(targetName);
+            string target = proj.TargetGuidByName(targetName); 
+            #endif
 
-            proj.AddBuildProperty(target, "HEADER_SEARCH_PATHS", "$(SRCROOT)/Frameworks/Plugins/iOS/ThinkingSDK.framework/Headers");
             proj.AddBuildProperty(target, "OTHER_LDFLAGS", "-ObjC");
 
             File.WriteAllText(projPath, proj.WriteToString());
