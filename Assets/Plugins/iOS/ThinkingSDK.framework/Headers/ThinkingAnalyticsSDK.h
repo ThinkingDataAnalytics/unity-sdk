@@ -4,23 +4,23 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
-Debug模式
+Debug 模式
 
-- ThinkingAnalyticsDebugOff : 默认 不开启Debug模式
+- ThinkingAnalyticsDebugOff : 默认不开启 Debug 模式
 */
 typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsDebugMode) {
     /**
-     默认 不开启Debug模式
+     默认不开启 Debug 模式
      */
     ThinkingAnalyticsDebugOff      = 0,
     
     /**
-     开启Debug模式，不入库
+     开启 Debug 模式，不入库
      */
     ThinkingAnalyticsDebugOnly     = 1 << 0,
     
     /**
-     开启Debug模式，并入库
+     开启 Debug 模式，并入库
      */
     ThinkingAnalyticsDebug         = 1 << 1
 };
@@ -46,36 +46,41 @@ typedef NS_OPTIONS(NSInteger, TDSSLPinningMode) {
 };
 
 /**
- 自定义HTTPS认证
+ 自定义 HTTPS 认证
 */
 typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticationChallengeBlock)(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *_Nullable __autoreleasing *_Nullable credential);
 
+/**
+ HTTPS 请求进行证书验证的策略
+*/
 @interface TDSecurityPolicy : NSObject
 
 /**
- 是否允许自建证书或者过期SSL证书，默认NO
+ 是否允许自建证书或者过期SSL证书，默认 NO
 */
 @property (nonatomic, assign) BOOL allowInvalidCertificates;
 
 /**
- 是否验证证书域名，默认YES
+ 是否验证证书域名，默认 YES
 */
 @property (nonatomic, assign) BOOL validatesDomainName;
 
 /**
- 自定义HTTPS认证
+ 自定义 HTTPS 认证
 */
 @property (nonatomic, copy) TDURLSessionDidReceiveAuthenticationChallengeBlock sessionDidReceiveAuthenticationChallenge;
 
 /**
  证书验证模式
+ 
+ @param pinningMode 证书验证模式
 */
 + (instancetype)policyWithPinningMode:(TDSSLPinningMode)pinningMode;
 
 @end
 
 /**
- 初始化配置
+ TDConfig 是实例的配置类。通过 TDConfig 实例初始化 SDK，可以对 SDK 进行更灵活的配置。
  */
 @interface TDConfig : NSObject
 
@@ -85,12 +90,12 @@ typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticat
 @property (nonatomic, assign) BOOL trackRelaunchedInBackgroundEvents;
 
 /**
- 初始化配置debug模式
+ 初始化配置 Debug 模式
 */
 @property (nonatomic, assign) ThinkingAnalyticsDebugMode debugMode;
 
 /**
- 初始化配置launchOptions
+ 初始化配置 launchOptions
 */
 @property (nonatomic, copy) NSDictionary *launchOptions;
 
@@ -139,15 +144,15 @@ typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticat
 /**
  获取实例
 
- @return SDK实例
+ @return SDK 实例
  */
 + (nullable ThinkingAnalyticsSDK *)sharedInstance;
 
 /**
- 根据APPID获取实例
+ 根据 APPID 获取实例
 
  @param appid APP ID
- @return SDK实例
+ @return SDK 实例
  */
 + (ThinkingAnalyticsSDK *)sharedInstanceWithAppid:(NSString *)appid;
 
@@ -156,7 +161,7 @@ typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticat
 
  @param appId APP ID
  @param url 接收端地址
- @return SDK实例
+ @return SDK 实例
  */
 + (ThinkingAnalyticsSDK *)startWithAppId:(NSString *)appId withUrl:(NSString *)url;
 
@@ -171,13 +176,13 @@ typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticat
 + (ThinkingAnalyticsSDK *)startWithAppId:(NSString *)appId withUrl:(NSString *)url withConfig:(nullable TDConfig *)config;
 
 /**
- Log级别
+ Log 级别
 
- - TDLoggingLevelNone : 默认 不开启
+ - TDLoggingLevelNone : 默认不开启
  */
 typedef NS_OPTIONS(NSInteger, TDLoggingLevel) {
     /**
-     默认 不开启
+     默认不开启
      */
     TDLoggingLevelNone  = 0,
     
@@ -223,42 +228,42 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsNetworkType) {
 /**
  自动采集事件
 
- - ThinkingAnalyticsEventTypeNone           : 默认 不开启自动埋点
+ - ThinkingAnalyticsEventTypeNone           : 默认不开启自动埋点
  */
 typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
     
     /**
-     默认 不开启自动埋点
+     默认不开启自动埋点
      */
     ThinkingAnalyticsEventTypeNone          = 0,
     
     /*
-     APP启动或从后台恢复事件
+     APP 启动或从后台恢复事件
      */
     ThinkingAnalyticsEventTypeAppStart      = 1 << 0,
     
     /**
-     APP进入后台事件
+     APP 进入后台事件
      */
     ThinkingAnalyticsEventTypeAppEnd        = 1 << 1,
     
     /**
-     APP控件点击事件
+     APP 控件点击事件
      */
     ThinkingAnalyticsEventTypeAppClick      = 1 << 2,
     
     /**
-     APP浏览页面事件
+     APP 浏览页面事件
      */
     ThinkingAnalyticsEventTypeAppViewScreen = 1 << 3,
     
     /**
-     APP崩溃信息
+     APP 崩溃信息
      */
     ThinkingAnalyticsEventTypeAppViewCrash  = 1 << 4,
     
     /**
-     APP安装之后的首次打开
+     APP 安装之后的首次打开
      */
     ThinkingAnalyticsEventTypeAppInstall    = 1 << 5
 };
@@ -315,26 +320,26 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 /**
  获取访客ID
 
- @return 获取访客ID
+ @return 获取访客 ID
  */
 - (NSString *)getDistinctId;
 
 /**
  获取SDK版本号
 
- @return 获取SDK版本号
+ @return 获取 SDK 版本号
  */
 + (NSString *)getSDKVersion;
 
 /**
- 设置账号ID
+ 设置账号 ID
 
  @param accountId 账号 ID
  */
 - (void)login:(NSString *)accountId;
 
 /**
- 清空账号ID
+ 清空账号 ID
  */
 - (void)logout;
 
@@ -381,6 +386,8 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 
 /**
  对 Array 类型的用户属性进行追加操作
+ 
+ @param properties 用户属性
 */
 - (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties;
 
@@ -434,9 +441,9 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 - (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType;
 
 /**
- 获取设备ID
+ 获取设备 ID
 
- @return 设备ID
+ @return 设备 ID
  */
 - (NSString *)getDeviceId;
 
@@ -450,7 +457,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 /**
  忽略某个类型控件的点击事件
 
- @param aClass 忽略的控件Class
+ @param aClass 忽略的控件 Class
  */
 - (void)ignoreViewType:(Class)aClass;
 
@@ -466,12 +473,12 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 - (BOOL)showUpWebView:(id)webView WithRequest:(NSURLRequest *)request;
 
 /**
- 与 H5 打通数据时需要调用此接口配置UserAgent
+ 与 H5 打通数据时需要调用此接口配置 UserAgent
  */
 - (void)addWebViewUserAgent;
 
 /**
- 开启Log功能
+ 开启 Log 功能
 
  @param level 打印日志级别
  */
@@ -516,17 +523,17 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 #pragma mark - Autotrack View Interface
 
 /**
- APP控件点击事件
+ APP 控件点击事件
  */
 @interface UIView (ThinkingAnalytics)
 
 /**
-设置控件元素ID
+设置控件元素 ID
  */
 @property (copy,nonatomic) NSString *thinkingAnalyticsViewID;
 
 /**
- 配置APPID的控件元素ID
+ 配置 APPID 的控件元素 ID
  */
 @property (strong,nonatomic) NSDictionary *thinkingAnalyticsViewIDWithAppid;
 
@@ -536,7 +543,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 @property (nonatomic,assign) BOOL thinkingAnalyticsIgnoreView;
 
 /**
- 配置APPID的忽略某个控件的点击事件
+ 配置 APPID 的忽略某个控件的点击事件
  */
 @property (strong,nonatomic) NSDictionary *thinkingAnalyticsIgnoreViewWithAppid;
 
@@ -546,7 +553,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 @property (strong,nonatomic) NSDictionary *thinkingAnalyticsViewProperties;
 
 /**
- 配置APPID的自定义控件点击事件的属性
+ 配置 APPID 的自定义控件点击事件的属性
  */
 @property (strong,nonatomic) NSDictionary *thinkingAnalyticsViewPropertiesWithAppid;
 
@@ -613,7 +620,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 - (NSDictionary *)getTrackProperties;
 
 /**
- 配置APPID自定义页面浏览事件的属性
+ 配置 APPID 自定义页面浏览事件的属性
 
  @return 事件属性
  */
@@ -636,7 +643,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 - (NSString *)getScreenUrl;
 
 /**
- 配置APPID自定义页面浏览事件的属性
+ 配置 APPID 自定义页面浏览事件的属性
 
  @return 预置属性 #url 的值
  */

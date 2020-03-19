@@ -22,14 +22,24 @@ namespace ThinkingAnalytics.Editors
             PBXProject proj = new PBXProject();
             proj.ReadFromString(File.ReadAllText(projPath));
 
-            #if UNITY_2019_3_OR_NEWER
-            string target = proj.GetUnityMainTargetGuid(); 
-            #else
-            string targetName = PBXProject.GetUnityTargetName();
-            string target = proj.TargetGuidByName(targetName); 
-            #endif
+            string mainTargetGuid;
+            string unityFrameworkTargetGuid;
+                    
+            var unityMainTargetGuidMethod = proj.GetType().GetMethod("GetUnityMainTargetGuid");
+            var unityFrameworkTargetGuidMethod = proj.GetType().GetMethod("GetUnityFrameworkTargetGuid");
+                            
+            if (unityMainTargetGuidMethod != null && unityFrameworkTargetGuidMethod != null)
+            {
+                mainTargetGuid = (string)unityMainTargetGuidMethod.Invoke(proj, null);
+                unityFrameworkTargetGuid = (string)unityFrameworkTargetGuidMethod.Invoke(proj, null);
+            }
+            else
+            {
+                mainTargetGuid = proj.TargetGuidByName ("Unity-iPhone");
+                unityFrameworkTargetGuid = mainTargetGuid;
+            }
 
-            proj.AddBuildProperty(target, "OTHER_LDFLAGS", "-ObjC");
+            proj.AddBuildProperty(unityFrameworkTargetGuid, "OTHER_LDFLAGS", "-ObjC");
 
             File.WriteAllText(projPath, proj.WriteToString());
         }

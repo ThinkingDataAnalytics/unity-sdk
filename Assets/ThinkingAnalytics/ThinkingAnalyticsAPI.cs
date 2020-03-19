@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v1.4.2
+    Thinkingdata Unitiy SDK v1.4.3
     
     Copyright 2019, ThinkingData, Inc
 
@@ -52,14 +52,52 @@ namespace ThinkingAnalytics
             public string serverUrl;
             public bool autoTrack;
             public TAMode mode;
+            public TATimeZone timeZone;
+            public string timeZoneId;
 
-            public Token(string appId, string serverUrl, bool autoTrackFlag, TAMode mode)
+            public Token(string appId, string serverUrl, bool autoTrackFlag, TAMode mode, TATimeZone timeZone, string timeZoneId = null)
             {
                 appid = appId;
                 this.serverUrl = serverUrl;
                 autoTrack = autoTrackFlag;
                 this.mode = mode;
+                this.timeZone = timeZone;
+                this.timeZoneId = timeZoneId;
             }
+
+            public string getTimeZoneId()
+            {
+                switch (timeZone)
+                {
+                    case TATimeZone.UTC:
+                        return "UTC";
+                    case TATimeZone.Asia_Shanghai:
+                        return "Asia/Shanghai";
+                    case TATimeZone.Asia_Tokyo:
+                        return "Asia/Tokyo";
+                    case TATimeZone.America_Los_Angeles:
+                        return "America/Los_Angeles";
+                    case TATimeZone.America_New_York:
+                        return "America/New_York";
+                    case TATimeZone.Other:
+                        return timeZoneId;
+                    default:
+                        break;
+                }
+                return null;
+            }
+        }
+
+
+        public enum TATimeZone
+        {
+            Local,
+            UTC,
+            Asia_Shanghai,
+            Asia_Tokyo,
+            America_Los_Angeles,
+            America_New_York,
+            Other = 100
         }
 
         public enum TAMode

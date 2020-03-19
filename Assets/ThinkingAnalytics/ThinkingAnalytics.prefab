@@ -45,7 +45,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enableLog: 1
   networkType: 1
-  serverUrl: 
+  postponeTrack: 0
   tokens:
   - appid: debug-appid
+    serverUrl: 
     autoTrack: 1
+    mode: 0
+    timeZone: 0
+    timeZoneId: 

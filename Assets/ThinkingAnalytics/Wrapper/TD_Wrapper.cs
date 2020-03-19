@@ -147,7 +147,7 @@ namespace ThinkingAnalytics.Wrapper
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling createLightInstance()");
-            return new ThinkingAnalyticsWrapper(delegateToken.appid, delegateToken.serverUrl, delegateToken.mode);
+            return new ThinkingAnalyticsWrapper(delegateToken, false);
         }
 
 #endif
@@ -156,15 +156,13 @@ namespace ThinkingAnalytics.Wrapper
 
         private static System.Random rnd = new System.Random();
 
-        public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token)
+        public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, bool initRequired = true)
         {
             this.token = token;
-            init();
+            if (initRequired) init();
         }
 
-        private ThinkingAnalyticsWrapper(string appId, string serverUrl, ThinkingAnalyticsAPI.TAMode mode) {
-            token = new ThinkingAnalyticsAPI.Token(appId, serverUrl, false, mode);
-        }
+
 
         public static void EnableLog(bool enableLog)
         {
@@ -340,7 +338,7 @@ namespace ThinkingAnalytics.Wrapper
 
         public ThinkingAnalyticsWrapper CreateLightInstance()
         {
-            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), token.serverUrl, false, token.mode));
+            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), token.serverUrl, false, token.mode, token.timeZone, token.timeZoneId));
         }
 
         internal string GetAppId()

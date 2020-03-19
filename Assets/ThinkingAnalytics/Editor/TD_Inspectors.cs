@@ -23,7 +23,7 @@ namespace ThinkingAnalytics.Editors
                 onAddCallback = AddListElement
             };
 
-            _stringArray.elementHeight = 120;
+            _stringArray.elementHeight = 5 * (EditorGUIUtility.singleLineHeight + 10);
 
             _stringArray.serializedProperty.isExpanded = true;
         }
@@ -89,6 +89,22 @@ namespace ThinkingAnalytics.Editors
             arect.x += xSpacing;
             EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("autoTrack"), GUIContent.none);
 
+            arect.y += EditorGUIUtility.singleLineHeight + spacing;
+            arect.x -= xSpacing;
+
+            EditorGUI.LabelField(arect, "TimeZone:", style);
+            arect.x += xSpacing;
+            var a = serElem.FindPropertyRelative("timeZone");
+            if (a.intValue == 100)
+            {
+                EditorGUI.PropertyField(new Rect(arect.x, arect.y, 115, arect.height), a, GUIContent.none);
+                arect.x += 125;
+                EditorGUI.PropertyField(new Rect(arect.x, arect.y, 115, arect.height), serElem.FindPropertyRelative("timeZoneId"), GUIContent.none);
+            }
+            else
+            {
+                EditorGUI.PropertyField(arect, a, GUIContent.none);
+            }
         }
 
         void AddListElement(ReorderableList list)

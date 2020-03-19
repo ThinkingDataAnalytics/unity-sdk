@@ -12,7 +12,7 @@ namespace ThinkingAnalytics.Wrapper
     {
 #if UNITY_IOS && !(UNITY_EDITOR)
         [DllImport("__Internal")]
-        private static extern void start(string app_id, string server_url, int mode);
+        private static extern void start(string app_id, string server_url, int mode, string timeZoneId);
         [DllImport("__Internal")]
         private static extern void identify(string app_id, string unique_id);
         [DllImport("__Internal")]
@@ -68,7 +68,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private void init()
         {
-            start(token.appid, token.serverUrl, (int)token.mode);
+            start(token.appid, token.serverUrl, (int)token.mode, token.getTimeZoneId());
         }
 
         private void identify(string uniqueId)
@@ -110,16 +110,23 @@ namespace ThinkingAnalytics.Wrapper
             long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
 
             string tz = "";
-            switch(dateTime.Kind)
+            if (token.timeZone == ThinkingAnalyticsAPI.TATimeZone.Local)
             {
-                case DateTimeKind.Local:
-                    tz = "Local";
-                    break;
-                case DateTimeKind.Utc:
-                    tz = "UTC";
-                    break;
-                case DateTimeKind.Unspecified:
-                    break;
+                switch(dateTime.Kind)
+                {
+                    case DateTimeKind.Local:
+                        tz = "Local";
+                        break;
+                    case DateTimeKind.Utc:
+                        tz = "UTC";
+                        break;
+                    case DateTimeKind.Unspecified:
+                        break;
+                }
+            }
+            else 
+            {
+                tz = token.getTimeZoneId();
             }
            
             track(token.appid, eventName, TD_MiniJSON.Serialize(properties), currentMillis, tz);
@@ -224,7 +231,7 @@ namespace ThinkingAnalytics.Wrapper
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
             create_light_instance(token.appid, delegateToken.appid);
-            return new ThinkingAnalyticsWrapper(delegateToken);
+            return new ThinkingAnalyticsWrapper(delegateToken, false);
         }
 
 #endif

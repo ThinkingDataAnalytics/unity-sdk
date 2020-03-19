@@ -38,7 +38,7 @@ char* strdup(const char* string) {
 }
 
 
-void start(const char *app_id, const char *url, int mode) { 
+void start(const char *app_id, const char *url, int mode, const char *timezone_id) { 
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *url_string = url != NULL ? [NSString stringWithUTF8String:url] : nil;
     TDConfig *config = [[TDConfig alloc] init];
@@ -48,6 +48,11 @@ void start(const char *app_id, const char *url, int mode) {
     } else if (mode == 2) { 
         // DEBUG_ONLY
         config.debugMode = ThinkingAnalyticsDebugOnly;
+    }
+    NSString *timezone_id_string = timezone_id != NULL ? [NSString stringWithUTF8String:timezone_id] : nil;
+    NSTimeZone *timezone = [NSTimeZone timeZoneWithName:timezone_id_string];
+    if (timezone) {
+        config.defaultTimeZone = timezone;
     }
     [ThinkingAnalyticsSDK startWithAppId:app_id_string withUrl: url_string withConfig:config];
 }
@@ -108,6 +113,8 @@ void track(const char *app_id, const char *event_name, const char *properties, l
         tz = [NSTimeZone timeZoneWithName:@"UTC"];
     } else if ([time_zone_string isEqualToString:@"Local"]) {
         tz = [NSTimeZone localTimeZone];
+    } else {
+        tz = [NSTimeZone timeZoneWithName:time_zone_string];
     }
     
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];

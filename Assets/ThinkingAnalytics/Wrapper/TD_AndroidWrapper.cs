@@ -40,6 +40,17 @@ namespace ThinkingAnalytics.Wrapper
             AndroidJavaObject context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"); //获得Context
             AndroidJavaObject config = configClass.CallStatic<AndroidJavaObject>("getInstance", context, token.appid, token.serverUrl);
             config.Call("setModeInt", (int) token.mode);
+
+            string timeZoneId = token.getTimeZoneId();
+            if (null != timeZoneId && timeZoneId.Length > 0)
+            {
+                AndroidJavaObject timeZone = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getTimeZone", timeZoneId);
+                if (null != timeZone)
+                {
+                    config.Call("setDefaultTimeZone", timeZone);
+                }
+            }
+
             instance = sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", config);
         }
 
@@ -59,17 +70,25 @@ namespace ThinkingAnalytics.Wrapper
             AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
             AndroidJavaObject tz = null;
 
-            switch(dateTime.Kind)
+            if (token.timeZone == ThinkingAnalyticsAPI.TATimeZone.Local)
             {
-                case DateTimeKind.Local:
-                    tz = tzClass.CallStatic<AndroidJavaObject>("getDefault");
-                    break;
-                case DateTimeKind.Utc:
-                    tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", "UTC");
-                    break;
-                case DateTimeKind.Unspecified:
-                    break;
+                switch (dateTime.Kind)
+                {
+                    case DateTimeKind.Local:
+                        tz = tzClass.CallStatic<AndroidJavaObject>("getDefault");
+                        break;
+                    case DateTimeKind.Utc:
+                        tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", "UTC");
+                        break;
+                    case DateTimeKind.Unspecified:
+                        break;
+                }
             }
+            else
+            {
+                tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", token.getTimeZoneId());
+            }
+
             instance.Call("track", eventName, GetJSONObject(properties), date, tz);
         }
         private void track(string eventName, Dictionary<string, object> properties)
@@ -210,7 +229,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
-            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken);
+            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken, false);
             AndroidJavaObject lightInstance = instance.Call<AndroidJavaObject>("createLightInstance");
             result.setInstance(lightInstance);
             return result;
