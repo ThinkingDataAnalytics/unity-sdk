@@ -66,13 +66,13 @@ void enable_log(BOOL enable_log) {
 void set_network_type(int type) {
     switch (type) {
         case NETWORK_TYPE_DEFAULT:
-            [[ThinkingAnalyticsSDK sharedInstance]setNetworkType:TDNetworkTypeDefault];
+            [[ThinkingAnalyticsSDK sharedInstance] setNetworkType:TDNetworkTypeDefault];
             break;
         case NETWORK_TYPE_WIFI:
-            [[ThinkingAnalyticsSDK sharedInstance]setNetworkType:TDNetworkTypeOnlyWIFI];
+            [[ThinkingAnalyticsSDK sharedInstance] setNetworkType:TDNetworkTypeOnlyWIFI];
             break;
         case NETWORK_TYPE_ALL:
-            [[ThinkingAnalyticsSDK sharedInstance]setNetworkType:TDNetworkTypeALL];
+            [[ThinkingAnalyticsSDK sharedInstance] setNetworkType:TDNetworkTypeALL];
             break;
     }
 }
@@ -120,15 +120,15 @@ void track(const char *app_id, const char *event_name, const char *properties, l
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     
     if (tz) {
-        [getInstance(app_id_string) track:event_name_string  properties:properties_dict time:time timeZone:tz];
+        [getInstance(app_id_string) track:event_name_string properties:properties_dict time:time timeZone:tz];
     } else {
         if (time_stamp_millis > 0) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-            [getInstance(app_id_string) track:event_name_string  properties:properties_dict time:time];
+            [getInstance(app_id_string) track:event_name_string properties:properties_dict time:time];
 #pragma clang diagnostic pop
         } else {
-            [getInstance(app_id_string) track:event_name_string  properties:properties_dict];
+            [getInstance(app_id_string) track:event_name_string properties:properties_dict];
         }
     }
 }
@@ -185,10 +185,27 @@ void user_set(const char *app_id, const char *properties) {
     }
 }
 
+void user_set_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    if (properties_dict) {
+        [getInstance(app_id_string) user_set:properties_dict withTime:time];
+    }
+}
+
 void user_unset(const char *app_id, const char *properties) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *properties_string = properties != NULL ? [NSString stringWithUTF8String:properties] : nil;
     [getInstance(app_id_string) user_unset:properties_string];
+}
+
+void user_unset_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSString *properties_string = properties != NULL ? [NSString stringWithUTF8String:properties] : nil;
+    [getInstance(app_id_string) user_unset:properties_string withTime:time];
 }
 
 void user_set_once(const char *app_id, const char *properties) {
@@ -197,6 +214,16 @@ void user_set_once(const char *app_id, const char *properties) {
     convertToDictionary(properties, &properties_dict);
     if (properties_dict) {
         [getInstance(app_id_string) user_setOnce:properties_dict];
+    }
+}
+
+void user_set_once_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    if (properties_dict) {
+        [getInstance(app_id_string) user_setOnce:properties_dict withTime:time];
     }
 }
 
@@ -209,9 +236,25 @@ void user_add(const char *app_id, const char *properties) {
     }
 }
 
+void user_add_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    if (properties_dict) {
+        [getInstance(app_id_string) user_add:properties_dict withTime:time];
+    }
+}
+
 void user_delete(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [getInstance(app_id_string) user_delete];
+}
+
+void user_delete_with_time(const char *app_id, long time_stamp_millis) {
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [getInstance(app_id_string) user_delete:time];
 }
 
 void user_append(const char *app_id, const char *properties) {
@@ -223,14 +266,19 @@ void user_append(const char *app_id, const char *properties) {
     }
 }
 
-const char *get_device_id() {
-    NSString *distinct_id =[[ThinkingAnalyticsSDK sharedInstance] getDeviceId];
-    return strdup([distinct_id UTF8String]);
+void user_append_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    if (properties_dict) {
+        [getInstance(app_id_string) user_append:properties_dict withTime:time];
+    }
 }
 
-void track_app_install(const char *app_id) {
-    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [getInstance(app_id_string) enableAutoTrack: ThinkingAnalyticsEventTypeAppInstall];
+const char *get_device_id() {
+    NSString *distinct_id = [[ThinkingAnalyticsSDK sharedInstance] getDeviceId];
+    return strdup([distinct_id UTF8String]);
 }
 
 void enable_tracking(const char *app_id, BOOL enabled) {
@@ -265,4 +313,25 @@ void create_light_instance(const char *app_id, const char *delegate_app_id) {
 
     [light_instances setObject:light forKey:delegate_app_id_string];
     pthread_rwlock_unlock(&rwlock);
+}
+
+void enable_autoTrack(const char *app_id, int autoTrackEvents) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents];
+}
+
+const char *get_time_string(const char *app_id, long time_stamp_millis) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *time_string = [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] getTimeString:time];
+    return strdup([time_string UTF8String]);
+}
+
+void calibrate_time(long time_stamp_millis) {
+    [ThinkingAnalyticsSDK calibrateTime:time_stamp_millis];
+}
+
+void calibrate_time_with_ntp(const char *ntp_server) {
+    NSString *ntp_server_string = ntp_server != NULL ? [NSString stringWithUTF8String:ntp_server] : nil;
+    [ThinkingAnalyticsSDK calibrateTimeWithNtp:ntp_server_string];
 }

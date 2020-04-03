@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v1.4.3
+    Thinkingdata Unitiy SDK v2.0.0
     
     Copyright 2019, ThinkingData, Inc
 
@@ -42,6 +42,18 @@ namespace ThinkingAnalytics
         Dictionary<string, object> GetDynamicSuperProperties();
     }
 
+    // 自动采集事件类型
+    [Flags]
+    public enum AUTO_TRACK_EVENTS
+    {
+        NONE = 0,
+        APP_START = 1 << 0, // 当应用进入前台的时候触发上报，对应 ta_app_start
+        APP_END = 1 << 1, // 当应用进入后台的时候触发上报，对应 ta_app_end
+        APP_CRASH = 1 << 4, // 当出现未捕获异常的时候触发上报，对应 ta_app_crash
+        APP_INSTALL = 1 << 5, // 应用安装后首次打开的时候触发上报，对应 ta_app_install
+        ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH
+    }
+
     public class ThinkingAnalyticsAPI : MonoBehaviour
     {
         #region settings
@@ -50,16 +62,14 @@ namespace ThinkingAnalytics
         {
             public string appid;
             public string serverUrl;
-            public bool autoTrack;
             public TAMode mode;
             public TATimeZone timeZone;
             public string timeZoneId;
 
-            public Token(string appId, string serverUrl, bool autoTrackFlag, TAMode mode, TATimeZone timeZone, string timeZoneId = null)
+            public Token(string appId, string serverUrl, TAMode mode, TATimeZone timeZone, string timeZoneId = null)
             {
                 appid = appId;
                 this.serverUrl = serverUrl;
-                autoTrack = autoTrackFlag;
                 this.mode = mode;
                 this.timeZone = timeZone;
                 this.timeZoneId = timeZoneId;
@@ -119,9 +129,6 @@ namespace ThinkingAnalytics
         public bool enableLog = true;
         [Tooltip("设置网络类型")]
         public NetworkType networkType = NetworkType.DEFAULT;
-        [Tooltip("推迟上报(主动调用 StartTrack() 之后才会上报)")]
-        public bool postponeTrack = false;
-
 
         [Header("Project")]
         [Tooltip("项目相关配置, APP ID 会在项目申请时给出")]
@@ -129,7 +136,6 @@ namespace ThinkingAnalytics
         public Token[] tokens = new Token[1];
 
         #endregion
-
 
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID
@@ -197,6 +203,18 @@ namespace ThinkingAnalytics
         }
 
         /// <summary>
+        /// 开启自动采集功能.
+        /// </summary>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).EnableAutoTrack(events);
+            }
+        }
+
+        /// <summary>
         /// track 简单事件. 该事件会先缓存在本地，达到触发上报条件或者主动调用 Flush 时会上报到服务器.
         /// </summary>
         /// <param name="eventName">事件名称</param>
@@ -216,11 +234,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                if (initComplete) {
-                    getInstance(appId).Track(eventName, properties);
-                } else {
-                    _queue.Add(new Event(EVENT_TYPE.TRACK, appId, eventName, properties, DateTime.Now));
-                }
+                getInstance(appId).Track(eventName, properties);
             }
         }
 
@@ -235,13 +249,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                if (initComplete)
-                {
-                    getInstance(appId).Track(eventName, properties, date);
-                } else
-                {
-                    _queue.Add(new Event(EVENT_TYPE.TRACK, appId, eventName, properties, date));
-                }
+                getInstance(appId).Track(eventName, properties, date);
             }
         }
 
@@ -319,14 +327,21 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                if (initComplete)
-                {
-                    getInstance(appId).UserSet(properties);
-                }
-                else
-                {
-                    _queue.Add(new Event(EVENT_TYPE.USER_SET, appId, null, properties));
-                }
+                getInstance(appId).UserSet(properties);
+            }
+        }
+
+        /// <summary>
+        /// 设置用户属性. 该接口上传的属性将会覆盖原有的属性值.
+        /// </summary>
+        /// <param name="properties">用户属性</param>
+        /// <param name="dateTime">用户属性设置的时间</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserSet(Dictionary<string, object> properties, DateTime dateTime, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserSet(properties, dateTime);
             }
         }
 
@@ -342,6 +357,7 @@ namespace ThinkingAnalytics
             UserUnset(properties, appId);
         }
 
+
         /// <summary>
         /// 重置一组用户属性
         /// </summary>
@@ -351,14 +367,21 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                if (initComplete)
-                {
-                    getInstance(appId).UserUnset(properties);
-                }
-                else
-                {
-                    _queue.Add(new Event(EVENT_TYPE.USER_SET, appId, properties));
-                }
+                getInstance(appId).UserUnset(properties);
+            }
+        }
+
+        /// <summary>
+        /// 重置一组用户属性, 并指定操作时间
+        /// </summary>
+        /// <param name="properties">用户属性列表</param>
+        /// <param name="dateTime">操作时间</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserUnset(List<string> properties, DateTime dateTime, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserUnset(properties, dateTime);
             }
         }
 
@@ -371,16 +394,24 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                if (initComplete)
-                {
-                    getInstance(appId).UserSetOnce(properties);
-                }
-                else
-                {
-                    _queue.Add(new Event(EVENT_TYPE.USER_SET_ONCE, appId, null, properties));
-                }
+                getInstance(appId).UserSetOnce(properties);
             }
         }
+
+        /// <summary>
+        /// 设置用户属性. 当该属性之前已经有值的时候，将会忽略这条信息.
+        /// </summary>
+        /// <param name="properties">用户属性</param>
+        /// <param name="dateTime">操作时间</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserSetOnce(properties, dateTime);
+            }
+        }
+
 
         /// <summary>
         /// 对数值类用户属性进行累加. 如果该属性还未被设置，则会赋值 0 后再进行计算.
@@ -406,21 +437,21 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                foreach(KeyValuePair<string, object> kv in properties)
-                {
-                    if (!TD_PropertiesChecker.IsNumeric(kv.Value)) {
-                        TD_Log.w("TA.API - userAdd allowed only numeric values. value invalid for: " + kv.Key);
-                        return;
-                    }
-                }
-                if (initComplete)
-                {
-                    getInstance(appId).UserAdd(properties);
-                }
-                else
-                {
-                    _queue.Add(new Event(EVENT_TYPE.USER_ADD, appId, null, properties));
-                }
+                getInstance(appId).UserAdd(properties);
+            }
+        }
+
+        /// <summary>
+        /// 对数值类用户属性进行累加. 如果属性还未被设置，则会赋值 0 后再进行计算.
+        /// </summary>
+        /// <param name="properties">用户属性</param>
+        /// <param name="dateTime">操作时间</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserAdd(Dictionary<string, object> properties, DateTime dateTime, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserAdd(properties, dateTime);
             }
         }
 
@@ -433,23 +464,21 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                foreach (KeyValuePair<string, object> kv in properties)
-                {
-                    if (!TD_PropertiesChecker.IsList(kv.Value))
-                    {
-                        TD_Log.w("TA.API - userAppend allowed only List or Array values. value invalid for: " + kv.Key);
-                        return;
-                    }
-                }
-                if (initComplete)
-                {
-                    getInstance(appId).UserAppend(properties);
-                }
-                else
-                {
-                    _queue.Add(new Event(EVENT_TYPE.USER_APPEND, appId, null, properties));
-                }
+                getInstance(appId).UserAppend(properties);
+            }
+        }
 
+        /// <summary>
+        /// 对 List 类型的用户属性进行追加.
+        /// </summary>
+        /// <param name="properties">用户属性</param>
+        /// <param name="dateTime">操作时间</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserAppend(Dictionary<string, object> properties, DateTime dateTime, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserAppend(properties, dateTime);
             }
         }
 
@@ -461,14 +490,19 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                if (initComplete)
-                {
-                    getInstance(appId).UserDelete();
-                }
-                else
-                {
-                    _queue.Add(new Event(EVENT_TYPE.USER_DEL, appId, null, null));
-                }
+                getInstance(appId).UserDelete();
+            }
+        }
+
+        /// <summary>
+        /// 删除用户数据并指定操作时间.
+        /// </summary>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserDelete(DateTime dateTime, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserDelete(dateTime);
             }
         }
 
@@ -509,56 +543,6 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).SetDynamicSuperProperties(dynamicSuperProperties);
             }
-        }
-
-        /// <summary>
-        /// Tracks the app install event.
-        /// </summary>
-        /// <param name="appId"> Optional APP ID.</param>
-        public static void TrackAppInstall(string appId = "")
-        {
-            if (tracking_enabled)
-            {
-                getInstance(appId).TrackAppInstall();
-            }
-        }
-
-        /// <summary>
-        /// Make ThinkingAnalytics functional. If Post To Server Immediately is not checked, 
-        /// All track and user set/add/delete operations will be cached until this function is called.
-        /// </summary>
-        public static void StartTrack()
-        {
-            if (initComplete) return;
-            initComplete = true;
-            foreach(Event eventData in _queue)
-            {
-                switch(eventData.type)
-                {
-                    case EVENT_TYPE.TRACK:
-                        Track(eventData.eventName, eventData.properties, eventData.dateTime.Value, eventData.appId);
-                        break;
-                    case EVENT_TYPE.USER_SET:
-                        UserSet(eventData.properties, eventData.appId);
-                        break;
-                    case EVENT_TYPE.USER_SET_ONCE:
-                        UserSetOnce(eventData.properties, eventData.appId);
-                        break;
-                    case EVENT_TYPE.USER_ADD:
-                        UserAdd(eventData.properties, eventData.appId);
-                        break;
-                    case EVENT_TYPE.USER_DEL:
-                        UserDelete(eventData.appId);
-                        break;
-                    case EVENT_TYPE.USER_UNSET:
-                        UserUnset(eventData.propertiesList, eventData.appId);
-                        break;
-                    case EVENT_TYPE.USER_APPEND:
-                        UserAppend(eventData.properties, eventData.appId);
-                        break;
-                }
-            }
-            _queue.Clear();
         }
 
         /// <summary>
@@ -635,6 +619,28 @@ namespace ThinkingAnalytics
             }
         }
 
+        /// <summary>
+        /// 传入时间戳校准 SDK 时间.
+        /// </summary>
+        /// <param name="timestamp">当前 Unix timestamp, 单位 毫秒</param>
+        public static void CalibrateTime(long timestamp)
+        {
+            ThinkingAnalyticsWrapper.CalibrateTime(timestamp);
+        }
+
+        /// <summary>
+        /// 传入 NTP Server 地址校准 SDK 时间.
+        ///
+        /// 您可以根据您用户所在地传入访问速度较快的 NTP Server 地址, 例如 time.asia.apple.com
+        /// SDK 默认情况下会等待 3 秒，去获取时间偏移数据，并用该偏移校准之后的数据.
+        /// 如果在 3 秒内未因网络原因未获得正确的时间偏移，本次应用运行期间将不会再校准时间.
+        /// </summary>
+        /// <param name="timestamp">可用的 NTP 服务器地址</param>
+        public static void CalibrateTimeWithNtp(string ntpServer)
+        {
+            ThinkingAnalyticsWrapper.CalibrateTimeWithNtp(ntpServer);
+        }
+
         #region internal
 
         void Awake()
@@ -665,10 +671,6 @@ namespace ThinkingAnalytics
                         if (!string.IsNullOrEmpty(token.appid))
                         {
                             sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token));
-                            if (token.autoTrack)
-                            {
-                                sAutoTrackIDs.Add(token.appid);
-                            }
                         }
                     }
                 }
@@ -677,8 +679,6 @@ namespace ThinkingAnalytics
                     instance_lock.ExitWriteLock();
                 }
 
-                initComplete = !postponeTrack;
-
                 if (sInstances.Count == 0)
                 {
                     tracking_enabled = false;
@@ -686,37 +686,17 @@ namespace ThinkingAnalytics
                 else
                 {
                     getInstance(default_appid).SetNetworkType(networkType);
-                    if (!running)
-                    {
-                        running = true;
-                        autoTrackStart();
-                    }
                 }
 
-            }
-        }
-
-        void OnApplicationFocus(bool focus)
-        {
-            if (focus && !running)
-            {
-                running = true;
-                autoTrackStart();
-            } else if(!focus)
-            {
-                running = false;
-                autoTrackEnd();
             }
         }
 
         private static ThinkingAnalyticsAPI TA_instance;
         private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID
         private static bool tracking_enabled = true;
-        private static bool running = false; // 是否在游戏中（Application focused）
         private static ReaderWriterLockSlim instance_lock = new ReaderWriterLockSlim();
         private static readonly Dictionary<string, ThinkingAnalyticsWrapper> sInstances = 
             new Dictionary<string, ThinkingAnalyticsWrapper>();
-        private static readonly List<string> sAutoTrackIDs = new List<string>(); // added to remove recursive lock
 
         private static ThinkingAnalyticsWrapper getInstance(string appid)
         {
@@ -733,68 +713,6 @@ namespace ThinkingAnalytics
                 instance_lock.ExitReadLock();
             }
         }
-
-        private static void autoTrackEnd()
-        {
-            foreach (string appId in sAutoTrackIDs)
-            {
-                Track("ta_app_end", appId);
-            }
-        }
-        private static void autoTrackStart()
-        {
-            foreach (string appId in sAutoTrackIDs)
-            {
-                Track("ta_app_start", appId);
-                TimeEvent("ta_app_end", appId);
-            }
-        }
-
-        private static bool initComplete = false;
-        private enum EVENT_TYPE 
-        { 
-            TRACK,
-            USER_SET,
-            USER_SET_ONCE,
-            USER_ADD,
-            USER_DEL,
-            USER_UNSET,
-            USER_APPEND,
-        }
-
-        private struct Event 
-        {
-            public EVENT_TYPE type;
-            public string appId;
-            public string eventName;
-            public Dictionary<string, object> properties;
-            public List<string> propertiesList;
-            public DateTime? dateTime;
-
-            public Event(EVENT_TYPE type, string appId, string eventName, Dictionary<string, object> properties, DateTime? dateTime = null)
-            {
-                this.type = type;
-                this.appId = appId;
-                this.eventName = eventName;
-                this.properties = properties;
-                this.dateTime = dateTime;
-                this.propertiesList = null;
-            }
-
-            // for UserUnset operation
-            public Event(EVENT_TYPE type, string appId, List<string> properties)
-            {
-                this.type = type;
-                this.appId = appId;
-                this.propertiesList = properties;
-                this.properties = null;
-                this.dateTime = null;
-                this.eventName = null;
-            }
-        }
-
-        private static List<Event> _queue = new List<Event>();
-
         #endregion
     }
 }

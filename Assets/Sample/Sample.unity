@@ -94,8 +94,8 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaDirect: 0.5
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
-    m_ShowResolutionOverlay: 1
     m_ExportTrainingData: 0
+    m_TrainingDataDestination: TrainingData
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 0
 --- !u!196 &5
@@ -192,6 +192,16 @@ PrefabInstance:
       propertyPath: serverUrl
       value: http://test.com
       objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591,
+        type: 3}
+      propertyPath: tokens.Array.data[0].serverUrl
+      value: https://sdk.tga.thinkinggame.cn
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591,
+        type: 3}
+      propertyPath: tokens.Array.data[0].autoTrack
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
 --- !u!1 &269916751
@@ -250,6 +260,7 @@ SpriteRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0

@@ -11,7 +11,7 @@ namespace ThinkingAnalytics.Wrapper
         private string uniqueId;
         private void init()
         {
-            TD_Log.d("TA.Wrapper(" + token.appid + ") - Thinking for using ThinkingAnalytics SDK for tracking data.");
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - Thanks for using ThinkingAnalytics SDK for tracking data.");
         }
         private static void enable_log(bool enableLog)
         {
@@ -38,20 +38,20 @@ namespace ThinkingAnalytics.Wrapper
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling Logout");
         }
-        private void track(string eventName, Dictionary<string, object> properties)
+        private void track(string eventName, string properties)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling track with eventName: " + eventName + ", " +
-                "properties: " + TD_MiniJSON.Serialize(properties));
+                "properties: " + properties);
         }
 
-        private void track(string eventName, Dictionary<string, object> properties, DateTime datetime)
+        private void track(string eventName, string properties, DateTime datetime)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling track with eventName: " + eventName + ", " +
-                "properties: " + TD_MiniJSON.Serialize(properties) + ", " +
+                "properties: " + properties + ", " +
                 "dateTime: " + datetime.ToString());
         }
 
-        private void setSuperProperties(Dictionary<string, object> superProperties)
+        private void setSuperProperties(string superProperties)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling setSuperProperties with superProperties: " + TD_MiniJSON.Serialize(superProperties));
         }
@@ -76,13 +76,25 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling timeEvent with eventName: " + eventName);
         }
 
-        private void userSet(Dictionary<string, object> properties)
+        private void userSet(string properties)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userSet with properties: " + TD_MiniJSON.Serialize(properties));
         }
-        private void userSetOnce(Dictionary<string, object> properties)
+
+        private void userSet(string properties, DateTime dateTime)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userSet with properties: " + TD_MiniJSON.Serialize(properties)
+                + ", dateTime: " + dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+        }
+        private void userSetOnce(string properties)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userSetOnce with properties: " + TD_MiniJSON.Serialize(properties));
+        }
+
+        private void userSetOnce(string properties, DateTime dateTime)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userSetOnce with properties: " + TD_MiniJSON.Serialize(properties)
+                + ", dateTime: " + dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
         }
 
         private void userUnset(List<string> properties)
@@ -90,14 +102,32 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userUnset with properties: " + string.Join(", ", properties.ToArray()));
         }
 
-        private void userAdd(Dictionary<string, object> properties)
+        private void userUnset(List<string> properties, DateTime dateTime)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userUnset with properties: " + string.Join(", ", properties.ToArray())
+                + ", dateTime: " + dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+        }
+
+        private void userAdd(string properties)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userAdd with properties: " + TD_MiniJSON.Serialize(properties));
         }
 
-        private void userAppend(Dictionary<string, object> properties)
+        private void userAdd(string properties, DateTime dateTime)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userAdd with properties: " + TD_MiniJSON.Serialize(properties)
+                 + ", dateTime: " + dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+        }
+
+        private void userAppend(string properties)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userAppend with properties: " + TD_MiniJSON.Serialize(properties));
+        }
+
+        private void userAppend(string properties, DateTime dateTime)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userAppend with properties: " + TD_MiniJSON.Serialize(properties)
+                + ", dateTime: " + dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
         }
 
         private void userDelete()
@@ -105,9 +135,19 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userDelete");
         }
 
+        private void userDelete(DateTime dateTime)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling userDelete"  + ", dateTime: " + dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+        }
+
         private void flush()
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling flush.");
+        }
+
+        private void enableAutoTrack(AUTO_TRACK_EVENTS events)
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling enableAutoTrack: " + events.ToString());
         }
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
         {
@@ -117,11 +157,6 @@ namespace ThinkingAnalytics.Wrapper
         private string getDeviceId() {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling getDeviceId()");
             return "editor device id";
-        }
-
-        private void trackAppInstall()
-        {
-            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling trackAppInstall()");
         }
 
         private void optOutTracking()
@@ -150,19 +185,35 @@ namespace ThinkingAnalytics.Wrapper
             return new ThinkingAnalyticsWrapper(delegateToken, false);
         }
 
+        private string getTimeString(DateTime dateTime) {
+            return dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        }
+
+        private static void calibrateTime(long timestamp)
+        {
+            TD_Log.d("TA.Wrapper: - calling calibrateTime() with: " + timestamp);
+        }
+
+        private static void calibrateTimeWithNtp(string ntpServer)
+        {
+            TD_Log.d("TA.Wrapper: - calling calibrateTimeWithNtp() with: " + ntpServer);
+        }
+
 #endif
         public readonly ThinkingAnalyticsAPI.Token token;
         private IDynamicSuperProperties dynamicSuperProperties;
 
         private static System.Random rnd = new System.Random();
 
+        private string serilize<T>(Dictionary<string, T> data) {
+            return TD_MiniJSON.Serialize(data, getTimeString);
+        }
+
         public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, bool initRequired = true)
         {
             this.token = token;
             if (initRequired) init();
         }
-
-
 
         public static void EnableLog(bool enableLog)
         {
@@ -189,6 +240,11 @@ namespace ThinkingAnalytics.Wrapper
             logout();
         }
 
+        public void EnableAutoTrack(AUTO_TRACK_EVENTS events)
+        {
+            enableAutoTrack(events);
+        }
+
         public void Track(string eventName, Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckString(eventName);
@@ -198,11 +254,11 @@ namespace ThinkingAnalytics.Wrapper
                 Dictionary<string, object> finalProperties = new Dictionary<string, object>();
                 TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
                 TD_PropertiesChecker.MergeProperties(properties, finalProperties);
-                track(eventName, finalProperties);
+                track(eventName, serilize(finalProperties));
             } 
             else
             {
-                track(eventName, properties);
+                track(eventName, serilize(properties));
             }
         }
 
@@ -215,18 +271,18 @@ namespace ThinkingAnalytics.Wrapper
                 Dictionary<string, object> finalProperties = new Dictionary<string, object>();
                 TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
                 TD_PropertiesChecker.MergeProperties(properties, finalProperties);
-                track(eventName, finalProperties, datetime);
+                track(eventName, serilize(finalProperties), datetime);
             }
             else
             {
-                track(eventName, properties, datetime);
+                track(eventName, serilize(properties), datetime);
             }
         }
 
         public void SetSuperProperties(Dictionary<string, object> superProperties)
         {
             TD_PropertiesChecker.CheckProperties(superProperties);
-            setSuperProperties(superProperties);
+            setSuperProperties(serilize(superProperties));
         }
 
         public void UnsetSuperProperty(string superPropertyName)
@@ -255,13 +311,25 @@ namespace ThinkingAnalytics.Wrapper
         public void UserSet(Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSet(properties);
+            userSet(serilize(properties));
+        }
+
+        public void UserSet(Dictionary<string, object> properties, DateTime dateTime)
+        {
+            TD_PropertiesChecker.CheckProperties(properties);
+            userSet(serilize(properties), dateTime);
         }
 
         public void UserSetOnce(Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSetOnce(properties);
+            userSetOnce(serilize(properties));
+        }
+
+        public void UserSetOnce(Dictionary<string, object> properties, DateTime dateTime)
+        {
+            TD_PropertiesChecker.CheckProperties(properties);
+            userSetOnce(serilize(properties), dateTime);
         }
 
         public void UserUnset(List<string> properties)
@@ -270,21 +338,44 @@ namespace ThinkingAnalytics.Wrapper
             userUnset(properties);
         }
 
+        public void UserUnset(List<string> properties, DateTime dateTime)
+        {
+            TD_PropertiesChecker.CheckProperteis(properties);
+            userUnset(properties, dateTime);
+        }
+
         public void UserAdd(Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAdd(properties);
+            userAdd(serilize(properties));
+        }
+
+        public void UserAdd(Dictionary<string, object> properties, DateTime dateTime)
+        {
+            TD_PropertiesChecker.CheckProperties(properties);
+            userAdd(serilize(properties), dateTime);
         }
 
         public void UserAppend(Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAppend(properties);
+            userAppend(serilize(properties));
+        }
+
+        public void UserAppend(Dictionary<string, object> properties, DateTime dateTime)
+        {
+            TD_PropertiesChecker.CheckProperties(properties);
+            userAppend(serilize(properties), dateTime);
         }
 
         public void UserDelete()
         {
             userDelete();
+        }
+
+        public void UserDelete(DateTime dateTime)
+        {
+            userDelete(dateTime);
         }
 
         public void Flush()
@@ -311,11 +402,6 @@ namespace ThinkingAnalytics.Wrapper
             this.dynamicSuperProperties = dynamicSuperProperties;
         }
 
-        public void TrackAppInstall()
-        {
-            trackAppInstall();
-        }
-
         public void OptOutTracking()
         {
             optOutTracking();
@@ -338,12 +424,22 @@ namespace ThinkingAnalytics.Wrapper
 
         public ThinkingAnalyticsWrapper CreateLightInstance()
         {
-            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), token.serverUrl, false, token.mode, token.timeZone, token.timeZoneId));
+            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), token.serverUrl, token.mode, token.timeZone, token.timeZoneId));
         }
 
         internal string GetAppId()
         {
             return token.appid;
+        }
+
+        public static void CalibrateTime(long timestamp)
+        {
+            calibrateTime(timestamp);
+        }
+
+        public static void CalibrateTimeWithNtp(string ntpServer)
+        {
+            calibrateTimeWithNtp(ntpServer);
         }
     }
 }

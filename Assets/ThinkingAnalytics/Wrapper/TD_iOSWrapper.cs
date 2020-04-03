@@ -36,15 +36,27 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern void user_set(string app_id, string properties);
         [DllImport("__Internal")]
+        private static extern void user_set_with_time(string app_id, string properties, long timestamp);
+        [DllImport("__Internal")]
         private static extern void user_unset(string app_id, string properties);
+        [DllImport("__Internal")]
+        private static extern void user_unset_with_time(string app_id, string properties, long timestamp);
         [DllImport("__Internal")]
         private static extern void user_set_once(string app_id, string properties);
         [DllImport("__Internal")]
+        private static extern void user_set_once_with_time(string app_id, string properties, long timestamp);
+        [DllImport("__Internal")]
         private static extern void user_add(string app_id, string properties);
+        [DllImport("__Internal")]
+        private static extern void user_add_with_time(string app_id, string properties, long timestamp);
         [DllImport("__Internal")]
         private static extern void user_delete(string app_id);
         [DllImport("__Internal")]
+        private static extern void user_delete_with_time(string app_id, long timestamp);
+        [DllImport("__Internal")]
         private static extern void user_append(string app_id, string properties);
+        [DllImport("__Internal")]
+        private static extern void user_append_with_time(string app_id, string properties, long timestamp);
         [DllImport("__Internal")]
         private static extern void flush(string app_id);
         [DllImport("__Internal")]
@@ -53,8 +65,6 @@ namespace ThinkingAnalytics.Wrapper
         private static extern void enable_log(bool is_enable);
         [DllImport("__Internal")]
         private static extern string get_device_id();
-        [DllImport("__Internal")]
-        private static extern void track_app_install(string app_id);
         [DllImport("__Internal")]
         private static extern void enable_tracking(string app_id, bool enabled);
         [DllImport("__Internal")]
@@ -65,6 +75,14 @@ namespace ThinkingAnalytics.Wrapper
         private static extern void opt_in_tracking(string app_id);
         [DllImport("__Internal")]
         private static extern void create_light_instance(string app_id, string delegate_token);
+        [DllImport("__Internal")]
+        private static extern void enable_autoTrack(string app_id, int events);
+        [DllImport("__Internal")]
+        private static extern string get_time_string(string app_id, long events);
+        [DllImport("__Internal")]
+        private static extern void calibrate_time(long timestamp);
+        [DllImport("__Internal")]
+        private static extern void calibrate_time_with_ntp(string ntpServer);
 
         private void init()
         {
@@ -97,12 +115,12 @@ namespace ThinkingAnalytics.Wrapper
             flush(token.appid);
         }
 
-        private void track(string eventName, Dictionary<string, object> properties)
+        private void track(string eventName, string properties)
         {  
-            track(token.appid, eventName, TD_MiniJSON.Serialize(properties), 0, "");
+            track(token.appid, eventName, properties, 0, "");
         }
 
-        private void track(string eventName, Dictionary<string, object> properties, DateTime dateTime)
+        private void track(string eventName, string properties, DateTime dateTime)
         {
             long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
 
@@ -129,13 +147,12 @@ namespace ThinkingAnalytics.Wrapper
                 tz = token.getTimeZoneId();
             }
            
-            track(token.appid, eventName, TD_MiniJSON.Serialize(properties), currentMillis, tz);
+            track(token.appid, eventName, properties, currentMillis, tz);
         }
 
-        private void setSuperProperties(Dictionary<string, object> superProperties)
+        private void setSuperProperties(string superProperties)
         {
-            string properties = TD_MiniJSON.Serialize(superProperties);
-            set_super_properties(token.appid, properties);
+            set_super_properties(token.appid, superProperties);
         }
 
         private void unsetSuperProperty(string superPropertyName)
@@ -159,11 +176,18 @@ namespace ThinkingAnalytics.Wrapper
             time_event(token.appid, eventName);
         }
 
-        private void userSet(Dictionary<string, object> properties)
+        private void userSet(string properties)
         {
-            user_set(token.appid, TD_MiniJSON.Serialize(properties));
+            user_set(token.appid, properties);
         }
 
+        private void userSet(string properties, DateTime dateTime)
+        {
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            user_set_with_time(token.appid, properties, currentMillis);
+        }
 
         private void userUnset(List<string> properties)
         {
@@ -173,14 +197,41 @@ namespace ThinkingAnalytics.Wrapper
             }
         }
 
-        private void userSetOnce(Dictionary<string, object> properties)
+        private void userUnset(List<string> properties, DateTime dateTime)
         {
-            user_set_once(token.appid, TD_MiniJSON.Serialize(properties));
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            foreach (string property in properties)
+            {
+                user_unset_with_time(token.appid, property, currentMillis);
+            }
         }
 
-        private void userAdd(Dictionary<string, object> properties)
+        private void userSetOnce(string properties)
         {
-            user_add(token.appid, TD_MiniJSON.Serialize(properties));
+            user_set_once(token.appid, properties);
+        }
+
+        private void userSetOnce(string properties, DateTime dateTime)
+        {
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            user_set_once_with_time(token.appid, properties, currentMillis);
+        }
+
+        private void userAdd(string properties)
+        {
+            user_add(token.appid, properties);
+        }
+
+        private void userAdd(string properties, DateTime dateTime)
+        {
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            user_add_with_time(token.appid, properties, currentMillis);
         }
 
         private void userDelete()
@@ -188,9 +239,25 @@ namespace ThinkingAnalytics.Wrapper
             user_delete(token.appid);
         }
 
-        private void userAppend(Dictionary<string, object> properties)
+        private void userDelete(DateTime dateTime)
         {
-            user_append(token.appid, TD_MiniJSON.Serialize(properties));
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            user_delete_with_time(token.appid, currentMillis);
+        }
+
+        private void userAppend(string properties)
+        {
+            user_append(token.appid, properties);
+        }
+
+        private void userAppend(string properties, DateTime dateTime)
+        {
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            user_append_with_time(token.appid, properties, currentMillis);
         }
 
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
@@ -201,11 +268,6 @@ namespace ThinkingAnalytics.Wrapper
         private string getDeviceId() 
         {
             return get_device_id();
-        }
-
-        private void trackAppInstall() 
-        {
-            track_app_install(token.appid);
         }
 
         private void optOutTracking()
@@ -234,6 +296,28 @@ namespace ThinkingAnalytics.Wrapper
             return new ThinkingAnalyticsWrapper(delegateToken, false);
         }
 
+        private string getTimeString(DateTime dateTime)
+        {
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            return get_time_string(token.appid, currentMillis);
+        }
+
+        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents)
+        {
+            enable_autoTrack(token.appid, (int)autoTrackEvents);
+        }
+
+        private static void calibrateTime(long timestamp)
+        {
+            calibrate_time(timestamp);
+        }
+
+        private static void calibrateTimeWithNtp(string ntpServer)
+        {
+            calibrate_time_with_ntp(ntpServer);
+        }
 #endif
     }
 }

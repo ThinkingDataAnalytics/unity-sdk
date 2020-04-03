@@ -291,7 +291,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param propertieDict 事件属性
  @param time          事件触发时间
  */
-- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time __attribute__((deprecated("使用track:properties:time:timeZone:方法传入")));
+- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time __attribute__((deprecated("使用 track:properties:time:timeZone: 方法传入")));
 
 /**
  自定义事件埋点
@@ -301,7 +301,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param time          事件触发时间
  @param timeZone      事件触发时间时区
  */
-- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time timeZone:(NSTimeZone*)timeZone;
+- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time timeZone:(NSTimeZone *)timeZone;
 
 /**
  记录事件时长
@@ -346,9 +346,17 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 /**
  设置用户属性
 
- @param property 用户属性
+ @param properties 用户属性
  */
-- (void)user_set:(NSDictionary *)property;
+- (void)user_set:(NSDictionary *)properties;
+
+/**
+ 设置用户属性
+
+ @param properties 用户属性
+ @param time 事件触发时间
+*/
+- (void)user_set:(NSDictionary *)properties withTime:(NSDate *)time;
 
 /**
  重置用户属性
@@ -358,31 +366,71 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 - (void)user_unset:(NSString *)propertyName;
 
 /**
+ 重置用户属性
+
+ @param propertyName 用户属性
+ @param time 事件触发时间
+*/
+- (void)user_unset:(NSString *)propertyName withTime:(NSDate *)time;
+
+/**
  设置单次用户属性
 
- @param property 用户属性
+ @param properties 用户属性
  */
-- (void)user_setOnce:(NSDictionary *)property;
+- (void)user_setOnce:(NSDictionary *)properties;
+
+/**
+ 设置单次用户属性
+
+ @param properties 用户属性
+ @param time 事件触发时间
+*/
+- (void)user_setOnce:(NSDictionary *)properties withTime:(NSDate *)time;
 
 /**
  对数值类型用户属性进行累加操作
 
- @param property 用户属性
+ @param properties 用户属性
  */
-- (void)user_add:(NSDictionary *)property;
+- (void)user_add:(NSDictionary *)properties;
+
+/**
+ 对数值类型用户属性进行累加操作
+
+ @param properties 用户属性
+ @param time 事件触发时间
+*/
+- (void)user_add:(NSDictionary *)properties withTime:(NSDate *)time;
+
+/**
+  对数值类型用户属性进行累加操作
+
+  @param propertyName  属性名称
+  @param propertyValue 属性值
+ */
+- (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue;
 
 /**
  对数值类型用户属性进行累加操作
 
  @param propertyName  属性名称
  @param propertyValue 属性值
- */
-- (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue;
+ @param time 事件触发时间
+*/
+- (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue withTime:(NSDate *)time;
 
 /**
  删除用户 该操作不可逆 需慎重使用
  */
 - (void)user_delete;
+
+/**
+ 删除用户 该操作不可逆 需慎重使用
+ 
+ @param time 事件触发时间
+ */
+- (void)user_delete:(NSDate *)time;
 
 /**
  对 Array 类型的用户属性进行追加操作
@@ -392,11 +440,19 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 - (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties;
 
 /**
+ 对 Array 类型的用户属性进行追加操作
+ 
+ @param properties 用户属性
+ @param time 事件触发时间
+*/
+- (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate *)time;
+
+/**
  设置公共事件属性
 
- @param propertyDict 公共事件属性
+ @param properties 公共事件属性
  */
-- (void)setSuperProperties:(NSDictionary *)propertyDict;
+- (void)setSuperProperties:(NSDictionary *)properties;
 
 /**
  清除一条公共事件属性
@@ -464,7 +520,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
 /**
  H5 与原生 APP SDK 打通，配合 addWebViewUserAgent 接口使用
 
- @param webView 需要打通H5的控件，支持 `WKWebView`、`UIWebView`
+ @param webView 需要打通H5的控件
  @param request NSURLRequest 网络请求
  @return YES：处理此次请求 NO：未处理此次请求
  
@@ -517,6 +573,21 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @return SDK 实例
  */
 - (ThinkingAnalyticsSDK *)createLightInstance;
+
+/**
+ 使用指定NTP Server 校准时间
+ @param ntpServer NTP Server
+*/
++ (void)calibrateTimeWithNtp:(NSString *)ntpServer;
+
+/**
+ 校准时间
+ 
+ @param timestamp 当前时间戳，单位毫秒
+*/
++ (void)calibrateTime:(NSTimeInterval)timestamp;
+
+- (NSString *)getTimeString:(NSDate *)date;
 
 @end
 

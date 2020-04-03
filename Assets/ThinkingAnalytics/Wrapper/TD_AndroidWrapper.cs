@@ -18,17 +18,27 @@ namespace ThinkingAnalytics.Wrapper
         /// </summary>
         /// <returns>The JSONObject instance.</returns>
         /// <param name="data">The Dictionary containing some data </param>
-        private static AndroidJavaObject GetJSONObject<T>(Dictionary<string, T> data)
+        private static AndroidJavaObject getJSONObject(string dataString)
         {
-            if (null == data || data.Count == 0)
+            try
             {
-                return null;
-            }
-            else
-            {
-                string dataString = TD_MiniJSON.Serialize(data);
                 return new AndroidJavaObject(JSON_CLASS, dataString);
             }
+            catch (Exception e)
+            {
+                TD_Log.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            return null;
+        }
+
+        private string getTimeString(DateTime dateTime) {
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+
+            AndroidJavaObject date = new AndroidJavaObject("java.util.Date", currentMillis);
+            return instance.Call<string>("getTimeString", date);
         }
 
         private static void enable_log(bool enableLog) {
@@ -59,14 +69,18 @@ namespace ThinkingAnalytics.Wrapper
             instance.Call("flush");
         }
 
-        private void track(string eventName, Dictionary<string, object> properties, DateTime dateTime)
+        private AndroidJavaObject getDate(DateTime dateTime)
         {
             long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
 
             DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            return new AndroidJavaObject("java.util.Date", currentMillis);
+        }
 
-            AndroidJavaObject date = new AndroidJavaObject("java.util.Date", currentMillis);
+        private void track(string eventName, string properties, DateTime dateTime)
+        {
+            AndroidJavaObject date = getDate(dateTime);
             AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
             AndroidJavaObject tz = null;
 
@@ -89,16 +103,17 @@ namespace ThinkingAnalytics.Wrapper
                 tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", token.getTimeZoneId());
             }
 
-            instance.Call("track", eventName, GetJSONObject(properties), date, tz);
-        }
-        private void track(string eventName, Dictionary<string, object> properties)
-        {
-            instance.Call("track", eventName, GetJSONObject(properties));
+            instance.Call("track", eventName, getJSONObject(properties), date, tz);
         }
 
-        private void setSuperProperties(Dictionary<string, object> superProperties)
+        private void track(string eventName, string properties)
         {
-            instance.Call("setSuperProperties", GetJSONObject(superProperties));
+            instance.Call("track", eventName, getJSONObject(properties));
+        }
+
+        private void setSuperProperties(string superProperties)
+        {
+            instance.Call("setSuperProperties", getJSONObject(superProperties));
         }
 
         private void unsetSuperProperty(string superPropertyName)
@@ -143,14 +158,24 @@ namespace ThinkingAnalytics.Wrapper
             instance.Call("login", uniqueId);
         }
 
-        private void userSetOnce(Dictionary<string, object> properties)
+        private void userSetOnce(string properties)
         {
-            instance.Call("user_setOnce", GetJSONObject(properties));
+            instance.Call("user_setOnce", getJSONObject(properties));
         }
-        private void userSet(Dictionary<string, object> properties)
-        {
-            instance.Call("user_set", GetJSONObject(properties));
 
+        private void userSetOnce(string properties, DateTime dateTime)
+        {
+            instance.Call("user_setOnce", getJSONObject(properties), getDate(dateTime));
+        }
+
+        private void userSet(string properties)
+        {
+            instance.Call("user_set", getJSONObject(properties));
+        }
+
+        private void userSet(string properties, DateTime dateTime)
+        {
+            instance.Call("user_set", getJSONObject(properties), getDate(dateTime));
         }
 
         private void userUnset(List<string> properties)
@@ -158,19 +183,45 @@ namespace ThinkingAnalytics.Wrapper
             instance.Call("user_unset", properties.ToArray());
         }
 
-        private void userAdd(Dictionary<string, object> properties)
+        private void userUnset(List<string> properties, DateTime dateTime)
         {
-            instance.Call("user_add", GetJSONObject(properties));
+            Dictionary<string, object> finalProperties = new Dictionary<string, object>();
+            foreach(string s in properties)
+            {
+                finalProperties.Add(s, 0);
+            }
+
+            instance.Call("user_unset", getJSONObject(TD_MiniJSON.Serialize(finalProperties)), getDate(dateTime));
         }
 
-        private void userAppend(Dictionary<string, object> properties)
+        private void userAdd(string properties)
         {
-            instance.Call("user_append", GetJSONObject(properties));
+            instance.Call("user_add", getJSONObject(properties));
+        }
+
+        private void userAdd(string properties, DateTime dateTime)
+        {
+            instance.Call("user_add", getJSONObject(properties), getDate(dateTime));
+        }
+
+        private void userAppend(string properties)
+        {
+            instance.Call("user_append", getJSONObject(properties));
+        }
+
+        private void userAppend(string properties, DateTime dateTime)
+        {
+            instance.Call("user_append", getJSONObject(properties), getDate(dateTime));
         }
 
         private void userDelete()
         {
             instance.Call("user_delete");
+        }
+
+        private void userDelete(DateTime dateTime)
+        {
+            instance.Call("user_delete", getDate(dateTime));
         }
 
         private void logout() {
@@ -197,9 +248,9 @@ namespace ThinkingAnalytics.Wrapper
             }
         }
 
-        private void trackAppInstall()
+        private void enableAutoTrack(AUTO_TRACK_EVENTS events)
         {
-            instance.Call("trackAppInstall");
+            instance.Call("enableAutoTrack", (int) events);
         }
 
         private void optOutTracking()
@@ -233,6 +284,16 @@ namespace ThinkingAnalytics.Wrapper
             AndroidJavaObject lightInstance = instance.Call<AndroidJavaObject>("createLightInstance");
             result.setInstance(lightInstance);
             return result;
+        }
+
+        private static void calibrateTime(long timestamp)
+        {
+            sdkClass.CallStatic("calibrateTime", timestamp);
+        }
+
+        private static void calibrateTimeWithNtp(string ntpServer)
+        {
+            sdkClass.CallStatic("calibrateTimeWithNtp", new string[]{ntpServer});
         }
 #endif
     }

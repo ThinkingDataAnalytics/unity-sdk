@@ -85,13 +85,6 @@ namespace ThinkingAnalytics.Editors
             arect.y += EditorGUIUtility.singleLineHeight + spacing;
             arect.x -= xSpacing;
 
-            EditorGUI.LabelField(arect, "AUTO TRACK:", style);
-            arect.x += xSpacing;
-            EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("autoTrack"), GUIContent.none);
-
-            arect.y += EditorGUIUtility.singleLineHeight + spacing;
-            arect.x -= xSpacing;
-
             EditorGUI.LabelField(arect, "TimeZone:", style);
             arect.x += xSpacing;
             var a = serElem.FindPropertyRelative("timeZone");
@@ -115,7 +108,6 @@ namespace ThinkingAnalytics.Editors
                 list.index = list.serializedProperty.arraySize - 1;
                 SerializedProperty item = list.serializedProperty.GetArrayElementAtIndex(list.index);
                 item.FindPropertyRelative("appid").stringValue = "";
-                item.FindPropertyRelative("autoTrack").boolValue = false;
             }
             else
             {

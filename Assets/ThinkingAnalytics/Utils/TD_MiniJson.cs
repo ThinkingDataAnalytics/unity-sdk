@@ -401,23 +401,25 @@ namespace ThinkingAnalytics.Utils
         /// </summary>
         /// <param name="json">A Dictionary&lt;string, object&gt; / List&lt;object&gt;</param>
         /// <returns>A JSON encoded string, or null if object 'json' is not serializable</returns>
-        public static string Serialize(object obj)
+        public static string Serialize(object obj, Func<DateTime, string> func = null)
         {
-            return Serializer.Serialize(obj);
+            return Serializer.Serialize(obj, func);
         }
 
         sealed class Serializer
         {
             StringBuilder builder;
+            Func<DateTime, string> func;
 
             Serializer()
             {
                 builder = new StringBuilder();
             }
 
-            public static string Serialize(object obj)
+            public static string Serialize(object obj, Func<DateTime, string> func)
             {
                 var instance = new Serializer();
+                instance.func = func;
 
                 instance.SerializeValue(obj);
 
@@ -581,7 +583,15 @@ namespace ThinkingAnalytics.Utils
                 else if (value is DateTime)
                 {
                     builder.Append('\"');
-                    builder.Append(((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                    DateTime dateTime = (DateTime) value;
+                    if (null != func)
+                    {
+                        builder.Append(func((DateTime) value));
+                    }
+                    else
+                    {
+                        builder.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                    }
                     builder.Append('\"');
                 }
                 else

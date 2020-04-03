@@ -13,9 +13,8 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
     public Dictionary<string, object> GetDynamicSuperProperties()
     {
        return new Dictionary<string, object>() {
-           {"KEY_UTCTime", DateTime.UtcNow}
+           {"KEY_DYNAMIC_Time", DateTime.Now}
        };
-
     }
 
     void OnGUI() {
@@ -25,16 +24,21 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
 
         if (GUILayout.Button("TRACK TEST_EVENT"))
         {
+            List<dynamic> listProps = new List<dynamic>();
+            listProps.Add(DateTime.Now);
+            listProps.Add("bbb");
+            listProps.Add("ccc");
+
             // a simple tracking call
             Dictionary<string, object> properties = new Dictionary<string, object>()
             {
                 {"KEY_DateTime", DateTime.Now.AddDays(1)},
                 {"KEY_STRING", "B1"},
                 {"KEY_BOOL", true},
-                {"KEY_NUMBER", 50.65}
+                {"KEY_NUMBER", 50.65},
+                {"KEY_LIST", listProps}
             };
-            DateTime dateTime = DateTime.Now.AddDays(-1);
-            ThinkingAnalyticsAPI.Track("TEST_EVENT", properties, dateTime);
+            ThinkingAnalyticsAPI.Track("TEST_EVENT", properties);
         }
 
         if (GUILayout.Button("LOGIN UNITY_USER")) // 设置 account ID
@@ -88,11 +92,6 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             ThinkingAnalyticsAPI.Flush();
         }
 
-        if (GUILayout.Button("START")) // an engage call
-        {
-            ThinkingAnalyticsAPI.StartTrack();
-        }
-
         Scene scene = SceneManager.GetActiveScene();
 
         if (scene.name == "scene1")
@@ -114,16 +113,25 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         GUILayout.EndArea();
     }
 
+    void Awake()
+    {
+        // 以时间戳校准 SDK 时间
+        ThinkingAnalyticsAPI.CalibrateTime(1585555578000);
+        //ThinkingAnalyticsAPI.CalibrateTimeWithNtp("ntp.aliyun.com");
+    }
     void Start () {
         // 设置 Distinct ID
         ThinkingAnalyticsAPI.Identify("unity_id");
         ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
-        ThinkingAnalyticsAPI.TrackAppInstall();
-        Debug.Log("TA.TAExample - current disctinct ID is: " + ThinkingAnalyticsAPI.GetDistinctId());
-        Debug.Log("TA.TAExample - the device ID is: " + ThinkingAnalyticsAPI.GetDeviceId());
 
         // 清除公共事件属性
         ThinkingAnalyticsAPI.ClearSuperProperties();
+
+        // 开启自动采集启动和关闭事件
+        ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.APP_START | AUTO_TRACK_EVENTS.APP_END);
+
+        Debug.Log("TA.TAExample - current disctinct ID is: " + ThinkingAnalyticsAPI.GetDistinctId());
+        Debug.Log("TA.TAExample - the device ID is: " + ThinkingAnalyticsAPI.GetDeviceId());
 
         // 设置动态公共属性，传 this 是因为 this 实现了 IDynamicSuperProperties
         ThinkingAnalyticsAPI.SetDynamicSuperProperties(this);
