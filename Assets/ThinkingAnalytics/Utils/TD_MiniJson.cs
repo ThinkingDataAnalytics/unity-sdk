@@ -578,7 +578,7 @@ namespace ThinkingAnalytics.Utils
                 else if (value is double
                   || value is decimal)
                 {
-                    builder.Append(Convert.ToDouble(value).ToString("R"));
+                    builder.Append(Convert.ToDouble(value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
                 }
                 else if (value is DateTime)
                 {
