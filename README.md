@@ -1,13 +1,15 @@
-## Unity SDK 使用指南
+## Thinking Analytics Unity SDK 使用指南
 
-本指南将会介绍如何使用 Unity SDK 接入您的项目。
+Thinking Analytics Unity SDK 提供了事件和用户属性数据采集相关接口，可以很方便的集成到您的项目中，向 TA 系统上报用户数据。
+
+详细的使用指南请参考 Thinking Analytics 官网的[Unity SDK 使用指南](https://doc.thinkingdata.cn/tdamanual/installation/unity_sdk_installation.html)。
 
 #### 1. 初始化 SDK
-1.1 下载 [Unity SDK ](http://download.thinkingdata.cn/client/release/ta_unity_sdk.zip)资源文件，并导入资源文件到您的项目中：Assets > Import Package > Custom Package，选中您刚刚下载的文件
+1.1 下载 [Unity SDK ](http://download.thinkingdata.cn/client/release/ThinkingAnalytics.unitypackage)资源文件，并导入资源文件到您的项目中：Assets > Import Package > Custom Package，选中您刚刚下载的文件
 
 1.2 添加 ThinkingAnalytics GameObject, 并配置服务器地址和 APP ID
 
-<img src="https://doc.thinkingdata.cn/tdamanual/assets/unity_sdk_installation_1.png" width = "50%"/>
+<img src="https://doc.thinkingdata.cn/tdamanual/assets/unity_sdk_installation.png" width = "50%"/>
 
 >    注意：Android 插件使用 Gradle 集成，因此目前只支持 Unity 5.4 之后的版本。 
 
@@ -75,7 +77,7 @@ DateTime dateTime = DateTime.Now.AddDays(-1);
 ThinkingAnalyticsAPI.Track("TEST_EVENT", properties, dateTime);
 ```
 
-> 注意：尽管事件可以设置触发时间，但是接收端会做如下的限制：只接收相对服务器时间在前 10 天至后 4 天的数据，超过时限的数据将会被视为异常数据，整条数据无法入库。
+> 注意：尽管事件可以设置触发时间，但是接收端会做如下的限制：只接收相对服务器时间在前 10 天至后 3 天的数据，超过时限的数据将会被视为异常数据，整条数据无法入库。
 
 v1.3.0+ 版本开始，SDK 支持上传事件的时间偏移（对应预置属性 #zone_offset），但是如果传入的 dateTime 的 Kind 属性为 DataTimeKind.Unspecified，则不会上报时间偏移。
 
@@ -198,50 +200,3 @@ listProps.Add("ccc");
 
 ThinkingAnalyticsAPI.UserUnset(listProps);
 ```
-
-#### 5 自动采集事件
-如果在配置 SDK 时，勾选了Auto Track 选项，SDK 会自动记录：
-- ta_app_start 每次用户获得焦点（即在游戏中）
-- ta_app_end 当游戏进入`Pause`状态，并附加`#duration`属性，记录本次游戏时长
-
-1.1.0 版本开始，可以通过接口调用的方式采集安装事件：
-```c#
-// 采集 APP 安装事件
-ThinkingAnalyticsAPI.TrackAppInstall();
-```
-
-#### 6 多项目 ID 支持
-
-在配置 SDK 时，可以添加多个 APP ID，之后在调用 API 时，最后附加一个参数指定 APP ID. 以 `Identify()` 接口为例：
-```c#
-// 为 APP ID 为 “debug-appid” 的项目设置访客 ID
-ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
-```
-> 注意：访客 ID、账户 ID、公共属性等值在多项目中不共享，需要单独设置
-
-如果没有附加 APP ID 参数，则默认使用 列表中第一个 APP ID。您可以拖动列表项，调整列表顺序。
-
-#### 7 其他配置选项
-7.1 设置上报数据到服务器的网络条件, Network Type:
-
-- DEFAULT：3G, 4G, 5G 及 WIFI 
-- WIFI：只在 WIFI 环境下上报数据
-- ALL：2G,3G, 4G, 5G 及 WIFI 
-
-7.2 打开日志
-
-如果勾选了 Enable Log 选项，将会开启日志，打印上报情况，以方便您的调试。您也可以在 Editor 模式下，检验事件上报是否正确，对于不符合条件的属性，会以`warning`日志显示在控制台中。
-
-7.3 获取设备ID
-```c#
-ThinkingAnalyticsAPI.GetDeviceId()
-```
-
-7.4 Postpone Track
-
-如果您勾选了 Postpone Track 选项，意味着所有的上报请求（包括用户属性设置和事件追踪）都会被缓存，直到您主动调用:
-```c#
-ThinkingAnalyticsAPI.StartTrack();
-```
-
-这个设置可以满足希望在上报之前完成设置访客ID，公共属性等初始化的场景。

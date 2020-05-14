@@ -20,6 +20,11 @@ namespace ThinkingAnalytics.Wrapper
         /// <param name="data">The Dictionary containing some data </param>
         private static AndroidJavaObject getJSONObject(string dataString)
         {
+            if (dataString.Equals("null"))
+            {
+                return null;
+            }
+
             try
             {
                 return new AndroidJavaObject(JSON_CLASS, dataString);
