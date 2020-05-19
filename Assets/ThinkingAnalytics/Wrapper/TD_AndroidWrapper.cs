@@ -298,7 +298,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private static void calibrateTimeWithNtp(string ntpServer)
         {
-            sdkClass.CallStatic("calibrateTimeWithNtp", new string[]{ntpServer});
+            sdkClass.CallStatic("calibrateTimeWithNtpForUnity", ntpServer);
         }
 #endif
     }
