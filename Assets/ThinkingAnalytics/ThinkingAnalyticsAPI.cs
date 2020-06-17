@@ -1,5 +1,5 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v2.0.5
+    Thinkingdata Unitiy SDK v2.0.6
     
     Copyright 2019, ThinkingData, Inc
 

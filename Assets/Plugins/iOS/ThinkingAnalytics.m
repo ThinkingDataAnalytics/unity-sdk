@@ -100,7 +100,7 @@ void logout(const char *app_id) {
     [getInstance(app_id_string) logout];
 }
 
-void track(const char *app_id, const char *event_name, const char *properties, long time_stamp_millis, const char *timezone) {
+void track(const char *app_id, const char *event_name, const char *properties, long long time_stamp_millis, const char *timezone) {
     NSString *event_name_string = event_name != NULL ? [NSString stringWithUTF8String:event_name] : nil;
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     
@@ -185,7 +185,7 @@ void user_set(const char *app_id, const char *properties) {
     }
 }
 
-void user_set_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+void user_set_with_time(const char *app_id, const char *properties, long long time_stamp_millis) {
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *properties_dict = nil;
@@ -201,7 +201,7 @@ void user_unset(const char *app_id, const char *properties) {
     [getInstance(app_id_string) user_unset:properties_string];
 }
 
-void user_unset_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+void user_unset_with_time(const char *app_id, const char *properties, long long time_stamp_millis) {
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *properties_string = properties != NULL ? [NSString stringWithUTF8String:properties] : nil;
@@ -217,7 +217,7 @@ void user_set_once(const char *app_id, const char *properties) {
     }
 }
 
-void user_set_once_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+void user_set_once_with_time(const char *app_id, const char *properties, long long time_stamp_millis) {
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *properties_dict = nil;
@@ -236,7 +236,7 @@ void user_add(const char *app_id, const char *properties) {
     }
 }
 
-void user_add_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+void user_add_with_time(const char *app_id, const char *properties, long long time_stamp_millis) {
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *properties_dict = nil;
@@ -251,7 +251,7 @@ void user_delete(const char *app_id) {
     [getInstance(app_id_string) user_delete];
 }
 
-void user_delete_with_time(const char *app_id, long time_stamp_millis) {
+void user_delete_with_time(const char *app_id, long long time_stamp_millis) {
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [getInstance(app_id_string) user_delete:time];
@@ -266,7 +266,7 @@ void user_append(const char *app_id, const char *properties) {
     }
 }
 
-void user_append_with_time(const char *app_id, const char *properties, long time_stamp_millis) {
+void user_append_with_time(const char *app_id, const char *properties, long long time_stamp_millis) {
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *properties_dict = nil;
@@ -320,14 +320,14 @@ void enable_autoTrack(const char *app_id, int autoTrackEvents) {
     [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents];
 }
 
-const char *get_time_string(const char *app_id, long time_stamp_millis) {
+const char *get_time_string(const char *app_id, long long time_stamp_millis) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
     NSString *time_string = [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] getTimeString:time];
     return strdup([time_string UTF8String]);
 }
 
-void calibrate_time(long time_stamp_millis) {
+void calibrate_time(long long time_stamp_millis) {
     [ThinkingAnalyticsSDK calibrateTime:time_stamp_millis];
 }
 
