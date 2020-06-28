@@ -15,7 +15,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsDebugMode) {
     ThinkingAnalyticsDebugOff      = 0,
     
     /**
-     开启 Debug 模式，不入库
+     开启 DebugOnly 模式，不入库
      */
     ThinkingAnalyticsDebugOnly     = 1 << 0,
     

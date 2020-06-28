@@ -1,3 +1,11 @@
+**v2.0.8** (2020-06-28)
+- 更新原生 Android SDK，解决极端情况下的空指针异常
+
+**v2.0.7** (2020-06-23)
+- 新增预置属性 #system_language
+- 更新原生 SDK 版本号: Android v2.5.5, iOS v2.5.5
+- Android 不再通过修改 gradle 配置来引入ThinkingAnalyticsSDK 依赖
+
 **v2.0.6** (2020-06-17)
 - 解决 iOS 32 位机型 long 型溢出的问题
 
