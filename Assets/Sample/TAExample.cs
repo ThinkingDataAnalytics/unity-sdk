@@ -41,6 +41,50 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             ThinkingAnalyticsAPI.Track("TEST_EVENT", properties);
         }
 
+        if (GUILayout.Button("TRACK FIRST EVENT"))
+        {
+            Dictionary<string, object> properties = new Dictionary<string, object>()
+            {
+                {"KEY_STRING", "B1"},
+                {"KEY_BOOL", true},
+                {"KEY_NUMBER", 50.65},
+            };
+
+            ThinkingAnalyticsAPI.Track(new TDFirstEvent("DEVICE_FIRST", properties));
+
+            TDFirstEvent firstEvent = new TDFirstEvent("USER_FIRST", properties);
+            firstEvent.SetFirstCheckId("YOUR_ACCOUNT_ID");
+            ThinkingAnalyticsAPI.Track(firstEvent);
+        }
+
+        if (GUILayout.Button("TRACK UPDATE"))
+        {
+            TDUpdatableEvent updatableEvent = new TDUpdatableEvent("UPDATABLE_EVENT", new Dictionary<string, object>{
+                {"status", 3},
+                {"price", 100}
+            }, "test_event_id");
+            ThinkingAnalyticsAPI.Track(updatableEvent);
+
+             TDUpdatableEvent updatableEvent_new = new TDUpdatableEvent("UPDATABLE_EVENT", new Dictionary<string, object>{
+                {"status", 5}
+            }, "test_event_id");
+            ThinkingAnalyticsAPI.Track(updatableEvent_new);
+        }
+
+        if (GUILayout.Button("TRACK OVERWRITE"))
+        {
+            TDOverWritableEvent overWritableEvent = new TDOverWritableEvent("OVERWRITABLE_EVENT", new Dictionary<string, object>{
+                {"status", 3},
+                {"price", 100}
+            }, "test_event_id");
+            ThinkingAnalyticsAPI.Track(overWritableEvent);
+
+            TDOverWritableEvent overWritableEvent_new = new TDOverWritableEvent("OVERWRITABLE_EVENT", new Dictionary<string, object>{
+                {"status", 5}
+            }, "test_event_id");
+            ThinkingAnalyticsAPI.Track(overWritableEvent_new);
+        }
+
         if (GUILayout.Button("LOGIN UNITY_USER")) // 设置 account ID
         {
             ThinkingAnalytics.ThinkingAnalyticsAPI.Login("unity_user");
@@ -116,7 +160,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
     void Awake()
     {
         // 以时间戳校准 SDK 时间
-        ThinkingAnalyticsAPI.CalibrateTime(1585555578000);
+        //ThinkingAnalyticsAPI.CalibrateTime(1585555578000);
         //ThinkingAnalyticsAPI.CalibrateTimeWithNtp("ntp.aliyun.com");
     }
     void Start () {

@@ -49,6 +49,9 @@ namespace ThinkingAnalytics.Wrapper
         private static void enable_log(bool enableLog) {
             sdkClass.CallStatic("enableTrackLog", enableLog);
         }
+        private static void setVersionInfo(string libName, string version) {
+            sdkClass.CallStatic("setCustomerLibInfo", libName, version);
+        }
 
         private void init()
         {
@@ -109,6 +112,64 @@ namespace ThinkingAnalytics.Wrapper
             }
 
             instance.Call("track", eventName, getJSONObject(properties), date, tz);
+        }
+
+        private void track(ThinkingAnalyticsEvent taEvent)
+        {
+            AndroidJavaObject javaEvent = null;
+            switch(taEvent.EventType)
+            {
+                case ThinkingAnalyticsEvent.Type.FIRST:
+                    javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDFirstEvent", 
+                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)));
+
+                    string extraId = taEvent.ExtraId;
+                    if (!string.IsNullOrEmpty(extraId))
+                    {
+                        javaEvent.Call("setFirstCheckId", extraId);
+                    }
+                    
+                    break;
+                case ThinkingAnalyticsEvent.Type.UPDATABLE:
+                    javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDUpdatableEvent", 
+                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.ExtraId); 
+                    break;
+                case ThinkingAnalyticsEvent.Type.OVERWRITABLE:
+                    javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDOverWritableEvent", 
+                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.ExtraId); 
+                    break;
+            }
+            if (null == javaEvent) {
+                TD_Log.w("Unexpected java event object. Returning...");
+                return;
+            }
+
+            if (taEvent.EventTime != DateTime.MinValue) {
+                AndroidJavaObject date = getDate(taEvent.EventTime);
+                AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
+                AndroidJavaObject tz = null;
+
+                if (token.timeZone == ThinkingAnalyticsAPI.TATimeZone.Local)
+                {
+                    switch (taEvent.EventTime.Kind)
+                    {
+                        case DateTimeKind.Local:
+                            tz = tzClass.CallStatic<AndroidJavaObject>("getDefault");
+                            break;
+                        case DateTimeKind.Utc:
+                            tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", "UTC");
+                            break;
+                        case DateTimeKind.Unspecified:
+                            break;
+                    }
+                }
+                else
+                {
+                    tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", token.getTimeZoneId());
+                }
+                javaEvent.Call("setEventTime", date, tz);
+            }
+            instance.Call("track", javaEvent);
         }
 
         private void track(string eventName, string properties)

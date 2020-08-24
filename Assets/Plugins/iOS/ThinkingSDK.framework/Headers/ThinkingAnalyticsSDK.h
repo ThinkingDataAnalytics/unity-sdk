@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import "TDFirstEventModel.h"
+#import "TDEditableEventModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -49,6 +51,8 @@ typedef NS_OPTIONS(NSInteger, TDSSLPinningMode) {
  自定义 HTTPS 认证
 */
 typedef NSURLSessionAuthChallengeDisposition (^TDURLSessionDidReceiveAuthenticationChallengeBlock)(NSURLSession *session, NSURLAuthenticationChallenge *challenge, NSURLCredential *_Nullable __autoreleasing *_Nullable credential);
+
+@class TDEventModel;
 
 /**
  HTTPS 请求进行证书验证的策略
@@ -268,6 +272,8 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
     ThinkingAnalyticsEventTypeAppInstall    = 1 << 5
 };
 
+#pragma mark - Action Track
+
 /**
  自定义事件埋点
 
@@ -302,6 +308,10 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param timeZone      事件触发时间时区
  */
 - (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time timeZone:(NSTimeZone *)timeZone;
+
+- (void)trackWithEventModel:(TDEventModel *)eventModel;
+
+#pragma mark -
 
 /**
  记录事件时长
@@ -356,7 +366,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param properties 用户属性
  @param time 事件触发时间
 */
-- (void)user_set:(NSDictionary *)properties withTime:(NSDate *)time;
+- (void)user_set:(NSDictionary *)properties withTime:(NSDate * _Nullable)time;
 
 /**
  重置用户属性
@@ -371,7 +381,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param propertyName 用户属性
  @param time 事件触发时间
 */
-- (void)user_unset:(NSString *)propertyName withTime:(NSDate *)time;
+- (void)user_unset:(NSString *)propertyName withTime:(NSDate * _Nullable)time;
 
 /**
  设置单次用户属性
@@ -386,7 +396,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param properties 用户属性
  @param time 事件触发时间
 */
-- (void)user_setOnce:(NSDictionary *)properties withTime:(NSDate *)time;
+- (void)user_setOnce:(NSDictionary *)properties withTime:(NSDate * _Nullable)time;
 
 /**
  对数值类型用户属性进行累加操作
@@ -401,7 +411,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param properties 用户属性
  @param time 事件触发时间
 */
-- (void)user_add:(NSDictionary *)properties withTime:(NSDate *)time;
+- (void)user_add:(NSDictionary *)properties withTime:(NSDate * _Nullable)time;
 
 /**
   对数值类型用户属性进行累加操作
@@ -418,7 +428,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param propertyValue 属性值
  @param time 事件触发时间
 */
-- (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue withTime:(NSDate *)time;
+- (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue withTime:(NSDate * _Nullable)time;
 
 /**
  删除用户 该操作不可逆 需慎重使用
@@ -430,7 +440,7 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  
  @param time 事件触发时间
  */
-- (void)user_delete:(NSDate *)time;
+- (void)user_delete:(NSDate * _Nullable)time;
 
 /**
  对 Array 类型的用户属性进行追加操作
@@ -445,7 +455,14 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
  @param properties 用户属性
  @param time 事件触发时间
 */
-- (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate *)time;
+- (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate * _Nullable)time;
+
+/**
+ 谨慎调用此接口, 此接口用于使用第三方框架或者游戏引擎的场景中, 更准确的设置上报方式.
+ @param libName     对应事件表中 #lib预制属性, 默认为 "iOS".
+ @param libVersion  对应事件表中 #lib_version 预制属性, 默认为当前SDK版本号.
+ */
++ (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *)libVersion;
 
 /**
  设置公共事件属性

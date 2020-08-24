@@ -1,5 +1,6 @@
 #import <ThinkingSDK/ThinkingAnalyticsSDK.h>
 #import <pthread.h>
+#import <ThinkingSDK/TDDeviceInfo.h>
 
 #define NETWORK_TYPE_DEFAULT 1
 #define NETWORK_TYPE_WIFI 2
@@ -10,15 +11,15 @@ static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
 ThinkingAnalyticsSDK* getInstance(NSString *app_id) {
     ThinkingAnalyticsSDK *result = nil;
-
+    
     pthread_rwlock_rdlock(&rwlock);
     if (light_instances[app_id] != nil) {
         result = light_instances[app_id];
     }
     pthread_rwlock_unlock(&rwlock);
-
+    
     if (result != nil) return result;
-
+    
     return [ThinkingAnalyticsSDK sharedInstanceWithAppid: app_id];
 }
 
@@ -38,14 +39,14 @@ char* strdup(const char* string) {
 }
 
 
-void start(const char *app_id, const char *url, int mode, const char *timezone_id) { 
+void start(const char *app_id, const char *url, int mode, const char *timezone_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *url_string = url != NULL ? [NSString stringWithUTF8String:url] : nil;
     TDConfig *config = [[TDConfig alloc] init];
-    if (mode == 1) { 
+    if (mode == 1) {
         // DEBUG
         config.debugMode = ThinkingAnalyticsDebug;
-    } else if (mode == 2) { 
+    } else if (mode == 2) {
         // DEBUG_ONLY
         config.debugMode = ThinkingAnalyticsDebugOnly;
     }
@@ -100,6 +101,47 @@ void logout(const char *app_id) {
     [getInstance(app_id_string) logout];
 }
 
+void config_custom_lib_info(const char *lib_name, const char *lib_version) {
+    NSString *lib_name_string = lib_name != NULL ? [NSString stringWithUTF8String:lib_name] : nil;
+    NSString *lib_version_string = lib_version != NULL ? [NSString stringWithUTF8String:lib_version] : nil;
+    [ThinkingAnalyticsSDK setCustomerLibInfoWithLibName:lib_name_string libVersion:lib_version_string];
+}
+
+void track_event(const char *app_id, const char *event_model_json) {
+    NSDictionary *event_model_dic = nil;
+    convertToDictionary(event_model_json, &event_model_dic);
+    TDEventModel *eventModel;
+    NSString *eventType = event_model_dic[@"event_type"];
+    if ([eventType isEqualToString:@"track_first"]) {
+        eventModel = [[TDFirstEventModel alloc] initWithEventName:event_model_dic[@"event_name"] firstCheckID:event_model_dic[@"extra_id"]];
+    } else if ([eventType isEqualToString:@"track_update"]) {
+        eventModel = [[TDUpdateEventModel alloc] initWithEventName:event_model_dic[@"event_name"] eventID:event_model_dic[@"extra_id"]];
+    } else if ([eventType isEqualToString:@"track_overwrite"]) {
+        eventModel = [[TDOverwriteEventModel alloc] initWithEventName:event_model_dic[@"event_name"] eventID:event_model_dic[@"extra_id"]];
+    }
+    
+    eventModel.properties = event_model_dic[@"event_properties"];
+    
+    NSString *timeString = event_model_dic[@"event_time"];
+    NSString *timezoneString = event_model_dic[@"event_timezone"];
+    NSTimeZone *tz;
+    if ([@"Local" isEqualToString:timezoneString]) {
+        tz = [NSTimeZone localTimeZone];
+    } else {
+        tz = [NSTimeZone timeZoneWithName:timezoneString];
+    }
+    
+    if (timeString) {
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss.SSS";
+        NSDate *date = [formatter dateFromString:timeString];
+        [eventModel configTime:date timeZone:tz];
+    }
+    
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [getInstance(app_id_string) trackWithEventModel:eventModel];
+}
+
 void track(const char *app_id, const char *event_name, const char *properties, long long time_stamp_millis, const char *timezone) {
     NSString *event_name_string = event_name != NULL ? [NSString stringWithUTF8String:event_name] : nil;
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
@@ -109,9 +151,7 @@ void track(const char *app_id, const char *event_name, const char *properties, l
     
     NSString *time_zone_string = timezone != NULL ? [NSString stringWithUTF8String:timezone] : nil;
     NSTimeZone *tz;
-    if ([time_zone_string isEqualToString:@"UTC"]) {
-        tz = [NSTimeZone timeZoneWithName:@"UTC"];
-    } else if ([time_zone_string isEqualToString:@"Local"]) {
+    if ([@"Local" isEqualToString:time_zone_string]) {
         tz = [NSTimeZone localTimeZone];
     } else {
         tz = [NSTimeZone timeZoneWithName:time_zone_string];
@@ -305,12 +345,12 @@ void create_light_instance(const char *app_id, const char *delegate_app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *delegate_app_id_string = delegate_app_id != NULL ? [NSString stringWithUTF8String:delegate_app_id] : nil;
     ThinkingAnalyticsSDK *light = [getInstance(app_id_string) createLightInstance];
-
+    
     pthread_rwlock_wrlock(&rwlock);
     if (light_instances == nil) {
         light_instances = [NSMutableDictionary dictionary];
     }
-
+    
     [light_instances setObject:light forKey:delegate_app_id_string];
     pthread_rwlock_unlock(&rwlock);
 }

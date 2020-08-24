@@ -17,6 +17,8 @@ namespace ThinkingAnalytics.Wrapper
         {
             TD_Log.d("TA.Wrapper - calling enable_log with enableLog: " + enableLog);
         }
+        private static void setVersionInfo(string libName, string version) {
+        }
 
         private void identify(string uniqueId)
         {
@@ -49,6 +51,13 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling track with eventName: " + eventName + ", " +
                 "properties: " + properties + ", " +
                 "dateTime: " + datetime.ToString());
+        }
+
+        private void track(ThinkingAnalyticsEvent analyticsEvent)
+        {
+                TD_Log.d("TA.Wrapper(" + token.appid + ") - calling track with eventName: " + analyticsEvent.EventName + ", " +
+                "properties: " + getFinalEventProperties(analyticsEvent.Properties));
+
         }
 
         private void setSuperProperties(string superProperties)
@@ -220,6 +229,11 @@ namespace ThinkingAnalytics.Wrapper
             enable_log(enableLog);
         }
 
+        public static void SetVersionInfo(string version)
+        {
+            setVersionInfo("Unity", version);
+        }
+
         public void Identify(string uniqueId)
         {
             identify(uniqueId);
@@ -245,38 +259,49 @@ namespace ThinkingAnalytics.Wrapper
             enableAutoTrack(events);
         }
 
-        public void Track(string eventName, Dictionary<string, object> properties)
+        private string getFinalEventProperties(Dictionary<string, object> properties)
         {
-            TD_PropertiesChecker.CheckString(eventName);
             TD_PropertiesChecker.CheckProperties(properties);
+
             if (null != dynamicSuperProperties)
             {
                 Dictionary<string, object> finalProperties = new Dictionary<string, object>();
                 TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
                 TD_PropertiesChecker.MergeProperties(properties, finalProperties);
-                track(eventName, serilize(finalProperties));
-            } 
+                return serilize(finalProperties);
+            }
             else
             {
-                track(eventName, serilize(properties));
+                return serilize(properties);
             }
+
+        }
+        public void Track(string eventName, Dictionary<string, object> properties)
+        {
+            TD_PropertiesChecker.CheckString(eventName);
+            track(eventName, getFinalEventProperties(properties));
         }
 
         public void Track(string eventName, Dictionary<string, object> properties, DateTime datetime)
         {
             TD_PropertiesChecker.CheckString(eventName);
-            TD_PropertiesChecker.CheckProperties(properties);
-            if (null != dynamicSuperProperties)
+            track(eventName, getFinalEventProperties(properties), datetime);
+        }
+
+        public void Track(ThinkingAnalyticsEvent taEvent)
+        {
+            if (null == taEvent || null == taEvent.EventType)
             {
-                Dictionary<string, object> finalProperties = new Dictionary<string, object>();
-                TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
-                TD_PropertiesChecker.MergeProperties(properties, finalProperties);
-                track(eventName, serilize(finalProperties), datetime);
+                TD_Log.w("Ignoring invalid TA event");
+                return;
             }
-            else
+
+            if (taEvent.EventTime == null)
             {
-                track(eventName, serilize(properties), datetime);
+                TD_Log.w("ppp null...");
             }
+            
+            track(taEvent);
         }
 
         public void SetSuperProperties(Dictionary<string, object> superProperties)

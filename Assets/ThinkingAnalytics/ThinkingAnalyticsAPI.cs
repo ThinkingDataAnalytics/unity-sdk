@@ -1,6 +1,4 @@
 ﻿/*
-    Thinkingdata Unitiy SDK v2.0.8
-    
     Copyright 2019, ThinkingData, Inc
 
     Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +38,75 @@ namespace ThinkingAnalytics
     public interface IDynamicSuperProperties
     {
         Dictionary<string, object> GetDynamicSuperProperties();
+    }
+
+    /// <summary>
+    /// 内部使用的特殊事件类， 不要直接使用此类。
+    /// </summary>
+    public class ThinkingAnalyticsEvent
+    {
+        public enum Type
+        {
+            FIRST,
+            UPDATABLE,
+            OVERWRITABLE
+        }
+
+        public ThinkingAnalyticsEvent(string eventName, Dictionary<string, object> properties) {
+            EventName = eventName;
+            Properties = properties;
+        }
+
+        public Type? EventType { get; set; }
+        public string EventName { get; }
+        public Dictionary<string, object> Properties { get; }
+
+        public DateTime EventTime { get; set; }
+        public string ExtraId { get; set; }
+    }
+
+    /// <summary>
+    /// 首次（唯一）事件。默认情况下采集设备首次事件。请咨询数数客户成功获取支持。
+    /// </summary>
+    public class TDFirstEvent : ThinkingAnalyticsEvent
+    {
+        public TDFirstEvent(string eventName, Dictionary<string, object> properties) : base(eventName, properties)
+        {
+            EventType = Type.FIRST;
+        }
+        
+        /// <summary>
+        /// 设置用于检测是否首次的 ID，默认情况下会使用设备 ID
+        /// </summary>
+        /// <param name="firstCheckId">用于首次事件检测的 ID</param>
+        public void SetFirstCheckId(string firstCheckId)
+        {
+            ExtraId = firstCheckId;
+        }
+    }
+
+    /// <summary>
+    /// 可被更新的事件。请咨询数数客户成功获取支持。
+    /// </summary>
+    public class TDUpdatableEvent : ThinkingAnalyticsEvent
+    {
+        public TDUpdatableEvent(string eventName, Dictionary<string, object> properties, string eventId) : base(eventName, properties)
+        {
+            EventType = Type.UPDATABLE;
+            ExtraId = eventId;
+        }
+    }
+
+    /// <summary>
+    /// 可被重写的事件。请咨询数数客户成功获取支持。
+    /// </summary>
+    public class TDOverWritableEvent : ThinkingAnalyticsEvent
+    {
+        public TDOverWritableEvent(string eventName, Dictionary<string, object> properties, string eventId) : base(eventName, properties)
+        {
+            EventType = Type.OVERWRITABLE;
+            ExtraId = eventId;
+        }
     }
 
     // 自动采集事件类型
@@ -137,16 +204,18 @@ namespace ThinkingAnalytics
 
         #endregion
 
+        public readonly string VERSION = "2.1.0";
+
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID
         /// </summary>
-        /// <param name="uniqueId">访客 ID</param>
+        /// <param name="FIRSTId">访客 ID</param>
         /// <param name="appId">项目 ID(可选)</param>
-        public static void Identify(string uniqueId, string appId = "")
+        public static void Identify(string FIRSTId, string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Identify(uniqueId);
+                getInstance(appId).Identify(FIRSTId);
             }
         }
 
@@ -252,6 +321,18 @@ namespace ThinkingAnalytics
                 getInstance(appId).Track(eventName, properties, date);
             }
         }
+
+
+
+
+        public static void Track(ThinkingAnalyticsEvent analyticsEvent, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).Track(analyticsEvent);
+            }
+        }
+        
 
         /// <summary>
         /// 设置公共事件属性. 公共事件属性指的就是每个事件都会带有的属性.
@@ -649,6 +730,7 @@ namespace ThinkingAnalytics
             tracking_enabled = false;
             #endif
             TD_Log.EnableLog(enableLog);
+            ThinkingAnalyticsWrapper.SetVersionInfo(VERSION);
             if (TA_instance == null)
             {
                 DontDestroyOnLoad(gameObject);

@@ -24,6 +24,8 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern void track(string app_id, string event_name, string properties, long time_stamp_millis, string timezone);
         [DllImport("__Internal")]
+        private static extern void track_event(string app_id, string event_string);
+        [DllImport("__Internal")]
         private static extern void set_super_properties(string app_id, string properties);
         [DllImport("__Internal")]
         private static extern void unset_super_property(string app_id, string property_name);
@@ -83,6 +85,8 @@ namespace ThinkingAnalytics.Wrapper
         private static extern void calibrate_time(long timestamp);
         [DllImport("__Internal")]
         private static extern void calibrate_time_with_ntp(string ntpServer);
+        [DllImport("__Internal")]
+        private static extern void config_custom_lib_info(string lib_name, string lib_version);
 
         private void init()
         {
@@ -109,10 +113,59 @@ namespace ThinkingAnalytics.Wrapper
             logout(token.appid);
         }
 
-
         private void flush()
         {
             flush(token.appid);
+        }
+
+        private static void setVersionInfo(string lib_name, string lib_version) {
+            config_custom_lib_info(lib_name, lib_version);
+        }
+
+        private void track(ThinkingAnalyticsEvent taEvent)
+        {
+            Dictionary<string, object> finalEvent = new Dictionary<string, object>();
+            string extraId = taEvent.ExtraId;
+            switch (taEvent.EventType)
+            {
+                case ThinkingAnalyticsEvent.Type.FIRST:
+                    finalEvent["event_type"] = "track_first";
+                    break;
+                case ThinkingAnalyticsEvent.Type.UPDATABLE:
+                    finalEvent["event_type"] = "track_update";
+                    break;
+                case ThinkingAnalyticsEvent.Type.OVERWRITABLE:
+                    finalEvent["event_type"] = "track_overwrite";
+                    break;
+            }
+
+            if (!string.IsNullOrEmpty(extraId))
+            {
+                finalEvent["extra_id"] = extraId;
+            }
+
+            finalEvent["event_name"] = taEvent.EventName;
+            finalEvent["event_properties"] = taEvent.Properties;
+
+            if (taEvent.EventTime != DateTime.MinValue) 
+            {
+                finalEvent["event_time"] = taEvent.EventTime;
+                if (token.timeZone == ThinkingAnalyticsAPI.TATimeZone.Local)
+                {
+                    switch (taEvent.EventTime.Kind)
+                    {
+                        case DateTimeKind.Local:
+                            finalEvent["event_timezone"] = "Local";
+                            break;
+                        case DateTimeKind.Utc:
+                            finalEvent["event_timezone"] = "UTC";
+                            break;
+                        case DateTimeKind.Unspecified:
+                            break;
+                    }
+                }
+            }   
+            track_event(token.appid, serilize(finalEvent));
         }
 
         private void track(string eventName, string properties)
