@@ -204,7 +204,7 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.1.0";
+        public readonly string VERSION = "2.1.1";
 
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID
