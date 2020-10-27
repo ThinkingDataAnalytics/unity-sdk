@@ -17,7 +17,6 @@
 #define DISABLE_TA
 #warning "Your Unity version is not supported by us - ThinkingAnalyticsSDK disabled"
 #endif
-
 #if !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID)
 #define DISABLE_TA
 #warning "Your Unity Platfrom is not supported by us - ThinkingAnalyticsSDK disabled"
@@ -204,7 +203,7 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.1.1";
+        public readonly string VERSION = "2.1.2";
 
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID

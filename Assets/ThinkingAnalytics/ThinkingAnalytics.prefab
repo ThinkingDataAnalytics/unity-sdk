@@ -45,11 +45,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enableLog: 1
   networkType: 1
-  postponeTrack: 0
   tokens:
-  - appid: debug-appid
-    serverUrl: 
-    autoTrack: 1
+  - appid: 7a055a4bd7ec423fa5294b4a2c1eff28
+    serverUrl: https://receiver-ta-dev.thinkingdata.cn
     mode: 0
     timeZone: 0
     timeZoneId: 

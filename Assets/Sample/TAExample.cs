@@ -39,6 +39,9 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
                 {"KEY_LIST", listProps}
             };
             ThinkingAnalyticsAPI.Track("TEST_EVENT", properties);
+
+            Debug.Log("XXXX"+ThinkingAnalyticsAPI.GetDistinctId());
+
         }
 
         if (GUILayout.Button("TRACK FIRST EVENT"))
@@ -165,14 +168,14 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
     }
     void Start () {
         // 设置 Distinct ID
-        ThinkingAnalyticsAPI.Identify("unity_id");
-        ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
+        // ThinkingAnalyticsAPI.Identify("unity_id");
+        // ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
 
         // 清除公共事件属性
         ThinkingAnalyticsAPI.ClearSuperProperties();
 
         // 开启自动采集启动和关闭事件
-        ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.APP_START | AUTO_TRACK_EVENTS.APP_END);
+        ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
 
         Debug.Log("TA.TAExample - current disctinct ID is: " + ThinkingAnalyticsAPI.GetDistinctId());
         Debug.Log("TA.TAExample - the device ID is: " + ThinkingAnalyticsAPI.GetDeviceId());
