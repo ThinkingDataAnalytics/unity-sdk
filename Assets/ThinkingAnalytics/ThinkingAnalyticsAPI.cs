@@ -1,6 +1,6 @@
 ﻿/*
+ * 
     Copyright 2019, ThinkingData, Inc
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
@@ -12,12 +12,13 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
+    SDK VERSION:2.1.5
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
 #warning "Your Unity version is not supported by us - ThinkingAnalyticsSDK disabled"
 #endif
-#if !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID)
+#if !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN)
 #define DISABLE_TA
 #warning "Your Unity Platfrom is not supported by us - ThinkingAnalyticsSDK disabled"
 #endif
@@ -203,7 +204,7 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.1.2";
+        public readonly string VERSION = "2.1.5";
 
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID
@@ -721,6 +722,15 @@ namespace ThinkingAnalytics
             ThinkingAnalyticsWrapper.CalibrateTimeWithNtp(ntpServer);
         }
 
+        //多实例场景,设置默认的appid
+        public static void setDefaultAppid(string appid)
+        {
+            if (sInstances.Count > 0 && sInstances.ContainsKey(appid))
+            {
+                default_appid = appid;
+            }
+        }
+
         #region internal
 
         void Awake()
@@ -749,9 +759,13 @@ namespace ThinkingAnalytics
                     ThinkingAnalyticsWrapper.EnableLog(enableLog);
                     foreach (Token token in tokens)
                     {
+                        //Debug.Log("token:"+token.appid);
                         if (!string.IsNullOrEmpty(token.appid))
                         {
-                            sInstances.Add(token.appid, new ThinkingAnalyticsWrapper(token));
+                            ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token);
+                            wrapper.SetNetworkType(networkType);
+                            sInstances.Add(token.appid,wrapper);
+
                         }
                     }
                 }
@@ -759,18 +773,22 @@ namespace ThinkingAnalytics
                 {
                     instance_lock.ExitWriteLock();
                 }
-
                 if (sInstances.Count == 0)
                 {
                     tracking_enabled = false;
                 }
-                else
-                {
-                    getInstance(default_appid).SetNetworkType(networkType);
-                }
+                //else
+                //{
+                //    getInstance(default_appid).SetNetworkType(networkType);
+                //}
 
             }
         }
+      
+
+
+
+
 
         private static ThinkingAnalyticsAPI TA_instance;
         private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID

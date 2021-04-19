@@ -7,219 +7,273 @@ using System;
 public class TAExample : MonoBehaviour, IDynamicSuperProperties
 {
 
-    public GUISkin skin;
 
+    public GUISkin skin;
+    private Vector2 scrollPosition = Vector2.zero;
+    //private static Color MainColor = new Color(0, 0,0);
+    private static Color MainColor = new Color(84f / 255, 116f / 255, 241f / 255);
+    private static Color TextColor = new Color(153f / 255, 153f / 255, 153f / 255);
+    static int Margin = 40;
+    static int Height = 80;
+    static float ContainerWidth = Screen.width - 2 * Margin;
     // 动态公共属性接口
     public Dictionary<string, object> GetDynamicSuperProperties()
     {
        return new Dictionary<string, object>() {
-           {"KEY_DYNAMIC_Time", DateTime.Now}
+           {"DynamicProperty", DateTime.Now}
        };
+    }
+    void Awake()
+    {
     }
 
     void OnGUI() {
-        GUI.skin = this.skin;
+        GUILayout.BeginArea(new Rect(Margin, Screen.height * 0.15f, Screen.width-2*Margin, Screen.height));
+        scrollPosition = GUILayout.BeginScrollView(new Vector2(0, 0), GUILayout.Width(Screen.width - 2 * Margin), GUILayout.Height(Screen.height - 100));
+        GUIStyle style = GUI.skin.label;
+        style.fontSize = 25;
+        GUILayout.Label("设置用户ID",style);
 
-        GUILayout.BeginArea(new Rect(Screen.width * 0.15f, Screen.height * 0.3f, Screen.width * 0.7f, Screen.height * 2.5f));
-
-        if (GUILayout.Button("TRACK TEST_EVENT"))
+        GUIStyle buttonStyle = GUI.skin.button;
+        buttonStyle.fontSize = 20;
+        GUILayout.BeginHorizontal(GUI.skin.box,GUILayout.Height(Height));
+        if (GUILayout.Button("设置账号ID", GUILayout.Height(Height)))
         {
-            List<dynamic> listProps = new List<dynamic>();
-            listProps.Add(DateTime.Now);
-            listProps.Add("bbb");
-            listProps.Add("ccc");
-
-            // a simple tracking call
-            Dictionary<string, object> properties = new Dictionary<string, object>()
-            {
-                {"KEY_DateTime", DateTime.Now.AddDays(1)},
-                {"KEY_STRING", "B1"},
-                {"KEY_BOOL", true},
-                {"KEY_NUMBER", 50.65},
-                {"KEY_LIST", listProps}
-            };
-            ThinkingAnalyticsAPI.Track("TEST_EVENT", properties);
-
-            Debug.Log("XXXX"+ThinkingAnalyticsAPI.GetDistinctId());
-
+            ThinkingAnalyticsAPI.Login("TA");
         }
 
-        if (GUILayout.Button("TRACK FIRST EVENT"))
+        GUILayout.Space(20);
+        if (GUILayout.Button("设置访客ID", GUILayout.Height(Height)))
         {
-            Dictionary<string, object> properties = new Dictionary<string, object>()
-            {
+            ThinkingAnalyticsAPI.Identify("TA_Distinct1");
+            
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("清除账号ID", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.Logout();
+        }
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(20);
+        GUILayout.Label("上传事件", GUI.skin.label);
+        GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
+        if (GUILayout.Button("普通事件", GUILayout.Height(Height)))
+        {
+            Dictionary<string, object> properties = new Dictionary<string, object>(){
                 {"KEY_STRING", "B1"},
                 {"KEY_BOOL", true},
                 {"KEY_NUMBER", 50.65},
+                {"Key_Test","好的"}
             };
-
-            ThinkingAnalyticsAPI.Track(new TDFirstEvent("DEVICE_FIRST", properties));
-
-            TDFirstEvent firstEvent = new TDFirstEvent("USER_FIRST", properties);
-            firstEvent.SetFirstCheckId("YOUR_ACCOUNT_ID");
+            ThinkingAnalyticsAPI.Track("TA",properties);
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("首次事件", GUILayout.Height(Height)))
+        {
+            Dictionary<string, object> properties = new Dictionary<string, object>(){
+                {"KEY_STRING", "B1"},
+                {"KEY_BOOL", true},
+                {"KEY_NUMBER", 50.65}
+            };
+            TDFirstEvent firstEvent = new TDFirstEvent("DEVICE_FIRST", properties);
             ThinkingAnalyticsAPI.Track(firstEvent);
         }
-
-        if (GUILayout.Button("TRACK UPDATE"))
+        GUILayout.Space(20);
+        if (GUILayout.Button("可更新事件", GUILayout.Height(Height)))
         {
-            TDUpdatableEvent updatableEvent = new TDUpdatableEvent("UPDATABLE_EVENT", new Dictionary<string, object>{
-                {"status", 3},
-                {"price", 100}
-            }, "test_event_id");
+            // 示例： 上报可被更新的事件，假设事件名为 UPDATABLE_EVENT
+            TDUpdatableEvent updatableEvent = new TDUpdatableEvent("UPDATABLE_EVENT",
+                new Dictionary<string, object>{
+                    {"status", 3},
+                    
+                    {"price", 100}},
+                "test_event_id");
             ThinkingAnalyticsAPI.Track(updatableEvent);
 
-             TDUpdatableEvent updatableEvent_new = new TDUpdatableEvent("UPDATABLE_EVENT", new Dictionary<string, object>{
-                {"status", 5}
-            }, "test_event_id");
-            ThinkingAnalyticsAPI.Track(updatableEvent_new);
         }
 
-        if (GUILayout.Button("TRACK OVERWRITE"))
+        GUILayout.Space(20);
+        if (GUILayout.Button("可重写事件", GUILayout.Height(Height)))
         {
-            TDOverWritableEvent overWritableEvent = new TDOverWritableEvent("OVERWRITABLE_EVENT", new Dictionary<string, object>{
-                {"status", 3},
-                {"price", 100}
-            }, "test_event_id");
+            TDOverWritableEvent overWritableEvent = new TDOverWritableEvent("OVERWRITABLE_EVENT",
+                new Dictionary<string, object>{
+                    {"status", 3},
+                    {"super1",100},
+                    {"price", 100}},
+                "test_event_id");
             ThinkingAnalyticsAPI.Track(overWritableEvent);
-
-            TDOverWritableEvent overWritableEvent_new = new TDOverWritableEvent("OVERWRITABLE_EVENT", new Dictionary<string, object>{
-                {"status", 5}
-            }, "test_event_id");
-            ThinkingAnalyticsAPI.Track(overWritableEvent_new);
         }
 
-        if (GUILayout.Button("LOGIN UNITY_USER")) // 设置 account ID
+        GUILayout.Space(20);
+        if (GUILayout.Button("记录事件时长", GUILayout.Height(Height)))
         {
-            ThinkingAnalytics.ThinkingAnalyticsAPI.Login("unity_user");
+            ThinkingAnalyticsAPI.TimeEvent("TATimeEvent");
+            Invoke("TrackTimeEvent", 3);
+
         }
-        if (GUILayout.Button("LOGOUT")) // 清除 account ID
+
+        GUILayout.Space(20);
+        if (GUILayout.Button("自定义事件发生时间", GUILayout.Height(Height)))
         {
-            ThinkingAnalytics.ThinkingAnalyticsAPI.Logout();
+            Dictionary<string, object> properties = new Dictionary<string, object>();
+            properties["proper1"] = 1;
+            properties["proper2"] = "proString";
+            properties["proper3"] = true;
+            properties["proper4"] = DateTime.Now;
+            ThinkingAnalyticsAPI.Track("TA_001", properties, DateTime.Now.AddHours(-1));
         }
-        if (GUILayout.Button("SET SUPER_PROPERTIES")) // 设置公共属性
+        GUILayout.EndHorizontal();
+
+
+
+
+        GUILayout.Space(20);
+        GUILayout.Label("用户属性", GUI.skin.label);
+        GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
+        if (GUILayout.Button("UserSet", GUILayout.Height(Height)))
         {
-            Dictionary<string, object> superProperties = new Dictionary<string, object>()
-            {
-                {"SUPER_LEVEL", 0},
-                {"SUPER_CHANNEL", "A3"}
-            };
+            Dictionary<string, object> userProperties = new Dictionary<string, object>();
+            userProperties["UserProperty1"] = 1;
+            userProperties["UserProperty2"] = false;
+            userProperties["UserProperty3"] = DateTime.Now;
+            userProperties["UserProperty4"] = "UserStrProperty";
+            ThinkingAnalyticsAPI.UserSet(userProperties,DateTime.Now.AddHours(-1));
+        }
+
+        GUILayout.Space(20);
+        if (GUILayout.Button("UserSetOnce", GUILayout.Height(Height)))
+        {
+            Dictionary<string, object> userProperties = new Dictionary<string, object>();
+            userProperties["UserProperty1"] = 1;
+            userProperties["UserProperty2"] = false;
+            userProperties["UserProperty3"] = DateTime.Now;
+            userProperties["UserProperty4"] = "UserStrProperty";
+            ThinkingAnalyticsAPI.UserSetOnce(userProperties);
+
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("UserAdd", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.UserAdd("UserCoin", 1);
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("UserUnset", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.UserUnset("UserProperty1");
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("UserDelete", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.UserDelete();
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("UserAppend", GUILayout.Height(Height)))
+        {
+            List<string> stringList = new List<string>();
+            stringList.Add("apple");
+            stringList.Add("ball");
+            stringList.Add("cat");
+            ThinkingAnalyticsAPI.UserAppend(
+                new Dictionary<string, object>
+                {
+                    {"USER_LIST", stringList }
+                }
+            );
+        }
+        GUILayout.EndHorizontal();
+
+   
+
+        GUILayout.Space(20);
+        GUILayout.Label("其他配置选项", GUI.skin.label);
+        GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
+        if (GUILayout.Button("获取设备ID", GUILayout.Height(Height)))
+        {
+            Debug.Log("设备ID为:" + ThinkingAnalyticsAPI.GetDeviceId());
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("暂停数据上报", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.EnableTracking(false);
+        }
+
+        GUILayout.Space(20);
+        if (GUILayout.Button("继续数据上报", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.EnableTracking(true);
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("停止数据上报", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.OptOutTracking();
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("开始数据上报", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.OptInTracking();
+        }
+       
+        GUILayout.Space(20);
+        if (GUILayout.Button("校准时间", GUILayout.Height(Height)))
+        {
+            //时间戳,单位毫秒 对应时间为1608782412000 2020-12-24 12:00:12
+            ThinkingAnalyticsAPI.CalibrateTime(1608782412000);
+        }
+        GUILayout.EndHorizontal();
+
+        GUILayout.Space(20);
+        GUILayout.Label("设置公共属性", GUI.skin.label);
+        GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
+        if (GUILayout.Button("设置静态公共属性", GUILayout.Height(Height)))
+        {
+            Dictionary<string, object> superProperties = new Dictionary<string, object>();
+            List<object> listProperties = new List<object>();
+            superProperties["super1"] = 1;
+            superProperties["super2"] = "superstring";
+            superProperties["super3"] = false;
+            superProperties["super4"] = DateTime.Now;
+            listProperties.Add(2);
+            listProperties.Add("superStr");
+            listProperties.Add(true);
+            listProperties.Add(DateTime.Now);
+            superProperties["super5"] = listProperties;
             ThinkingAnalyticsAPI.SetSuperProperties(superProperties);
         }
-
-        if (GUILayout.Button("UNSET SUPER_CHANNEL")) // 清除某条公共属性
+        GUILayout.Space(20);
+        if (GUILayout.Button("更新静态公共属性", GUILayout.Height(Height)))
         {
-            ThinkingAnalyticsAPI.UnsetSuperProperty("SUPER_CHANNEL");
+            Dictionary<string, object> superProperties = new Dictionary<string, object>();
+            superProperties["super1"] = 2;
+            superProperties["super6"] = "super6";
+            ThinkingAnalyticsAPI.SetSuperProperties(superProperties);
+        }
+       
+        GUILayout.Space(20);
+        if (GUILayout.Button("清空部分静态公共属性", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.UnsetSuperProperty("super1");
+            ThinkingAnalyticsAPI.UnsetSuperProperty("superX");
         }
 
-        if (GUILayout.Button("CLEAR SUPER_PROPERTIES")) // 清除公共属性
+        GUILayout.Space(20);
+        if (GUILayout.Button("清空所有静态公共属性", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.ClearSuperProperties();
         }
 
-        if (GUILayout.Button("SET USER_PROPERTIES")) // 设置用户属性
+        GUILayout.Space(20);
+        if (GUILayout.Button("设置动态公共属性", GUILayout.Height(Height)))
         {
-            ThinkingAnalyticsAPI.UserSet(new Dictionary<string, object>(){
-                {"USER_PROP_NUM", 0},
-                {"USER_PROP_STRING", "A3"}
-            });
-
-            ThinkingAnalyticsAPI.UserSetOnce(new Dictionary<string, object>(){
-                {"USER_PROP_NUM", -50},
-                {"USER_PROP_STRING", "A3"}
-            });
-
-            ThinkingAnalyticsAPI.UserAdd(new Dictionary<string, object>(){
-                {"USER_PROP_NUM", -100.9},
-                {"USER_PROP_NUM2", 10.0}
-            });
+            ThinkingAnalyticsAPI.SetDynamicSuperProperties(this);
         }
-
-        if (GUILayout.Button("FLUSH")) // an engage call
-        {
-            ThinkingAnalyticsAPI.Flush();
-        }
-
-        Scene scene = SceneManager.GetActiveScene();
-
-        if (scene.name == "scene1")
-        {
-            // Show a button to allow scene2 to be switched to.
-            if (GUILayout.Button("LOAD SAMPLE"))
-            {
-                SceneManager.LoadScene("Sample");
-            }
-        }
-        else
-        {
-            // Show a button to allow scene1 to be returned to.
-            if (GUILayout.Button("LOAD SCENE1"))
-            {
-                    SceneManager.LoadScene("scene1");
-            }
-        }
+        GUILayout.EndHorizontal();
+        GUILayout.EndScrollView();
         GUILayout.EndArea();
     }
-
-    void Awake()
+    private void Start()
     {
-        // 以时间戳校准 SDK 时间
-        //ThinkingAnalyticsAPI.CalibrateTime(1585555578000);
-        //ThinkingAnalyticsAPI.CalibrateTimeWithNtp("ntp.aliyun.com");
-    }
-    void Start () {
-        // 设置 Distinct ID
-        // ThinkingAnalyticsAPI.Identify("unity_id");
-        // ThinkingAnalyticsAPI.Identify("unity_debug_id", "debug-appid");
-
-        // 清除公共事件属性
-        ThinkingAnalyticsAPI.ClearSuperProperties();
-
-        // 开启自动采集启动和关闭事件
+        // 开启自动采集事件
         ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
-
-        Debug.Log("TA.TAExample - current disctinct ID is: " + ThinkingAnalyticsAPI.GetDistinctId());
-        Debug.Log("TA.TAExample - the device ID is: " + ThinkingAnalyticsAPI.GetDeviceId());
-
-        // 设置动态公共属性，传 this 是因为 this 实现了 IDynamicSuperProperties
-        ThinkingAnalyticsAPI.SetDynamicSuperProperties(this);
-
-        // Track 简单事件
-        Scene scene = SceneManager.GetActiveScene();
-        ThinkingAnalyticsAPI.Track("unity_start", new Dictionary<string, object>() {
-            {"SCENE_NAME", scene.name}
-        });
-
-        if (scene.name == "scene1")
-        {
-            // 设置 SuperProperties
-            Dictionary<string, object> superProperties = new Dictionary<string, object>()
-            {
-                {"super_date", DateTime.Now.AddDays(1)},
-                {"super_string", "B1"},
-                {"super_bool", true},
-                {"super_number", 100}
-            };
-            ThinkingAnalyticsAPI.SetSuperProperties(superProperties);
-            Dictionary<string, object> response = ThinkingAnalyticsAPI.GetSuperProperties();
-
-            // 测试公共事件属性返回值
-            if (response != null)
-            {
-                foreach (KeyValuePair<string, object> kv in response)
-                {
-                    if (kv.Value is DateTime)
-                    {
-                        Debug.LogWarning("TA.TAExample - Returned super property date: " + ((DateTime)kv.Value).ToString("yyyy-MM-dd"));
-                    }
-                    if (kv.Value is bool)
-                    {
-                        Debug.LogWarning("TA.TAExample - Returned super property bool: " + Convert.ToBoolean(kv.Value));
-                    }
-
-                    Debug.LogWarning("TA.TAExample - Returned super property: " + kv.Key + ": " + kv.Value);
-                }
-
-            }
-        }
     }
 }

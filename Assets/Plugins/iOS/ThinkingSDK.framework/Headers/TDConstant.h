@@ -146,7 +146,12 @@ typedef NS_OPTIONS(NSInteger, ThinkingAnalyticsAutoTrackEventType) {
     /**
      APP 安装之后的首次打开
      */
-    ThinkingAnalyticsEventTypeAppInstall    = 1 << 5
+    ThinkingAnalyticsEventTypeAppInstall    = 1 << 5,
+    /**
+     以上全部 APP 事件
+     */
+    ThinkingAnalyticsEventTypeAll    = ThinkingAnalyticsEventTypeAppStart | ThinkingAnalyticsEventTypeAppEnd | ThinkingAnalyticsEventTypeAppClick | ThinkingAnalyticsEventTypeAppInstall | ThinkingAnalyticsEventTypeAppViewCrash | ThinkingAnalyticsEventTypeAppViewScreen
+
 };
 
 typedef NS_OPTIONS(NSInteger, ThinkingNetworkType) {

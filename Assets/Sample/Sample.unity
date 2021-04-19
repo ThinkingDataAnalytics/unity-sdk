@@ -175,15 +175,43 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: serverUrl
       value: http://test.com
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[0].serverUrl
-      value: https://receiver-ta-dev.thinkingdata.cn
+      value: https://receiver.ta.thinkingdata.cn
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[0].autoTrack
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[1].serverUrl
+      value: https://receiver-ta-dev.thinkingdata.cn
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[1].appid
+      value: 22e445595b0f42bd8c5fe35bc44b88d6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: enableLog
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[0].appid
+      value: 22e445595b0f42bd8c5fe35bc44b88d6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[0].mode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[0].timeZone
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3471622134282543401, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
@@ -217,7 +245,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 269916751}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: 0, y: 4, z: 0}
   m_LocalScale: {x: 1.3, y: 1.3, z: 1.3}
   m_Children: []
   m_Father: {fileID: 1608319071}
@@ -264,7 +292,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 1c8be89e83f14479081250d0c4806b85, type: 3}
-  m_Color: {r: 0.23137255, g: 0.3019608, b: 0.43529412, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -318,8 +346,8 @@ Camera:
   m_GameObject: {fileID: 541060113}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 1, g: 1, b: 1, a: 0.019607844}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.32941177, g: 0.45490196, b: 0.94509804, a: 0.019607844}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0

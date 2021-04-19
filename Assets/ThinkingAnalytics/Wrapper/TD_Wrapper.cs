@@ -7,7 +7,7 @@ namespace ThinkingAnalytics.Wrapper
 {
     public partial class ThinkingAnalyticsWrapper
     {
-#if (UNITY_EDITOR || (!UNITY_IOS && !UNITY_ANDROID))
+#if (!(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID|| UNITY_STANDALONE))
         private string uniqueId;
         private void init()
         {
@@ -18,6 +18,7 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper - calling enable_log with enableLog: " + enableLog);
         }
         private static void setVersionInfo(string libName, string version) {
+
         }
 
         private void identify(string uniqueId)
@@ -300,7 +301,8 @@ namespace ThinkingAnalytics.Wrapper
             {
                 TD_Log.w("ppp null...");
             }
-            
+            TD_PropertiesChecker.CheckString(taEvent.EventName);
+            TD_PropertiesChecker.CheckProperties(taEvent.Properties);
             track(taEvent);
         }
 

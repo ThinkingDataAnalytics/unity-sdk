@@ -12,7 +12,7 @@ FOUNDATION_EXTERN NSString *const VERSION;
 @property (nonatomic, copy) NSString *deviceId;
 @property (nonatomic, copy) NSString *appVersion;
 @property (nonatomic, strong) NSDictionary *automaticData;
-@property (nonatomic) BOOL isFirstOpen;
+@property (nonatomic, readonly) BOOL isFirstOpen;
 
 @property (nonatomic, copy) NSString *libName;
 @property (nonatomic, copy) NSString *libVersion;
@@ -20,6 +20,7 @@ FOUNDATION_EXTERN NSString *const VERSION;
 
 + (NSString *)libVersion;
 - (NSDictionary *)collectAutomaticProperties;
++ (NSString*)bundleId;
 
 @end
 
