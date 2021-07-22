@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.1.5
+    SDK VERSION:2.2.1
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -29,6 +29,13 @@ using System.Threading;
 using ThinkingAnalytics.Utils;
 using ThinkingAnalytics.Wrapper;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.Callbacks;
+using UnityEditor.iOS.Xcode;
+#endif
+using System.IO;
+using ThinkingAnalytics.TaException;
 
 namespace ThinkingAnalytics
 {
@@ -109,6 +116,73 @@ namespace ThinkingAnalytics
         }
     }
 
+    /// <summary>
+    /// 预置属性
+    /// </summary>
+    public class TDPresetProperties 
+    {
+		public static string BundleId 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#bundle_id"];}
+        }
+		public static string Carrier 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#carrier"];}
+        }
+
+		public static string DeviceId
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#device_id"];}
+        }
+		public static string DeviceModel 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#device_model"];}
+        }
+		public static string Manufacturer 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#manufacturer"];}
+        }
+		public static string NetworkType 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#network_type"];}
+        }
+		public static string OS 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#os"];}
+        }
+		public static string OSVersion 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#os_version"];}
+        }
+		public static int ScreenHeight 
+        { 
+            get {return (int)TDPresetProperties.PresetProperties["#screen_height"];}
+        }
+		public static int ScreenWidth 
+        { 
+            get {return (int)TDPresetProperties.PresetProperties["#screen_width"];}
+        }
+		public static string SystemLanguage 
+        { 
+            get {return (string)TDPresetProperties.PresetProperties["#system_language"];}
+        }
+		public static double ZoneOffset 
+        { 
+            get {return (double)TDPresetProperties.PresetProperties["#zone_offset"];}
+        }
+		public static Dictionary<string, object> PresetProperties 
+        {
+            get { return TDPresetProperties.ToEventPresetProperties();} 
+        }
+
+        // 返回事件预置属性的Key以"#"开头，不建议直接作为事件的Property使用
+        public static Dictionary<string, object> ToEventPresetProperties()
+        {
+            return ThinkingAnalyticsAPI.GetPresetProperties();
+        }
+         
+    }
+
     // 自动采集事件类型
     [Flags]
     public enum AUTO_TRACK_EVENTS
@@ -121,7 +195,7 @@ namespace ThinkingAnalytics
         ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH
     }
 
-    public class ThinkingAnalyticsAPI : MonoBehaviour
+    public class ThinkingAnalyticsAPI : MonoBehaviour, TaExceptionHandler
     {
         #region settings
         [System.Serializable]
@@ -204,7 +278,52 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.1.5";
+        public readonly string VERSION = "2.2.1";
+
+        private static ThinkingAnalyticsAPI taAPIInstance;
+
+        //配置Xcode选项
+        #if UNITY_EDITOR
+        //[PostProcessBuild]
+        [PostProcessBuildAttribute(88)]
+        public static void onPostProcessBuild(BuildTarget target, string targetPath)
+        {            
+            if (target != BuildTarget.iOS)
+            {
+                Debug.LogWarning("Target is not iPhone. XCodePostProcess will not run");
+                return;
+            }
+        
+            string projPath = Path.GetFullPath(targetPath) + "/Unity-iPhone.xcodeproj/project.pbxproj";
+
+            UnityEditor.iOS.Xcode.PBXProject proj = new UnityEditor.iOS.Xcode.PBXProject();
+            proj.ReadFromFile(projPath);
+            #if UNITY_2019_3_OR_NEWER
+            string targetGuid = proj.GetUnityFrameworkTargetGuid();
+            #else
+            string targetGuid = proj.TargetGuidByName(PBXProject.GetUnityTargetName());
+            #endif
+
+            //Build Property
+            proj.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");//BitCode  NO
+            proj.SetBuildProperty(targetGuid, "GCC_ENABLE_OBJC_EXCEPTIONS", "YES");//Enable Objective-C Exceptions
+
+            string[] headerSearchPathsToAdd = { "$(SRCROOT)/Libraries/Plugins/iOS/ThinkingSDK/Source/main", "$(SRCROOT)/Libraries/Plugins/iOS/ThinkingSDK/Source/common" };
+            proj.UpdateBuildProperty(targetGuid, "HEADER_SEARCH_PATHS", headerSearchPathsToAdd, null);// Header Search Paths
+
+            //Add Frameworks
+            proj.AddFrameworkToProject(targetGuid,"WebKit.framework", true);
+            proj.AddFrameworkToProject(targetGuid,"CoreTelephony.framework", true);
+            proj.AddFrameworkToProject(targetGuid,"SystemConfiguration.framework", true);
+            proj.AddFrameworkToProject(targetGuid,"Security.framework", true);
+
+            //Add Lib
+            proj.AddFileToBuild(targetGuid, proj.AddFile("usr/lib/libsqlite3.tbd", "libsqlite3.tbd", PBXSourceTree.Sdk));
+            proj.AddFileToBuild(targetGuid, proj.AddFile("usr/lib/libz.tbd", "libz.tbd", PBXSourceTree.Sdk));
+
+            proj.WriteToFile (projPath);
+        }        
+        #endif
 
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID
@@ -280,7 +399,21 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).EnableAutoTrack(events);
+
+                //C#异常捕获提前，包含所有端
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
+                {
+                    ThinkingSDKExceptionHandler eHandler = new ThinkingSDKExceptionHandler();
+                    eHandler.SetTaExceptionHandler(taAPIInstance);
+                    eHandler.RegisterTaExceptionHandler();
+                }
             }
+        }
+
+        /// 异常捕获回调
+        public void InvokeTaExceptionHandler(string eventName, Dictionary<string, object> properties)
+        {
+            Track(eventName, properties);
         }
 
         /// <summary>
@@ -384,6 +517,20 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).ClearSuperProperty();
             }
+        }
+
+        /// <summary>
+        /// 返回事件预置属性，Key以"#"开头，不建议直接作为事件的Property使用
+        /// </summary>
+        /// <returns>事件预置属性</returns>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static Dictionary<string, object> GetPresetProperties(string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                return getInstance(appId).GetPresetProperties();
+            }
+            return null;
         }
 
         /// <summary>
@@ -735,6 +882,7 @@ namespace ThinkingAnalytics
 
         void Awake()
         {
+            taAPIInstance = this;
             #if DISABLE_TA
             tracking_enabled = false;
             #endif

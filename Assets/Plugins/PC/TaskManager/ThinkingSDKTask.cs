@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using ThinkingSDK.PC.Utils;
 using ThinkingSDK.PC.Request;
 using ThinkingSDK.PC.Constant;

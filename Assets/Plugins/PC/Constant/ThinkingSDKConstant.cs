@@ -93,7 +93,10 @@ namespace ThinkingSDK.PC.Constant
         public static readonly string INSTALL_EVENT = "ta_app_install";
         //启动事件
         public static readonly string START_EVENT = "ta_app_start";
-
+        //崩溃事件
+        public static readonly string CRASH_EVENT = "ta_app_crash";
+        //崩溃原因
+        public static readonly string CRASH_REASON = @"#app_crashed_reason";
 
         
 

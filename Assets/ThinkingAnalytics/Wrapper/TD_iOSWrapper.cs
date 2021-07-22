@@ -34,6 +34,8 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern string get_super_properties(string app_id);
         [DllImport("__Internal")]
+        private static extern string get_preset_properties(string app_id);
+        [DllImport("__Internal")]
         private static extern void time_event(string app_id, string event_name);
         [DllImport("__Internal")]
         private static extern void user_set(string app_id, string properties);
@@ -222,6 +224,12 @@ namespace ThinkingAnalytics.Wrapper
         {
             string superPropertiesString = get_super_properties(token.appid);
             return TD_MiniJSON.Deserialize(superPropertiesString);
+        }
+
+        private Dictionary<string, object> getPresetProperties()
+        {
+            string presetPropertiesString = get_preset_properties(token.appid);
+            return TD_MiniJSON.Deserialize(presetPropertiesString);
         }
 
         private void timeEvent(string eventName)

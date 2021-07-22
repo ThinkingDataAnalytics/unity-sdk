@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using ThinkingSDK.PC.Config;
 using ThinkingSDK.PC.Constant;
 using ThinkingSDK.PC.DataModel;
@@ -188,7 +187,6 @@ namespace ThinkingSDK.PC.Main
             {
                 Track(ThinkingSDKConstant.START_EVENT);
             }
-
         }
         public void Track(string eventName)
         {
@@ -337,6 +335,24 @@ namespace ThinkingSDK.PC.Main
                 this.mSupperProperties = ThinkingSDKJSON.Deserialize(propertiesStr);
             }
             return this.mSupperProperties;
+        }
+        public  Dictionary<string, object> PresetProperties()
+        {
+            Dictionary<string, object> presetProperties = new Dictionary<string, object>();
+            presetProperties[ThinkingSDKConstant.DEVICE_ID] = ThinkingSDKDeviceInfo.DeviceID();
+            presetProperties[ThinkingSDKConstant.CARRIER] = ThinkingSDKDeviceInfo.Carrier();
+            presetProperties[ThinkingSDKConstant.OS] = ThinkingSDKDeviceInfo.OS();
+            presetProperties[ThinkingSDKConstant.SCREEN_HEIGHT] = ThinkingSDKDeviceInfo.ScreenHeight();
+            presetProperties[ThinkingSDKConstant.SCREEN_WIDTH] = ThinkingSDKDeviceInfo.ScreenWidth();
+            presetProperties[ThinkingSDKConstant.MANUFACTURE] = ThinkingSDKDeviceInfo.Manufacture();
+            presetProperties[ThinkingSDKConstant.DEVICE_MODEL] = ThinkingSDKDeviceInfo.DeviceModel();
+            presetProperties[ThinkingSDKConstant.SYSTEM_LANGUAGE] = ThinkingSDKDeviceInfo.MachineLanguage();
+            presetProperties[ThinkingSDKConstant.OS_VERSION] = ThinkingSDKDeviceInfo.OSVersion();
+            presetProperties[ThinkingSDKConstant.NETWORK_TYPE] = ThinkingSDKDeviceInfo.NetworkType();
+            presetProperties[ThinkingSDKConstant.APP_BUNDLEID] = ThinkingSDKAppInfo.AppIdentifier();
+            presetProperties[ThinkingSDKConstant.ZONE_OFFSET] = ThinkingSDKUtil.ZoneOffset(DateTime.Now, this.mConfig.TimeZone());
+            
+            return presetProperties;
         }
         public  void ClearSuperProperties()
         {

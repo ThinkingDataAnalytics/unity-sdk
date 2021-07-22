@@ -1,6 +1,11 @@
+#if __has_include(<ThinkingSDK/ThinkingAnalyticsSDK.h>)
 #import <ThinkingSDK/ThinkingAnalyticsSDK.h>
-#import <pthread.h>
 #import <ThinkingSDK/TDDeviceInfo.h>
+#else
+#import <ThinkingAnalyticsSDK.h>
+#import <TDDeviceInfo.h>
+#endif
+#import <pthread.h>
 
 #define NETWORK_TYPE_DEFAULT 1
 #define NETWORK_TYPE_WIFI 2
@@ -203,6 +208,16 @@ void clear_super_properties(const char *app_id) {
 const char *get_super_properties(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *property_dict = [getInstance(app_id_string) currentSuperProperties];
+    // nsdictionary --> nsdata
+    NSData *data = [NSJSONSerialization dataWithJSONObject:property_dict options:kNilOptions error:nil];
+    // nsdata -> nsstring
+    NSString *jsonString = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+    return strdup([jsonString UTF8String]);
+}
+
+const char *get_preset_properties(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *property_dict = [[getInstance(app_id_string) getPresetProperties] toEventPresetProperties];
     // nsdictionary --> nsdata
     NSData *data = [NSJSONSerialization dataWithJSONObject:property_dict options:kNilOptions error:nil];
     // nsdata -> nsstring

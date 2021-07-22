@@ -33,6 +33,12 @@ namespace ThinkingSDK.PC.Main
             return instance;
         }
 
+        public static ThinkingSDKInstance CurrentInstance()
+        {
+            ThinkingSDKInstance instance = Instances[CurrentAppid];
+            return instance;
+        }
+
         public static ThinkingSDKInstance Init(string appid, string server, ThinkingSDKConfig config = null)
         {
             if (ThinkingSDKUtil.IsEmptyString(appid))
@@ -142,6 +148,11 @@ namespace ThinkingSDK.PC.Main
            return GetInstance(appid).SuperProperties();
         }
         
+        public static Dictionary<string, object> PresetProperties(string appid="")
+        {
+            return GetInstance(appid).PresetProperties();
+        }
+
         public static void ClearSuperProperties(string appid= "")
         {
             GetInstance(appid).ClearSuperProperties();

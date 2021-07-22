@@ -28,6 +28,8 @@ namespace ThinkingSDK.PC.Request
 
         public override void SendData(ResponseHandle responseHandle)
         {
+            ServicePointManager.ServerCertificateValidationCallback = MyRemoteCertificateValidationCallback;
+
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(this.URL());
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";

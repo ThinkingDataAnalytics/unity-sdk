@@ -20,8 +20,12 @@ namespace ThinkingSDK.PC.Time
         {
             long nowTime = Environment.TickCount;
             long timestamp = nowTime - this.mSystemElapsedRealtime + this.mStartTime;
-            DateTime dt = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).LocalDateTime;
-            return dt;
+            // DateTime dt = DateTimeOffset.FromUnixTimeMilliseconds(timestamp).LocalDateTime;
+            // return dt;
+            
+            DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            Debug.Log("now dt is " + dt.AddMilliseconds(timestamp));
+            return dt.AddMilliseconds(timestamp);
         }
 
     }

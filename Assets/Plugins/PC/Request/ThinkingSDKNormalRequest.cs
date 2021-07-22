@@ -28,6 +28,8 @@ namespace ThinkingSDK.PC.Request
         public override void SendData(ResponseHandle responseHandle)
         {
 
+            ServicePointManager.ServerCertificateValidationCallback = MyRemoteCertificateValidationCallback;
+
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(this.URL());
             request.Method = "POST";
             request.ContentType = "text/plain";
@@ -44,6 +46,7 @@ namespace ThinkingSDK.PC.Request
             string content = ThinkingSDKJSON.Serialize(param);
             string encodeContent = Encode(content);
             byte[] contentCompressed = Encoding.UTF8.GetBytes(encodeContent);
+            request.ContentLength = contentCompressed.Length;
             Stream requestStream = null;
             HttpWebResponse response = null;
             Stream responseStream = null;

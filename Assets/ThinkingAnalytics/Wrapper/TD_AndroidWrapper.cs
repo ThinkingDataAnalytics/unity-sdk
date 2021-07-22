@@ -204,6 +204,18 @@ namespace ThinkingAnalytics.Wrapper
             return result;
         }
 
+        private Dictionary<string, object> getPresetProperties()
+        {
+            Dictionary<string, object> result = null;
+            AndroidJavaObject presetPropertyObject = instance.Call<AndroidJavaObject>("getPresetProperties").Call<AndroidJavaObject>("toEventPresetProperties");
+            if (null != presetPropertyObject)
+            {
+                string presetPropertiesString = presetPropertyObject.Call<string>("toString");
+                result = TD_MiniJSON.Deserialize(presetPropertiesString);
+            }
+            return result;
+        }
+
         private void timeEvent(string eventName)
         {
             instance.Call("timeEvent", eventName);

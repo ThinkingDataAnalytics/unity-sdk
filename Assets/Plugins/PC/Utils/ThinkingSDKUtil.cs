@@ -59,14 +59,43 @@ namespace ThinkingSDK.PC.Utils
         //获取时区偏移
         public static double ZoneOffset(DateTime dateTime, TimeZoneInfo timeZone)
         {
-            return timeZone.GetUtcOffset(dateTime).TotalHours;
+            TimeSpan timeSpan = timeZone.BaseUtcOffset;
+            try
+            {
+                if (timeZone.IsDaylightSavingTime(dateTime))
+                {
+                    TimeSpan timeSpan1 = TimeSpan.FromHours(1);
+                    timeSpan = timeSpan.Add(timeSpan1);
+                }
+            }
+            catch (Exception e)
+            {
+                ThinkingSDKLogger.Print("ZoneOffset: " + e.Message);
+            }
+            return timeSpan.TotalHours;
         }
         //时间格式化
         public static string FormatDate(DateTime dateTime, TimeZoneInfo timeZone)
         {
            
-          DateTime date =  TimeZoneInfo.ConvertTime(dateTime,timeZone);
-          return string.Format(ThinkingSDKConstant.TIME_PATTERN, date);
+            DateTime univDateTime = dateTime.ToUniversalTime();
+            TimeSpan timeSpan = timeZone.BaseUtcOffset;
+            try
+            {
+                if (timeZone.IsDaylightSavingTime(dateTime))
+                {
+                    TimeSpan timeSpan1 = TimeSpan.FromHours(1);
+                    timeSpan = timeSpan.Add(timeSpan1);
+                }
+            }
+            catch (Exception e)
+            {
+                ThinkingSDKLogger.Print("FormatDate: " + e.Message);
+            }
+
+            DateTime dateNew = univDateTime + timeSpan;
+
+            return string.Format(ThinkingSDKConstant.TIME_PATTERN, dateNew);
         }
         //向Dictionary添加Dictionary
         public static void AddDictionary(Dictionary<string, object> originalDic, Dictionary<string, object> subDic)

@@ -267,6 +267,17 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         {
             ThinkingAnalyticsAPI.SetDynamicSuperProperties(this);
         }
+
+        GUILayout.Space(20);
+        if (GUILayout.Button("获取预置属性", GUILayout.Height(Height)))
+        {
+            Dictionary<string, object> eventPresetProperties = ThinkingAnalyticsAPI.GetPresetProperties();
+            foreach (KeyValuePair<string, object> kv in eventPresetProperties)
+            {
+                Debug.Log("PresetProperties: " + kv.Key + " = " + kv.Value);
+            }
+            Debug.Log("TDPresetProperties.DeviceModel: " + TDPresetProperties.DeviceModel);
+        }
         GUILayout.EndHorizontal();
         GUILayout.EndScrollView();
         GUILayout.EndArea();

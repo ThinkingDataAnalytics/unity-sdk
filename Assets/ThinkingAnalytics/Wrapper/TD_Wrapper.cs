@@ -81,6 +81,11 @@ namespace ThinkingAnalytics.Wrapper
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling getSuperProperties");
             return null;
         }
+        private Dictionary<string, object> getPresetProperties()
+        {
+            TD_Log.d("TA.Wrapper(" + token.appid + ") - calling getPresetProperties");
+            return null;
+        }
         private void timeEvent(string eventName)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling timeEvent with eventName: " + eventName);
@@ -333,6 +338,11 @@ namespace ThinkingAnalytics.Wrapper
         public Dictionary<string, object> GetSuperProperties()
         {
             return getSuperProperties();
+        }
+
+        public Dictionary<string, object> GetPresetProperties()
+        {
+            return getPresetProperties();
         }
 
         public void UserSet(Dictionary<string, object> properties)

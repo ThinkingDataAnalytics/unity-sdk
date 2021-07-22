@@ -161,6 +161,10 @@ namespace ThinkingAnalytics.Wrapper
             return ThinkingPCSDK.SuperProperties(token.appid);
         }
 
+        private Dictionary<string, object> getPresetProperties()
+        {
+            return ThinkingPCSDK.PresetProperties(token.appid);
+        }
         private void timeEvent(string eventName)
         {
             ThinkingPCSDK.TimeEvent(eventName,token.appid);
