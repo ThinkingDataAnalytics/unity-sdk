@@ -19,8 +19,13 @@ namespace ThinkingSDK.PC.TaskManager
         static Queue<Thread> _threadQueue = new Queue<Thread>(); //队列
         static EventWaitHandle _waitHandle = new AutoResetEvent(false); //通知Work线程的信号
 
+        private static ThinkingSDKTask mSingleTask = new ThinkingSDKTask();
 
-        public ThinkingSDKTask() 
+        public static ThinkingSDKTask SingleTask()
+        {
+            return mSingleTask;
+        }
+        private ThinkingSDKTask() 
         {
             Thread newThread = new Thread(() => {
                 while (true) 

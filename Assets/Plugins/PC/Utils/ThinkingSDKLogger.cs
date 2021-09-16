@@ -16,8 +16,7 @@ namespace ThinkingSDK.PC.Utils
         {
             if (ThinkingSDKPublicConfig.IsPrintLog())
             {
-                Debug.Log("[ThinkingSDK Unity_PC_V"+ ThinkingSDKAppInfo.LibVersion() + "]");
-                Debug.Log(str);
+                Debug.Log("[ThinkingSDK Unity_PC_V"+ ThinkingSDKAppInfo.LibVersion() + "] " + str);
             }   
         }
     }

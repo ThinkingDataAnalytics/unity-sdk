@@ -241,6 +241,16 @@ namespace ThinkingSDK.PC.Main
             GetInstance(appid).OptTrackingAndDeleteUser();
         }
         /// <summary>
+        /// 创建轻实例
+        /// </summary>
+        /// <returns></returns>
+        public static ThinkingSDKInstance CreateLightInstance(string lightAppid)
+        {
+            ThinkingSDKInstance lightInstance = ThinkingSDKInstance.CreateLightInstance();
+            Instances[lightAppid] = lightInstance;
+            return lightInstance;
+        }
+        /// <summary>
         /// 通过时间戳校准时间
         /// </summary>
         /// <param name="timestamp"></param>
@@ -258,7 +268,11 @@ namespace ThinkingSDK.PC.Main
         /// <param name="ntpServer"></param>
         public static void CalibrateTimeWithNtp(string ntpServer)
         {
-
+            ThinkingSDKNTPCalibration ntpCalibration = new ThinkingSDKNTPCalibration(ntpServer);
+            foreach (KeyValuePair<string, ThinkingSDKInstance> kv in Instances)
+            {
+                kv.Value.SetTimeCalibratieton(ntpCalibration);
+            }
         }
 
         /// <summary>

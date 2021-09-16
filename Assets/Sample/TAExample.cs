@@ -3,6 +3,7 @@ using ThinkingAnalytics;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using System;
+using System.Threading;
 
 public class TAExample : MonoBehaviour, IDynamicSuperProperties
 {
@@ -23,7 +24,10 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
            {"DynamicProperty", DateTime.Now}
        };
     }
-    void Awake()
+    private void Awake()
+    {
+    }
+    private void Start()
     {
     }
 
@@ -32,21 +36,33 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         scrollPosition = GUILayout.BeginScrollView(new Vector2(0, 0), GUILayout.Width(Screen.width - 2 * Margin), GUILayout.Height(Screen.height - 100));
         GUIStyle style = GUI.skin.label;
         style.fontSize = 25;
-        GUILayout.Label("设置用户ID",style);
+        GUILayout.Label("初始化/设置用户ID",style);
 
         GUIStyle buttonStyle = GUI.skin.button;
         buttonStyle.fontSize = 20;
         GUILayout.BeginHorizontal(GUI.skin.box,GUILayout.Height(Height));
-        if (GUILayout.Button("设置账号ID", GUILayout.Height(Height)))
+        if (GUILayout.Button("手动初始化", GUILayout.Height(Height)))
+        {
+            string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
+            string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
+            ThinkingAnalyticsAPI.TAMode mode = ThinkingAnalyticsAPI.TAMode.NORMAL;
+            ThinkingAnalyticsAPI.TATimeZone timeZone = ThinkingAnalyticsAPI.TATimeZone.Local;
+            ThinkingAnalyticsAPI.Token token = new ThinkingAnalyticsAPI.Token(appId, serverUrl, mode, timeZone);
+            ThinkingAnalyticsAPI.Token[] tokens = new ThinkingAnalyticsAPI.Token[1];
+            tokens[0] = token;
+            ThinkingAnalyticsAPI.StartThinkingAnalytics(tokens);
+            // 开启自动采集事件
+            ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("设设置账号ID", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.Login("TA");
         }
-
         GUILayout.Space(20);
         if (GUILayout.Button("设置访客ID", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.Identify("TA_Distinct1");
-            
         }
         GUILayout.Space(20);
         if (GUILayout.Button("清除账号ID", GUILayout.Height(Height)))
@@ -109,8 +125,8 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         if (GUILayout.Button("记录事件时长", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.TimeEvent("TATimeEvent");
-            Invoke("TrackTimeEvent", 3);
-
+            Thread.Sleep(1000);
+            ThinkingAnalyticsAPI.Track("TATimeEvent");
         }
 
         GUILayout.Space(20);
@@ -122,6 +138,15 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             properties["proper3"] = true;
             properties["proper4"] = DateTime.Now;
             ThinkingAnalyticsAPI.Track("TA_001", properties, DateTime.Now.AddHours(-1));
+        }
+
+        GUILayout.Space(20);
+        if (GUILayout.Button("轻实例", GUILayout.Height(Height)))
+        {
+            // 创建轻实例，返回轻实例的 token （类似于 APP ID）
+            string lightToken = ThinkingAnalyticsAPI.CreateLightInstance();
+            ThinkingAnalyticsAPI.Login("light_account", lightToken);
+            ThinkingAnalyticsAPI.Track("light_event", lightToken);
         }
         GUILayout.EndHorizontal();
 
@@ -219,6 +244,9 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         {
             //时间戳,单位毫秒 对应时间为1608782412000 2020-12-24 12:00:12
             ThinkingAnalyticsAPI.CalibrateTime(1608782412000);
+
+            //NTP 时间服务器校准，如：time.apple.com
+            //ThinkingAnalyticsAPI.CalibrateTimeWithNtp("time.apple.com");
         }
         GUILayout.EndHorizontal();
 
@@ -271,20 +299,17 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         GUILayout.Space(20);
         if (GUILayout.Button("获取预置属性", GUILayout.Height(Height)))
         {
-            Dictionary<string, object> eventPresetProperties = ThinkingAnalyticsAPI.GetPresetProperties();
+            TDPresetProperties presetProperties = ThinkingAnalyticsAPI.GetPresetProperties();
+            string deviceModel = presetProperties.DeviceModel;
+            Debug.Log("TDPresetProperties DeviceModel is " + deviceModel);
+            Dictionary<string, object> eventPresetProperties = presetProperties.ToEventPresetProperties();
             foreach (KeyValuePair<string, object> kv in eventPresetProperties)
             {
-                Debug.Log("PresetProperties: " + kv.Key + " = " + kv.Value);
+                Debug.Log("eventPresetProperties: " + kv.Key + " = " + kv.Value);
             }
-            Debug.Log("TDPresetProperties.DeviceModel: " + TDPresetProperties.DeviceModel);
         }
         GUILayout.EndHorizontal();
         GUILayout.EndScrollView();
         GUILayout.EndArea();
-    }
-    private void Start()
-    {
-        // 开启自动采集事件
-        ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
     }
 }

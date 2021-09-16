@@ -61,23 +61,21 @@ namespace ThinkingSDK.PC.Request
                         ThinkingSDKLogger.Print("Response:=" + responseResult);
                         Dictionary<string, object> result = ThinkingSDKJSON.Deserialize(responseResult);
                         int errorLevel = Convert.ToInt32(result["errorLevel"]);
-                        if (errorLevel == -1)
-                        {
-                            if (mDryRun == 1)//DebugOnly
-                            {
-                                ThinkingSDKLogger.Print("The data will be discarded due to this device is not allowed to debug for: APPID = " + APPID());
-                                responseHandle();
-                                return;
-                            }
-                            else
-                            {
-                                ThinkingSDKConfig config = ThinkingSDKConfig.GetInstance(APPID(), this.URL());
-                                config.SetMode(Mode.NORMAL);
-                                ThinkingSDKLogger.Print("Fallback to normal mode due to the device is not allowed to debug for: APPID=" + APPID());
-                            }
-                        }
                         if (errorLevel != 0)
                         {
+                            if (errorLevel == -1)
+                            {
+                                if (mDryRun == 1)//DebugOnly
+                                {
+                                    ThinkingSDKLogger.Print("The data will be discarded due to this device is not allowed to debug for: APPID = " + APPID());
+                                }
+                                else
+                                {
+                                    ThinkingSDKConfig config = ThinkingSDKConfig.GetInstance(APPID(), this.URL());
+                                    config.SetMode(Mode.NORMAL);
+                                    ThinkingSDKLogger.Print("Fallback to normal mode due to the device is not allowed to debug for: APPID=" + APPID());
+                                }
+                            }
                             //if (result.ContainsKey("errorProperties"))
                             //{
                             //    object errorProperties = result["errorProperties"];

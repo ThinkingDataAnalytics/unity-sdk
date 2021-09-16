@@ -49,7 +49,14 @@ namespace ThinkingAnalytics.Wrapper
             ThinkingSDKConfig config = ThinkingSDKConfig.GetInstance(token.appid,token.serverUrl);
             if (!string.IsNullOrEmpty(token.getTimeZoneId()))
             {
-                config.SetTimeZone(TimeZoneInfo.FindSystemTimeZoneById(token.getTimeZoneId()));
+                try
+                {
+                    config.SetTimeZone(TimeZoneInfo.FindSystemTimeZoneById(token.getTimeZoneId()));
+                }
+                catch (Exception e)
+                {
+                    //ThinkingSDKLogger.Print("TimeZoneInfo set failed : " + e.Message);
+                }
             }
             if (token.mode == ThinkingAnalyticsAPI.TAMode.DEBUG)
             {
@@ -270,7 +277,9 @@ namespace ThinkingAnalytics.Wrapper
 
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
-            return this;
+            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken, false);
+            ThinkingPCSDK.CreateLightInstance(delegateToken.appid);
+            return result;
         }
 
         private string getTimeString(DateTime dateTime)
@@ -305,7 +314,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private static void calibrateTimeWithNtp(string ntpServer)
         {
-           
+            ThinkingPCSDK.CalibrateTimeWithNtp(ntpServer);
         }
 #endif
     }

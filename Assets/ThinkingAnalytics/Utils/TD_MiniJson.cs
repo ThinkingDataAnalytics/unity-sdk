@@ -563,7 +563,7 @@ namespace ThinkingAnalytics.Utils
                 // Previously floats and doubles lost precision too.
                 if (value is float)
                 {
-                    builder.Append(((float)value).ToString("R"));
+                    builder.Append(((float)value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
                 }
                 else if (value is int
                   || value is uint

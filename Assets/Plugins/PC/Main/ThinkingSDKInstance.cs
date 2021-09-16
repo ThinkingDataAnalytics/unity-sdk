@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using ThinkingSDK.PC.Config;
 using ThinkingSDK.PC.Constant;
 using ThinkingSDK.PC.DataModel;
@@ -32,17 +31,18 @@ namespace ThinkingSDK.PC.Main
     {
         private string mAppid;
         private string mServer;
-        private string mDistinctID;
-        private string mAccountID;
+        protected string mDistinctID;
+        protected string mAccountID;
         private bool mOptTracking = true;
         private Dictionary<string, object> mTimeEvents = new Dictionary<string, object>();
         private bool mEnableTracking = true;
-        private Dictionary<string, object> mSupperProperties = new Dictionary<string, object>();
+        protected Dictionary<string, object> mSupperProperties = new Dictionary<string, object>();
         private ThinkingSDKConfig mConfig;
         private ThinkingSDKBaseRequest mRequest;
         private ThinkingSDKTimeCalibration mTimeCalibration;
         private IDynamicSuperProperties mDynamicProperties;
-        private ThinkingSDKTask mTask = new ThinkingSDKTask();
+        private ThinkingSDKTask mTask = ThinkingSDKTask.SingleTask();
+        private static ThinkingSDKInstance mCurrentInstance;
 
         ResponseHandle mResponseHandle;
         public void SetTimeCalibratieton(ThinkingSDKTimeCalibration timeCalibration)
@@ -78,6 +78,7 @@ namespace ThinkingSDK.PC.Main
             {
                 this.mConfig = config;
             }
+            this.mConfig.UpdateConfig();
             this.mAppid = appid;
             this.mServer = server;
             if (this.mConfig.GetMode() == Mode.NORMAL)
@@ -93,6 +94,12 @@ namespace ThinkingSDK.PC.Main
                 }
             }
             DefaultData();
+            mCurrentInstance = this;
+        }
+        public static ThinkingSDKInstance CreateLightInstance()
+        {
+            ThinkingSDKInstance lightInstance = new LightThinkingSDKInstance(mCurrentInstance.mAppid, mCurrentInstance.mServer, mCurrentInstance.mConfig);
+            return lightInstance;
         }
         public ThinkingSDKTimeInter GetTime(DateTime dateTime)
         {
@@ -117,7 +124,7 @@ namespace ThinkingSDK.PC.Main
             return time;
         }
         //设置访客ID
-        public void Identifiy(string distinctID)
+        public virtual void Identifiy(string distinctID)
         {
             if (IsPaused())
             {
@@ -129,7 +136,7 @@ namespace ThinkingSDK.PC.Main
                 ThinkingSDKFile.SaveData(mAppid, ThinkingSDKConstant.DISTINCT_ID,distinctID);
             }
         }
-        public string DistinctId()
+        public virtual string DistinctId()
         {
           
             this.mDistinctID = (string)ThinkingSDKFile.GetData(this.mAppid,ThinkingSDKConstant.DISTINCT_ID, typeof(string));
@@ -142,7 +149,7 @@ namespace ThinkingSDK.PC.Main
             return this.mDistinctID;
         }
 
-        public void Login(string accountID)
+        public virtual void Login(string accountID)
         {
             if (IsPaused())
             {
@@ -154,12 +161,12 @@ namespace ThinkingSDK.PC.Main
                 ThinkingSDKFile.SaveData(mAppid, ThinkingSDKConstant.ACCOUNT_ID, accountID);
             }
         }
-        public string AccountID()
+        public virtual string AccountID()
         {
             this.mAccountID = (string)ThinkingSDKFile.GetData(this.mAppid,ThinkingSDKConstant.ACCOUNT_ID, typeof(string));
             return this.mAccountID;
         }
-        public void Logout()
+        public virtual void Logout()
         {
             if (IsPaused())
             {
@@ -171,7 +178,7 @@ namespace ThinkingSDK.PC.Main
         }
        
         //TODO
-        public  void EnableAutoTrack(AUTO_TRACK_EVENTS events)
+        public virtual void EnableAutoTrack(AUTO_TRACK_EVENTS events)
         {
             if ((events & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
             {
@@ -261,7 +268,11 @@ namespace ThinkingSDK.PC.Main
             }
             data.SetDistinctID(this.mDistinctID);
 
-
+            if (this.mConfig.IsDisabledEvent(data.EventName()))
+            {
+                Debug.Log("disabled Event: " + data.EventName());
+                return;
+            }
             IList<Dictionary<string, object>> list = new List<Dictionary<string, object>>();
             list.Add(data.ToDictionary());
             if (this.mConfig.GetMode() == Mode.NORMAL && this.mRequest.GetType() != typeof(ThinkingSDKNormalRequest))
@@ -281,7 +292,7 @@ namespace ThinkingSDK.PC.Main
         /// <summary>
         /// 发送数据
         /// </summary>
-        public void Flush()
+        public virtual void Flush()
         {
             mTask.SyncInvokeAllTask();
         }
@@ -292,7 +303,7 @@ namespace ThinkingSDK.PC.Main
             SendData(analyticsEvent);
         }
 
-        public void SetSuperProperties(Dictionary<string, object> superProperties)
+        public virtual void SetSuperProperties(Dictionary<string, object> superProperties)
         {
             if (IsPaused())
             {
@@ -308,7 +319,7 @@ namespace ThinkingSDK.PC.Main
             this.mSupperProperties = properties;
             ThinkingSDKFile.SaveData(this.mAppid, ThinkingSDKConstant.SUPER_PROPERTY, ThinkingSDKJSON.Serialize(this.mSupperProperties));
         }
-        public void UnsetSuperProperty(string propertyKey)
+        public virtual void UnsetSuperProperty(string propertyKey)
         {
             if (IsPaused())
             {
@@ -327,7 +338,7 @@ namespace ThinkingSDK.PC.Main
             this.mSupperProperties = properties;
             ThinkingSDKFile.SaveData(this.mAppid, ThinkingSDKConstant.SUPER_PROPERTY, ThinkingSDKJSON.Serialize(this.mSupperProperties));
         }
-        public  Dictionary<string, object> SuperProperties()
+        public virtual Dictionary<string, object> SuperProperties()
         {
             string propertiesStr = (string)ThinkingSDKFile.GetData(this.mAppid, ThinkingSDKConstant.SUPER_PROPERTY, typeof(string));
             if (!string.IsNullOrEmpty(propertiesStr))
@@ -354,7 +365,7 @@ namespace ThinkingSDK.PC.Main
             
             return presetProperties;
         }
-        public  void ClearSuperProperties()
+        public virtual void ClearSuperProperties()
         {
             if (IsPaused())
             {
@@ -457,9 +468,14 @@ namespace ThinkingSDK.PC.Main
             }
             this.mDynamicProperties = dynamicSuperProperties;
         }
-        private bool IsPaused()
+        protected bool IsPaused()
         {
-            return !mEnableTracking || !mOptTracking;
+            bool mIsPaused = !mEnableTracking || !mOptTracking;
+            if (mIsPaused)
+            {
+                ThinkingSDKLogger.Print("已暂停/已停止数据上报");
+            }
+            return mIsPaused;
         }
         /*
         停止或开启数据上报,默认是开启状态,设置为停止时还会清空本地的访客ID,账号ID,静态公共属性

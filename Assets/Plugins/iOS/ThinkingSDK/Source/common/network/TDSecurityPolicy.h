@@ -1,5 +1,11 @@
 #import <Foundation/Foundation.h>
+
+#if __has_include(<ThinkingSDK/TDConstant.h>)
+#import <ThinkingSDK/TDConstant.h>
+#else
 #import "TDConstant.h"
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface TDSecurityPolicy: NSObject<NSCopying>

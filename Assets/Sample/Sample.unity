@@ -131,6 +131,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -141,6 +145,10 @@ PrefabInstance:
     - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: m_LocalRotation.x
@@ -155,14 +163,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: m_RootOrder
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 57277738888238098, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
@@ -175,7 +175,7 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: tokens.Array.size
+      propertyPath: enableLog
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
@@ -183,36 +183,44 @@ PrefabInstance:
       value: http://test.com
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: tokens.Array.data[0].serverUrl
-      value: https://receiver.ta.thinkingdata.cn
-      objectReference: {fileID: 0}
-    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: tokens.Array.data[0].autoTrack
+      propertyPath: startManually
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: tokens.Array.data[1].serverUrl
-      value: https://receiver-ta-dev.thinkingdata.cn
-      objectReference: {fileID: 0}
-    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: tokens.Array.data[1].appid
-      value: 22e445595b0f42bd8c5fe35bc44b88d6
-      objectReference: {fileID: 0}
-    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: enableLog
+      propertyPath: tokens.Array.size
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
-      propertyPath: tokens.Array.data[0].appid
-      value: 22e445595b0f42bd8c5fe35bc44b88d6
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[0].mode
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[1].mode
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[0].appid
+      value: 22e445595b0f42bd8c5fe35bc44b88d6
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[1].appid
+      value: b444dc7dee6747bf92c35c09277ab7ef
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[0].timeZone
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[0].autoTrack
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[0].serverUrl
+      value: https://receiver-ta-dev.thinkingdata.cn
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[1].serverUrl
+      value: https://global-ta.slots-patch.com
       objectReference: {fileID: 0}
     - target: {fileID: 3471622134282543401, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: m_Name
@@ -401,7 +409,7 @@ LightingSettings:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Settings.lighting
-  serializedVersion: 2
+  serializedVersion: 3
   m_GIWorkflowMode: 1
   m_EnableBakedLightmaps: 1
   m_EnableRealtimeLightmaps: 0
@@ -423,7 +431,7 @@ LightingSettings:
   m_MixedBakeMode: 1
   m_LightmapsBakeMode: 1
   m_FilterMode: 1
-  m_LightmapParameters: {fileID: 0}
+  m_LightmapParameters: {fileID: 15204, guid: 0000000000000000f000000000000000, type: 0}
   m_ExportTrainingData: 0
   m_TrainingDataDestination: TrainingData
   m_RealtimeResolution: 1
@@ -440,7 +448,7 @@ LightingSettings:
   m_PVREnvironmentReferencePointCount: 2048
   m_LightProbeSampleCountMultiplier: 4
   m_PVRBounces: 2
-  m_PVRRussianRouletteStartBounce: 2
+  m_PVRMinBounces: 1
   m_PVREnvironmentMIS: 0
   m_PVRFilteringMode: 0
   m_PVRDenoiserTypeDirect: 0

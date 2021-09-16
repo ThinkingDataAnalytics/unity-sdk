@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using ThinkingSDK.PC.Utils;
+using ThinkingSDK.PC.Request;
+using ThinkingSDK.PC.Constant;
+
 namespace ThinkingSDK.PC.Config
 {
     public enum Mode
@@ -20,16 +24,33 @@ namespace ThinkingSDK.PC.Config
         private string mConfigUrl;
         private Mode mMode = Mode.NORMAL;
         private TimeZoneInfo mTimeZone;
+        private int mUploadInterval = 60;
+        private int mUploadSize = 100;
+        private List<string> mDisableEvents = new List<string>();
         private static Dictionary<string, ThinkingSDKConfig> sInstances = new Dictionary<string, ThinkingSDKConfig>();
         private ThinkingSDKConfig(string token,string serverUrl)
         {
+            //校验 server url
+            serverUrl = this.VerifyUrl(serverUrl);
             this.mServerUrl = serverUrl;
             this.mNormalUrl = serverUrl + "/sync";
             this.mDebugUrl = serverUrl + "/data_debug";
-            this.mConfigUrl = serverUrl + "/config?appid=" + token;
+            this.mConfigUrl = serverUrl + "/config";
             this.mToken = token;
-            this.mTimeZone = TimeZoneInfo.Local;
-           
+            try
+            {
+                this.mTimeZone = TimeZoneInfo.Local;
+            }
+            catch (Exception e)
+            {
+                //ThinkingSDKLogger.Print("TimeZoneInfo initial failed :" + e.Message);
+            }
+        }
+        private string VerifyUrl(string serverUrl)
+        {
+            Uri uri = new Uri(serverUrl);
+            serverUrl = uri.Scheme + "://" + uri.Host + ":" + uri.Port;
+            return serverUrl;
         }
         public void SetMode(Mode mode)
         {
@@ -76,6 +97,45 @@ namespace ThinkingSDK.PC.Config
         public TimeZoneInfo TimeZone()
         {
             return this.mTimeZone;
+        }
+        public List<string> DisableEvents() {
+            return this.mDisableEvents;
+        }
+        public bool IsDisabledEvent(string eventName) 
+        {
+            if (this.mDisableEvents == null)
+            {
+                return false;
+            } 
+            else 
+            {
+                return this.mDisableEvents.Contains(eventName);
+            }
+        }
+        public void UpdateConfig()
+        {
+            Dictionary<string, object> dic = new Dictionary<string, object>();
+            ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
+                try
+                {
+                    int code = int.Parse(result["code"].ToString());
+                    if (result!=null && code==0)
+                    {
+                        Dictionary<string, object> data = (Dictionary<string, object>)result["data"];
+                        this.mUploadInterval = int.Parse(data["sync_interval"].ToString());
+                        this.mUploadSize = int.Parse(data["sync_batch_size"].ToString());
+                        foreach (var item in (List<object>)data["disable_event_list"])
+                        {
+                            this.mDisableEvents.Add((string)item);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ThinkingSDKLogger.Print("Get config failed: " + ex.Message);
+                }
+            };
+            ThinkingSDKBaseRequest.GetWithFORM(this.mConfigUrl,this.mToken,dic,responseHandle);            
         }
     }
 }

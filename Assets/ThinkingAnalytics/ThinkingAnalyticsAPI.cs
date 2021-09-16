@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.2.1
+    SDK VERSION:2.2.2
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -29,7 +29,7 @@ using System.Threading;
 using ThinkingAnalytics.Utils;
 using ThinkingAnalytics.Wrapper;
 using UnityEngine;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_IOS
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.iOS.Xcode;
@@ -121,64 +121,64 @@ namespace ThinkingAnalytics
     /// </summary>
     public class TDPresetProperties 
     {
-		public static string BundleId 
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#bundle_id"];}
+        
+        public TDPresetProperties(Dictionary<string, object> properties) {
+            PresetProperties = properties;
         }
-		public static string Carrier 
+		public string BundleId 
         { 
-            get {return (string)TDPresetProperties.PresetProperties["#carrier"];}
+            get {return (string)PresetProperties["#bundle_id"];}
         }
+		public string Carrier 
+        { 
+            get {return (string)PresetProperties["#carrier"];}
+        }
+		public string DeviceId
+        { 
+            get {return (string)PresetProperties["#device_id"];}
+        }
+		public string DeviceModel 
+        { 
+            get {return (string)PresetProperties["#device_model"];}
+        }
+		public string Manufacturer 
+        { 
+            get {return (string)PresetProperties["#manufacturer"];}
+        }
+		public string NetworkType 
+        { 
+            get {return (string)PresetProperties["#network_type"];}
+        }
+		public string OS 
+        { 
+            get {return (string)PresetProperties["#os"];}
+        }
+		public string OSVersion 
+        { 
+            get {return (string)PresetProperties["#os_version"];}
+        }
+		public int ScreenHeight 
+        { 
+            get {return (int)PresetProperties["#screen_height"];}
+        }
+		public int ScreenWidth 
+        { 
+            get {return (int)PresetProperties["#screen_width"];}
+        }
+		public string SystemLanguage 
+        { 
+            get {return (string)PresetProperties["#system_language"];}
+        }
+		public double ZoneOffset 
+        { 
+            get {return (double)PresetProperties["#zone_offset"];}
+        }
+		private Dictionary<string, object> PresetProperties { get; set; }
 
-		public static string DeviceId
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#device_id"];}
-        }
-		public static string DeviceModel 
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#device_model"];}
-        }
-		public static string Manufacturer 
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#manufacturer"];}
-        }
-		public static string NetworkType 
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#network_type"];}
-        }
-		public static string OS 
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#os"];}
-        }
-		public static string OSVersion 
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#os_version"];}
-        }
-		public static int ScreenHeight 
-        { 
-            get {return (int)TDPresetProperties.PresetProperties["#screen_height"];}
-        }
-		public static int ScreenWidth 
-        { 
-            get {return (int)TDPresetProperties.PresetProperties["#screen_width"];}
-        }
-		public static string SystemLanguage 
-        { 
-            get {return (string)TDPresetProperties.PresetProperties["#system_language"];}
-        }
-		public static double ZoneOffset 
-        { 
-            get {return (double)TDPresetProperties.PresetProperties["#zone_offset"];}
-        }
-		public static Dictionary<string, object> PresetProperties 
+        // 返回事件预置属性的Key以"#"开头，不建议直接作为用户属性使用
+        public Dictionary<string, object> ToEventPresetProperties()
         {
-            get { return TDPresetProperties.ToEventPresetProperties();} 
-        }
-
-        // 返回事件预置属性的Key以"#"开头，不建议直接作为事件的Property使用
-        public static Dictionary<string, object> ToEventPresetProperties()
-        {
-            return ThinkingAnalyticsAPI.GetPresetProperties();
+            return PresetProperties;
         }
          
     }
@@ -266,6 +266,9 @@ namespace ThinkingAnalytics
         }
 
         [Header("Configuration")]
+        [Tooltip("是否手动初始化SDK")]
+        public bool startManually = false;
+
         [Tooltip("是否打开 Log")]
         public bool enableLog = true;
         [Tooltip("设置网络类型")]
@@ -278,12 +281,12 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.2.1";
+        public readonly string VERSION = "2.2.2";
 
         private static ThinkingAnalyticsAPI taAPIInstance;
 
         //配置Xcode选项
-        #if UNITY_EDITOR
+        #if UNITY_EDITOR && UNITY_IOS
         //[PostProcessBuild]
         [PostProcessBuildAttribute(88)]
         public static void onPostProcessBuild(BuildTarget target, string targetPath)
@@ -520,15 +523,17 @@ namespace ThinkingAnalytics
         }
 
         /// <summary>
-        /// 返回事件预置属性，Key以"#"开头，不建议直接作为事件的Property使用
+        /// 返回事件预置属性
         /// </summary>
         /// <returns>事件预置属性</returns>
         /// <param name="appId">项目 ID(可选)</param>
-        public static Dictionary<string, object> GetPresetProperties(string appId = "")
+        public static TDPresetProperties GetPresetProperties(string appId = "")
         {
             if (tracking_enabled)
             {
-                return getInstance(appId).GetPresetProperties();
+                Dictionary<string, object> properties = getInstance(appId).GetPresetProperties();
+                TDPresetProperties presetProperties = new TDPresetProperties(properties);
+                return presetProperties;
             }
             return null;
         }
@@ -880,38 +885,41 @@ namespace ThinkingAnalytics
 
         #region internal
 
-        void Awake()
+        public static void StartThinkingAnalytics(Token[] tokens = null) 
         {
-            taAPIInstance = this;
             #if DISABLE_TA
             tracking_enabled = false;
             #endif
-            TD_Log.EnableLog(enableLog);
-            ThinkingAnalyticsWrapper.SetVersionInfo(VERSION);
+            TD_Log.EnableLog(taAPIInstance.enableLog);
+            ThinkingAnalyticsWrapper.SetVersionInfo(taAPIInstance.VERSION);
             if (TA_instance == null)
             {
-                DontDestroyOnLoad(gameObject);
-                TA_instance = this;
+                DontDestroyOnLoad(taAPIInstance.gameObject);
+                TA_instance = taAPIInstance;
             } else
             {
-                Destroy(gameObject);
+                Destroy(taAPIInstance.gameObject);
                 return;
             }
 
             if (tracking_enabled)
             {
+                if (tokens == null)
+                {
+                    tokens = taAPIInstance.tokens;
+                }
                 default_appid = tokens[0].appid;
                 instance_lock.EnterWriteLock();
                 try
                 {
-                    ThinkingAnalyticsWrapper.EnableLog(enableLog);
+                    ThinkingAnalyticsWrapper.EnableLog(taAPIInstance.enableLog);
                     foreach (Token token in tokens)
                     {
-                        //Debug.Log("token:"+token.appid);
+                        Debug.Log("StartThinkingAnalytics token: "+token.appid);
                         if (!string.IsNullOrEmpty(token.appid))
                         {
                             ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token);
-                            wrapper.SetNetworkType(networkType);
+                            wrapper.SetNetworkType(taAPIInstance.networkType);
                             sInstances.Add(token.appid,wrapper);
 
                         }
@@ -929,11 +937,18 @@ namespace ThinkingAnalytics
                 //{
                 //    getInstance(default_appid).SetNetworkType(networkType);
                 //}
-
             }
         }
-      
 
+        void Awake()
+        {
+            taAPIInstance = this;
+
+            if (startManually == false) 
+            {
+                ThinkingAnalyticsAPI.StartThinkingAnalytics();
+            }
+        }
 
 
 
@@ -950,11 +965,19 @@ namespace ThinkingAnalytics
             instance_lock.EnterReadLock();
             try
             {
-                if (sInstances.Count > 0 && sInstances.ContainsKey(appid))
+                if (sInstances.Count > 0)
                 {
-                    return sInstances[appid];
+                    if (sInstances.ContainsKey(appid)) 
+                    {
+                        return sInstances[appid];
+                    } 
+                    return sInstances[default_appid];
+                } 
+                else 
+                {
+                    Debug.Log("请先初始化 ThinkingAnalytics SDK");
+                    return null;
                 }
-                return sInstances[default_appid];
             } finally
             {
                 instance_lock.ExitReadLock();

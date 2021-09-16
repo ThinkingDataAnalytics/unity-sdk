@@ -1,4 +1,9 @@
+
+#if __has_include(<ThinkingSDK/TDEventModel.h>)
+#import <ThinkingSDK/TDEventModel.h>
+#else
 #import "TDEventModel.h"
+#endif
 
 NS_ASSUME_NONNULL_BEGIN
 

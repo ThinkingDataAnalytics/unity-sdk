@@ -1,13 +1,35 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+
+#if __has_include(<ThinkingSDK/TDFirstEventModel.h>)
+#import <ThinkingSDK/TDFirstEventModel.h>
+#else
 #import "TDFirstEventModel.h"
+#endif
+
+#if __has_include(<ThinkingSDK/TDEditableEventModel.h>)
+#import <ThinkingSDK/TDEditableEventModel.h>
+#else
 #import "TDEditableEventModel.h"
+#endif
+
+
+#if __has_include(<ThinkingSDK/TDConfig.h>)
+#import <ThinkingSDK/TDConfig.h>
+#else
 #import "TDConfig.h"
+#endif
+
+#if __has_include(<ThinkingSDK/TDPresetProperties.h>)
+#import <ThinkingSDK/TDPresetProperties.h>
+#else
 #import "TDPresetProperties.h"
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- SDK VERSION = 2.7.0
+ SDK VERSION = 2.7.2
  ThinkingData API
  
  ## 初始化API

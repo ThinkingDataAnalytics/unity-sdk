@@ -46,20 +46,37 @@ namespace ThinkingSDK.PC.Utils
             return deviceInfo;
         }
         //随机数持久化,作为访客ID的备选
-        public static string RandomID()
+        public static string RandomID(bool persistent = true)
         {
-            string randomID = (string)ThinkingSDKFile.GetData(ThinkingSDKConstant.RANDOM_ID, typeof(string));
+            string randomID = null;
+            if (persistent)
+            {
+                randomID = (string)ThinkingSDKFile.GetData(ThinkingSDKConstant.RANDOM_ID, typeof(string));
+            }
             if (string.IsNullOrEmpty(randomID))
             {
                 randomID = System.Guid.NewGuid().ToString("N");
-                ThinkingSDKFile.SaveData(ThinkingSDKConstant.RANDOM_ID, randomID);
+                if (persistent)
+                {
+                    ThinkingSDKFile.SaveData(ThinkingSDKConstant.RANDOM_ID, randomID);
+                }
             }
             return randomID;
         }
         //获取时区偏移
         public static double ZoneOffset(DateTime dateTime, TimeZoneInfo timeZone)
         {
-            TimeSpan timeSpan = timeZone.BaseUtcOffset;
+            bool success = true;
+            TimeSpan timeSpan = new TimeSpan();
+            try
+            {
+                timeSpan = timeZone.BaseUtcOffset;
+            }
+            catch (Exception e)
+            {
+                success = false;
+                //ThinkingSDKLogger.Print("ZoneOffset: TimeSpan get failed : " + e.Message);
+            }
             try
             {
                 if (timeZone.IsDaylightSavingTime(dateTime))
@@ -70,16 +87,30 @@ namespace ThinkingSDK.PC.Utils
             }
             catch (Exception e)
             {
-                ThinkingSDKLogger.Print("ZoneOffset: " + e.Message);
+                success = false;
+                //ThinkingSDKLogger.Print("ZoneOffset: IsDaylightSavingTime get failed : " + e.Message);
+            }
+            if (success == false)
+            {
+                timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
             }
             return timeSpan.TotalHours;
         }
         //时间格式化
         public static string FormatDate(DateTime dateTime, TimeZoneInfo timeZone)
         {
-           
+            bool success = true;
             DateTime univDateTime = dateTime.ToUniversalTime();
-            TimeSpan timeSpan = timeZone.BaseUtcOffset;
+            TimeSpan timeSpan = new TimeSpan();
+            try
+            {
+                timeSpan = timeZone.BaseUtcOffset;
+            }
+            catch (Exception e)
+            {
+                success = false;
+                //ThinkingSDKLogger.Print("FormatDate - TimeSpan get failed : " + e.Message);
+            }
             try
             {
                 if (timeZone.IsDaylightSavingTime(dateTime))
@@ -90,11 +121,14 @@ namespace ThinkingSDK.PC.Utils
             }
             catch (Exception e)
             {
-                ThinkingSDKLogger.Print("FormatDate: " + e.Message);
+                success = false;
+                //ThinkingSDKLogger.Print("FormatDate: IsDaylightSavingTime get failed : " + e.Message);
             }
-
+            if (success == false)
+            {
+                timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
+            }
             DateTime dateNew = univDateTime + timeSpan;
-
             return string.Format(ThinkingSDKConstant.TIME_PATTERN, dateNew);
         }
         //向Dictionary添加Dictionary

@@ -1181,7 +1181,12 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     NSTimeInterval systemUptime = [[NSProcessInfo processInfo] systemUptime];
     double offset = 0;
     if (eventData.timeValueType == TDTimeValueTypeNone) {
-        timeString = [_timeFormatter stringFromDate:[NSDate date]];
+        NSDate *currentDate = [NSDate date];
+        if ([eventData.eventName isEqualToString:TD_APP_INSTALL_EVENT]) {
+            currentDate = [currentDate dateByAddingTimeInterval:-1];
+        }
+        timeString = [_timeFormatter stringFromDate:currentDate];
+
         offset = [self getTimezoneOffset:[NSDate date] timeZone:_config.defaultTimeZone];
     } else {
         timeString = eventData.timeString;

@@ -13,15 +13,15 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TDFile : NSObject
 @property(strong,nonatomic) NSString* appid;
 - (instancetype)initWithAppid:(NSString*)appid;
-- (void)archiveIdentifyId:(NSString *)identifyId;
+- (void)archiveIdentifyId:(nullable NSString *)identifyId;
 - (NSString*)unarchiveIdentifyID ;
 - (NSString*)unarchiveAccountID ;
 - (void)archiveUploadSize:(NSNumber *)uploadSize;
 - (NSNumber*)unarchiveUploadSize;
 - (void)archiveUploadInterval:(NSNumber *)uploadInterval;
 - (NSNumber*)unarchiveUploadInterval;
-- (void)archiveAccountID:(NSString *)accountID;
-- (void)archiveSuperProperties:(NSDictionary *)superProperties;
+- (void)archiveAccountID:(nullable NSString *)accountID;
+- (void)archiveSuperProperties:(nullable NSDictionary *)superProperties;
 - (NSDictionary*)unarchiveSuperProperties;
 - (void)archiveOptOut:(BOOL)optOut;
 - (BOOL)unarchiveOptOut;

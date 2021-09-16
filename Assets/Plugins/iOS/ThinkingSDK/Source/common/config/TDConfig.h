@@ -1,6 +1,17 @@
 #import <Foundation/Foundation.h>
+
+#if __has_include(<ThinkingSDK/TDConstant.h>)
+#import <ThinkingSDK/TDConstant.h>
+#else
 #import "TDConstant.h"
+#endif
+
+#if __has_include(<ThinkingSDK/TDSecurityPolicy.h>)
+#import <ThinkingSDK/TDSecurityPolicy.h>
+#else
 #import "TDSecurityPolicy.h"
+#endif
+
 NS_ASSUME_NONNULL_BEGIN
 
 
