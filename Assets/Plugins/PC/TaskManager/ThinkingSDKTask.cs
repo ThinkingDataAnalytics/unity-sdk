@@ -9,6 +9,7 @@ using System.Collections;
 
 namespace ThinkingSDK.PC.TaskManager
 {
+    [DisallowMultipleComponent]
     public class ThinkingSDKTask : MonoBehaviour
     {
         private readonly static object _locker = new object();

@@ -14,7 +14,7 @@ namespace ThinkingAnalytics.Wrapper
 {
     public partial class ThinkingAnalyticsWrapper: ThinkingSDK.PC.Main.IDynamicSuperProperties
     {
-#if  (UNITY_STANDALONE || UNITY_EDITOR || UNITY_WEBGL)
+#if  (!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR)
         private void init()
         {
         //     public enum TATimeZone

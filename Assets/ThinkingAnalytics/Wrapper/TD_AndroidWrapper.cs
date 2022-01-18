@@ -260,7 +260,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private void userUnset(List<string> properties)
         {
-            instance.Call("user_unset", properties.ToArray());
+            userUnset(properties, DateTime.Now);
         }
 
         private void userUnset(List<string> properties, DateTime dateTime)

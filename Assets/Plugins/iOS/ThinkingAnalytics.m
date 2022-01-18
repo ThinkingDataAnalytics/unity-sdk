@@ -2,8 +2,8 @@
 #import <ThinkingSDK/ThinkingAnalyticsSDK.h>
 #import <ThinkingSDK/TDDeviceInfo.h>
 #else
-#import <ThinkingAnalyticsSDK.h>
-#import <TDDeviceInfo.h>
+#import "ThinkingAnalyticsSDK.h"
+#import "TDDeviceInfo.h"
 #endif
 #import <pthread.h>
 

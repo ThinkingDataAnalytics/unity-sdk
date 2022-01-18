@@ -404,6 +404,7 @@ namespace ThinkingSDK.PC.Main
             presetProperties[ThinkingSDKConstant.OS_VERSION] = ThinkingSDKDeviceInfo.OSVersion();
             presetProperties[ThinkingSDKConstant.NETWORK_TYPE] = ThinkingSDKDeviceInfo.NetworkType();
             presetProperties[ThinkingSDKConstant.APP_BUNDLEID] = ThinkingSDKAppInfo.AppIdentifier();
+            presetProperties[ThinkingSDKConstant.APP_VERSION] = ThinkingSDKAppInfo.AppVersion();
             presetProperties[ThinkingSDKConstant.ZONE_OFFSET] = ThinkingSDKUtil.ZoneOffset(DateTime.Now, this.mConfig.TimeZone());
             
             return presetProperties;

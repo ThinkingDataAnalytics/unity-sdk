@@ -12,15 +12,11 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.2.4
+    SDK VERSION:2.2.5
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
 #warning "Your Unity version is not supported by us - ThinkingAnalyticsSDK disabled"
-#endif
-#if !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN || UNITY_WEBGL)
-#define DISABLE_TA
-#warning "Your Unity Platfrom is not supported by us - ThinkingAnalyticsSDK disabled"
 #endif
 
 using System;
@@ -39,6 +35,10 @@ using ThinkingAnalytics.TaException;
 #if UNITY_IOS && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
+#if UNITY_EDITOR 
+using ThinkingSDK.PC.TaskManager;
+#endif
+
 
 namespace ThinkingAnalytics
 {
@@ -128,53 +128,57 @@ namespace ThinkingAnalytics
         public TDPresetProperties(Dictionary<string, object> properties) {
             PresetProperties = properties;
         }
+		public string AppVersion 
+        { 
+            get {return (string)(PresetProperties.ContainsKey("#app_version") ? PresetProperties["#app_version"] : "");}
+        }
 		public string BundleId 
         { 
-            get {return (string)PresetProperties["#bundle_id"];}
+            get {return (string)(PresetProperties.ContainsKey("#bundle_id") ? PresetProperties["#bundle_id"] : "");}
         }
 		public string Carrier 
         { 
-            get {return (string)PresetProperties["#carrier"];}
+            get {return (string)(PresetProperties.ContainsKey("#carrier") ? PresetProperties["#carrier"] : "");}
         }
 		public string DeviceId
         { 
-            get {return (string)PresetProperties["#device_id"];}
+            get {return (string)(PresetProperties.ContainsKey("#device_id") ? PresetProperties["#device_id"] : "");}
         }
 		public string DeviceModel 
         { 
-            get {return (string)PresetProperties["#device_model"];}
+            get {return (string)(PresetProperties.ContainsKey("#device_model") ? PresetProperties["#device_model"] : "");}
         }
 		public string Manufacturer 
         { 
-            get {return (string)PresetProperties["#manufacturer"];}
+            get {return (string)(PresetProperties.ContainsKey("#manufacturer") ? PresetProperties["#manufacturer"] : "");}
         }
 		public string NetworkType 
         { 
-            get {return (string)PresetProperties["#network_type"];}
+            get {return (string)(PresetProperties.ContainsKey("#network_type") ? PresetProperties["#network_type"] : "");}
         }
 		public string OS 
         { 
-            get {return (string)PresetProperties["#os"];}
+            get {return (string)(PresetProperties.ContainsKey("#os") ? PresetProperties["#os"] : "");}
         }
 		public string OSVersion 
         { 
-            get {return (string)PresetProperties["#os_version"];}
+            get {return (string)(PresetProperties.ContainsKey("#os_version") ? PresetProperties["#os_version"] : "");}
         }
 		public long ScreenHeight 
         { 
-            get {return (long)PresetProperties["#screen_height"];}
+            get {return (long)(PresetProperties.ContainsKey("#screen_height") ? PresetProperties["#screen_height"] : 0);}
         }
 		public long ScreenWidth 
         { 
-            get {return (long)PresetProperties["#screen_width"];}
+            get {return (long)(PresetProperties.ContainsKey("#screen_width") ? PresetProperties["#screen_width"] : 0);}
         }
 		public string SystemLanguage 
         { 
-            get {return (string)PresetProperties["#system_language"];}
+            get {return (string)(PresetProperties.ContainsKey("#system_language") ? PresetProperties["#system_language"] : "");}
         }
 		public double ZoneOffset 
         { 
-            get {return (double)PresetProperties["#zone_offset"];}
+            get {return (double)(PresetProperties.ContainsKey("#zone_offset") ? PresetProperties["#zone_offset"] : 0);}
         }
 		private Dictionary<string, object> PresetProperties { get; set; }
 
@@ -198,6 +202,7 @@ namespace ThinkingAnalytics
         ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH
     }
 
+    [DisallowMultipleComponent]
     public class ThinkingAnalyticsAPI : MonoBehaviour, TaExceptionHandler
     {
         #region settings
@@ -210,7 +215,7 @@ namespace ThinkingAnalytics
             public TATimeZone timeZone;
             public string timeZoneId;
 
-            public Token(string appId, string serverUrl, TAMode mode, TATimeZone timeZone, string timeZoneId = null)
+            public Token(string appId, string serverUrl, TAMode mode = TAMode.NORMAL, TATimeZone timeZone = TATimeZone.Local, string timeZoneId = null)
             {
                 this.appid = appId.Replace(" ", "");
                 this.serverUrl = serverUrl;
@@ -270,7 +275,7 @@ namespace ThinkingAnalytics
 
         [Header("Configuration")]
         [Tooltip("是否手动初始化SDK")]
-        public bool startManually = false;
+        public bool startManually = true;
 
         [Tooltip("是否打开 Log")]
         public bool enableLog = true;
@@ -284,7 +289,7 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.2.4";
+        public readonly string VERSION = "2.2.5";
 
         private static ThinkingAnalyticsAPI taAPIInstance;
 
@@ -910,15 +915,30 @@ namespace ThinkingAnalytics
         }
 
         //多实例场景,设置默认的appid
-        public static void setDefaultAppid(string appid)
+        public static void setDefaultAppid(string appId)
         {
-            if (sInstances.Count > 0 && sInstances.ContainsKey(appid))
+            if (sInstances.Count > 0 && sInstances.ContainsKey(appId))
             {
-                default_appid = appid;
+                default_appid = appId;
             }
         }
 
         #region internal
+
+        public static void StartThinkingAnalytics(string appId, string serverUrl)
+        {
+            ThinkingAnalyticsAPI.TAMode mode = ThinkingAnalyticsAPI.TAMode.NORMAL;
+            ThinkingAnalyticsAPI.TATimeZone timeZone = ThinkingAnalyticsAPI.TATimeZone.Local;
+            ThinkingAnalyticsAPI.Token token = new ThinkingAnalyticsAPI.Token(appId, serverUrl, mode, timeZone);
+            ThinkingAnalyticsAPI.StartThinkingAnalytics(token);
+        }
+
+        public static void StartThinkingAnalytics(ThinkingAnalyticsAPI.Token token)
+        {
+            ThinkingAnalyticsAPI.Token[] tokens = new ThinkingAnalyticsAPI.Token[1];
+            tokens[0] = token;
+            ThinkingAnalyticsAPI.StartThinkingAnalytics(tokens);
+        }
 
         public static void StartThinkingAnalytics(Token[] tokens = null) 
         {
@@ -971,6 +991,10 @@ namespace ThinkingAnalytics
 
         void Awake()
         {
+            #if UNITY_EDITOR 
+            gameObject.AddComponent(typeof(ThinkingSDKTask));
+            #endif
+
             taAPIInstance = this;
 
             if (TA_instance == null)

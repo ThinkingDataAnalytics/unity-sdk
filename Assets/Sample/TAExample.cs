@@ -48,20 +48,50 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         GUILayout.BeginHorizontal(GUI.skin.box,GUILayout.Height(Height));
         if (GUILayout.Button("ManualInitialization", GUILayout.Height(Height)))
         {
-            /*** 预置体挂载 ThinkingAnalyticsAPI 脚本，手动初始化 ***/
+            // 1. 手动初始化（已加载 ThinkingAnalytics 预置体）
             ThinkingAnalyticsAPI.StartThinkingAnalytics();
-            // 开启自动采集事件
-            ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
 
-            /*** 手动挂载 ThinkingAnalyticsAPI 脚本，手动初始化 ***/
+
+            // 2. 手动初始化（动态挂载 ThinkingAnalyticsAPI 脚本）
+            // gameObject.AddComponent(typeof(ThinkingAnalyticsAPI));
+
+            // 2.1 设置实例参数
+            // string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
+            // string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
+            // ThinkingAnalyticsAPI.StartThinkingAnalytics(appId, serverUrl);
+
+            // 2.1 个性化设置实例参数
             // string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
             // string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
             // ThinkingAnalyticsAPI.TAMode mode = ThinkingAnalyticsAPI.TAMode.NORMAL;
             // ThinkingAnalyticsAPI.TATimeZone timeZone = ThinkingAnalyticsAPI.TATimeZone.Local;
             // ThinkingAnalyticsAPI.Token token = new ThinkingAnalyticsAPI.Token(appId, serverUrl, mode, timeZone);
-            // ThinkingAnalyticsAPI.Token[] tokens = new ThinkingAnalyticsAPI.Token[1];
+            // ThinkingAnalyticsAPI.StartThinkingAnalytics(token);
+
+            // 2.2 多项目支持
+            // string appId_2 = "1b1c1fef65e3482bad5c9d0e6a823356";
+            // string serverUrl_2 = "https://receiver-ta-dev.thinkingdata.cn";
+            // ThinkingAnalyticsAPI.TAMode mode_2 = ThinkingAnalyticsAPI.TAMode.NORMAL;
+            // ThinkingAnalyticsAPI.TATimeZone timeZone_2 = ThinkingAnalyticsAPI.TATimeZone.Local;
+            // ThinkingAnalyticsAPI.Token token_2 = new ThinkingAnalyticsAPI.Token(appId_2, serverUrl_2, mode_2, timeZone_2);
+
+            // ThinkingAnalyticsAPI.Token[] tokens = new ThinkingAnalyticsAPI.Token[2];
             // tokens[0] = token;
+            // tokens[1] = token_2;
             // ThinkingAnalyticsAPI.StartThinkingAnalytics(tokens);
+            
+            // 多项目发送事件
+            // ThinkingAnalyticsAPI.Track("test_event");
+            // ThinkingAnalyticsAPI.Track("test_event_2", appId:appId2);
+
+
+            // 开启自动采集事件
+            // ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
+            // 开启自动采集事件，并设置自定属性
+            // ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL, new Dictionary<string, object>() 
+            // {
+            //     {"custom_key", "custom_value"}
+            // });
         }
         GUILayout.Space(20);
         if (GUILayout.Button("SetAccountID", GUILayout.Height(Height)))
@@ -100,8 +130,6 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             };
             List<object> listComplexProperties = new List<object>() {
                 complexProperties,
-                complexProperties,
-                complexProperties
             };
             Dictionary<string, object> properties = new Dictionary<string, object>(){
                 {"key_string", "A1"},

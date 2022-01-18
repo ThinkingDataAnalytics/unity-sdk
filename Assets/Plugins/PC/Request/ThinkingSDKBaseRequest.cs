@@ -194,7 +194,10 @@ namespace ThinkingSDK.PC.Request
                         break;
                     case UnityWebRequest.Result.Success:
                         ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
-                        resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                        if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
+                        {
+                            resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                        } 
                         break;
                 }
                 #else
@@ -205,7 +208,10 @@ namespace ThinkingSDK.PC.Request
                 else
                 {
                     ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
-                    resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                    if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
+                    {
+                        resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                    } 
                 }
                 #endif
                 if (responseHandle != null) 

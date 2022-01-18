@@ -39,7 +39,7 @@ namespace ThinkingSDK.PC.Request
         //     request.Timeout = 30 * 1000;
         //     request.Headers.Set("appid", this.APPID());
         //     request.Headers.Set("TA-Integration-Type", "PC");
-        //     request.Headers.Set("TA-Integration-Version", "2.2.4");
+        //     request.Headers.Set("TA-Integration-Version", "2.2.5");
         //     request.Headers.Set("TA-Integration-Count", "1");
         //     request.Headers.Set("TA-Integration-Extra", "PC");
         //     Dictionary<string, object> param = new Dictionary<string, object>();
@@ -119,7 +119,7 @@ namespace ThinkingSDK.PC.Request
                 webRequest.SetRequestHeader("Content-Type", "text/plain");
                 webRequest.SetRequestHeader("appid", this.APPID());
                 webRequest.SetRequestHeader("TA-Integration-Type", "PC");
-                webRequest.SetRequestHeader("TA-Integration-Version", "2.2.4");
+                webRequest.SetRequestHeader("TA-Integration-Version", "2.2.5");
                 webRequest.SetRequestHeader("TA-Integration-Count", "1");
                 webRequest.SetRequestHeader("TA-Integration-Extra", "PC");
                 webRequest.uploadHandler = (UploadHandler) new UploadHandlerRaw(contentCompressed);
@@ -143,7 +143,10 @@ namespace ThinkingSDK.PC.Request
                         break;
                     case UnityWebRequest.Result.Success:
                         ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
-                        resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                        if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
+                        {
+                            resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                        } 
                         break;
                 }
                 #else
@@ -154,7 +157,10 @@ namespace ThinkingSDK.PC.Request
                 else
                 {
                     ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
-                    resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                    if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
+                    {
+                        resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                    }
                 }
                 #endif
                 if (responseHandle != null) 
