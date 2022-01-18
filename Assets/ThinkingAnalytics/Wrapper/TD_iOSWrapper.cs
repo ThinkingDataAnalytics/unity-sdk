@@ -70,6 +70,8 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern string get_device_id();
         [DllImport("__Internal")]
+        private static extern void set_dynamic_super_properties(string app_id);
+        [DllImport("__Internal")]
         private static extern void enable_tracking(string app_id, bool enabled);
         [DllImport("__Internal")]
         private static extern void opt_out_tracking(string app_id);
@@ -80,7 +82,9 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern void create_light_instance(string app_id, string delegate_token);
         [DllImport("__Internal")]
-        private static extern void enable_autoTrack(string app_id, int events);
+        private static extern void enable_autoTrack(string app_id, int events, string properties);
+        [DllImport("__Internal")]
+        private static extern void set_autoTrack_properties(string app_id, int events, string properties);
         [DllImport("__Internal")]
         private static extern string get_time_string(string app_id, long events);
         [DllImport("__Internal")]
@@ -331,6 +335,11 @@ namespace ThinkingAnalytics.Wrapper
             return get_device_id();
         }
 
+        public void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        {
+            set_dynamic_super_properties(token.appid);
+        }
+
         private void optOutTracking()
         {
             opt_out_tracking(token.appid);
@@ -354,7 +363,7 @@ namespace ThinkingAnalytics.Wrapper
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
             create_light_instance(token.appid, delegateToken.appid);
-            return new ThinkingAnalyticsWrapper(delegateToken, false);
+            return new ThinkingAnalyticsWrapper(delegateToken, this.taMono, false);
         }
 
         private string getTimeString(DateTime dateTime)
@@ -365,9 +374,14 @@ namespace ThinkingAnalytics.Wrapper
             return get_time_string(token.appid, currentMillis);
         }
 
-        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents)
+        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
         {
-            enable_autoTrack(token.appid, (int)autoTrackEvents);
+            enable_autoTrack(token.appid, (int)autoTrackEvents, properties);
+        }
+
+        private void setAutoTrackProperties(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
+        {
+            set_autoTrack_properties(token.appid, (int)autoTrackEvents, properties);
         }
 
         private static void calibrateTime(long timestamp)

@@ -3,12 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using ThinkingSDK.PC.Utils;
+using UnityEngine;
 
 namespace ThinkingSDK.PC.Main
 {
     public class LightThinkingSDKInstance : ThinkingSDKInstance
     {
-        public LightThinkingSDKInstance(string appid, string server, ThinkingSDKConfig config) : base(appid, server, config)
+        public LightThinkingSDKInstance(string appid, string server, ThinkingSDKConfig config, MonoBehaviour mono = null) : base(appid, server, config, mono)
         {
         }
         public override void Identifiy(string distinctID)
@@ -84,10 +85,12 @@ namespace ThinkingSDK.PC.Main
             }
             this.mSupperProperties.Clear();
         }
-        public override void EnableAutoTrack(AUTO_TRACK_EVENTS events)
+        public override void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
         {
         }
-
+        public override void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        {
+        }
         public override void Flush()
         {    
         }

@@ -104,10 +104,11 @@ static NSString *kTAIntegrationExtra = @"TA-Integration-Extra";
 
 - (BOOL)flushEvents:(NSArray<NSDictionary *> *)recordArray {
     __block BOOL flushSucc = YES;
-    
+    UInt64 time = [[NSDate date] timeIntervalSince1970] * 1000;
     NSDictionary *flushDic = @{
         @"data": recordArray,
         @"#app_id": self.appid,
+        @"#flush_time": @(time),
     };
 //    NSDictionary *flushDic = @{
 //        @"data": recordArray,

@@ -7,6 +7,7 @@ using ThinkingSDK.PC.DataModel;
 using ThinkingSDK.PC.Storage;
 using ThinkingSDK.PC.Time;
 using ThinkingSDK.PC.Utils;
+using UnityEngine;
 namespace ThinkingSDK.PC.Main
 {
     public class ThinkingPCSDK
@@ -39,7 +40,7 @@ namespace ThinkingSDK.PC.Main
             return instance;
         }
 
-        public static ThinkingSDKInstance Init(string appid, string server, ThinkingSDKConfig config = null)
+        public static ThinkingSDKInstance Init(string appid, string server, ThinkingSDKConfig config = null, MonoBehaviour mono = null)
         {
             if (ThinkingSDKUtil.IsEmptyString(appid))
             {
@@ -53,7 +54,7 @@ namespace ThinkingSDK.PC.Main
             } 
             if (instance == null)
             {
-                instance = new ThinkingSDKInstance(appid,server,config);
+                instance = new ThinkingSDKInstance(appid,server,config,mono);
                 if (string.IsNullOrEmpty(CurrentAppid))
                 {
                     CurrentAppid = appid;
@@ -112,9 +113,14 @@ namespace ThinkingSDK.PC.Main
         /// </summary>
         /// <param name="events"></param>
         /// <param name="appid"></param>
-        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events,string appid = "")
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appid = "")
         {
-            GetInstance(appid).EnableAutoTrack(events);
+            GetInstance(appid).EnableAutoTrack(events, properties);
+        }
+
+        public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appid = "")
+        {
+            GetInstance(appid).SetAutoTrackProperties(events, properties);
         }
 
         public static void Track(string eventName,string appid = "")

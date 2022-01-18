@@ -68,6 +68,8 @@ namespace ThinkingSDK.PC.Constant
         public static readonly string EVENT_ID = "#event_id";
         //随机数
         public static readonly string RANDOM_ID = "RANDDOM_ID";
+        //随机设备ID(WebGL)
+        public static readonly string RANDOM_DEVICE_ID = "RANDOM_DEVICE_ID";
         //事件持续时长
         public static readonly string DURATION = "#duration";
 

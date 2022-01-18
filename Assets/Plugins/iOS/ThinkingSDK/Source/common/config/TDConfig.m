@@ -81,7 +81,8 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
                 if (uploadInterval > 0) {
                     self.uploadInterval = [NSNumber numberWithInteger:uploadInterval];
                     [file archiveUploadInterval:self.uploadInterval];
-                    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:self.appid] startFlushTimer];
+                    NSString *name = self.getInstanceName ? self.getInstanceName() : self.appid;
+                    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:name] startFlushTimer];
                 }
                 if (uploadSize > 0) {
                     self.uploadSize = [NSNumber numberWithInteger:uploadSize];
@@ -113,6 +114,7 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
     config.debugMode = self.debugMode;
     config.securityPolicy = [self.securityPolicy copyWithZone:zone];
     config.defaultTimeZone = [self.defaultTimeZone copyWithZone:zone];
+    config.name = [self.name copy];
     return config;
 }
 

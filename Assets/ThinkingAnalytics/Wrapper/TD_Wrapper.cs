@@ -7,7 +7,7 @@ namespace ThinkingAnalytics.Wrapper
 {
     public partial class ThinkingAnalyticsWrapper
     {
-#if (!(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID|| UNITY_STANDALONE))
+#if (!(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_STANDALONE || UNITY_WEBGL))
         private string uniqueId;
         private void init()
         {
@@ -197,7 +197,7 @@ namespace ThinkingAnalytics.Wrapper
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
             TD_Log.d("TA.Wrapper(" + token.appid + ") - calling createLightInstance()");
-            return new ThinkingAnalyticsWrapper(delegateToken, false);
+            return new ThinkingAnalyticsWrapper(delegateToken, this.taMono, false);
         }
 
         private string getTimeString(DateTime dateTime) {
@@ -215,6 +215,7 @@ namespace ThinkingAnalytics.Wrapper
         }
 
 #endif
+        public MonoBehaviour taMono;
         public readonly ThinkingAnalyticsAPI.Token token;
         private IDynamicSuperProperties dynamicSuperProperties;
 
@@ -224,8 +225,19 @@ namespace ThinkingAnalytics.Wrapper
             return TD_MiniJSON.Serialize(data, getTimeString);
         }
 
-        public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, bool initRequired = true)
+        public Dictionary<string, object> GetDynamicSuperProperties()
         {
+            if (this.dynamicSuperProperties != null) {
+                return this.dynamicSuperProperties.GetDynamicSuperProperties();
+            } 
+            else {
+                return new Dictionary<string, object>();
+            }
+        }
+
+        public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, MonoBehaviour mono, bool initRequired = true)
+        {
+            this.taMono = mono;
             this.token = token;
             if (initRequired) init();
         }
@@ -260,9 +272,14 @@ namespace ThinkingAnalytics.Wrapper
             logout();
         }
 
-        public void EnableAutoTrack(AUTO_TRACK_EVENTS events)
+        public void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
         {
-            enableAutoTrack(events);
+            enableAutoTrack(events, serilize(properties));
+        }
+
+        public void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        {
+            setAutoTrackProperties(events, serilize(properties));
         }
 
         private string getFinalEventProperties(Dictionary<string, object> properties)
@@ -371,13 +388,13 @@ namespace ThinkingAnalytics.Wrapper
 
         public void UserUnset(List<string> properties)
         {
-            TD_PropertiesChecker.CheckProperteis(properties);
+            TD_PropertiesChecker.CheckProperties(properties);
             userUnset(properties);
         }
 
         public void UserUnset(List<string> properties, DateTime dateTime)
         {
-            TD_PropertiesChecker.CheckProperteis(properties);
+            TD_PropertiesChecker.CheckProperties(properties);
             userUnset(properties, dateTime);
         }
 
@@ -437,6 +454,7 @@ namespace ThinkingAnalytics.Wrapper
                 TD_Log.d("TA.Wrapper(" + token.appid + ") - Cannot set dynamic super properties due to invalid properties.");
             }
             this.dynamicSuperProperties = dynamicSuperProperties;
+            setDynamicSuperProperties(dynamicSuperProperties);
         }
 
         public void OptOutTracking()

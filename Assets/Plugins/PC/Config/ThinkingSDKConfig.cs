@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using ThinkingSDK.PC.Utils;
 using ThinkingSDK.PC.Request;
 using ThinkingSDK.PC.Constant;
+using UnityEngine;
+using System.Collections;
 
 namespace ThinkingSDK.PC.Config
 {
@@ -112,7 +114,7 @@ namespace ThinkingSDK.PC.Config
                 return this.mDisableEvents.Contains(eventName);
             }
         }
-        public void UpdateConfig()
+        public void UpdateConfig(MonoBehaviour mono)
         {
             Dictionary<string, object> dic = new Dictionary<string, object>();
             ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
@@ -122,11 +124,23 @@ namespace ThinkingSDK.PC.Config
                     if (result!=null && code==0)
                     {
                         Dictionary<string, object> data = (Dictionary<string, object>)result["data"];
-                        this.mUploadInterval = int.Parse(data["sync_interval"].ToString());
-                        this.mUploadSize = int.Parse(data["sync_batch_size"].ToString());
-                        foreach (var item in (List<object>)data["disable_event_list"])
+                        foreach(KeyValuePair<string, object> kv in data) 
                         {
-                            this.mDisableEvents.Add((string)item);
+                            if (kv.Key == "sync_interval")
+                            {
+                                this.mUploadInterval = int.Parse(kv.Value.ToString());
+                            } 
+                            else if (kv.Key == "sync_batch_size")
+                            {
+                                this.mUploadSize = int.Parse(kv.Value.ToString());
+                            }
+                            else if (kv.Key == "disable_event_list")
+                            {
+                                foreach (var item in (List<object>)kv.Value)
+                                {
+                                    this.mDisableEvents.Add((string)item);
+                                }
+                            } 
                         }
                     }
                 }
@@ -135,7 +149,12 @@ namespace ThinkingSDK.PC.Config
                     ThinkingSDKLogger.Print("Get config failed: " + ex.Message);
                 }
             };
-            ThinkingSDKBaseRequest.GetWithFORM(this.mConfigUrl,this.mToken,dic,responseHandle);            
+            // ThinkingSDKBaseRequest.GetWithFORM(this.mConfigUrl,this.mToken,dic,responseHandle,mono);
+            mono.StartCoroutine(this.GetWithFORM(this.mConfigUrl,this.mToken,dic,responseHandle));
+        }
+
+        private IEnumerator GetWithFORM (string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle) {
+            yield return ThinkingSDKBaseRequest.GetWithFORM_2(this.mConfigUrl,this.mToken,param,responseHandle);
         }
     }
 }

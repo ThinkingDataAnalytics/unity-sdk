@@ -20,8 +20,6 @@ namespace ThinkingSDK.PC.Time
  		private static double ConvertDateTimeInt(System.DateTime time)
  		{
             DateTime startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-			Debug.Log("startTime is " + startTime.Kind);
-			Debug.Log("time is " + time.Kind);
  		    return (double)(time - startTime).TotalMilliseconds;
  		}
 

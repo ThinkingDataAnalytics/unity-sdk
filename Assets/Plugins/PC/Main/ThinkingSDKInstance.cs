@@ -37,12 +37,22 @@ namespace ThinkingSDK.PC.Main
         private Dictionary<string, object> mTimeEvents = new Dictionary<string, object>();
         private bool mEnableTracking = true;
         protected Dictionary<string, object> mSupperProperties = new Dictionary<string, object>();
+        protected Dictionary<string, Dictionary<string, object>> mAutoTrackProperties = new Dictionary<string, Dictionary<string, object>>();
         private ThinkingSDKConfig mConfig;
         private ThinkingSDKBaseRequest mRequest;
         private ThinkingSDKTimeCalibration mTimeCalibration;
         private IDynamicSuperProperties mDynamicProperties;
-        private ThinkingSDKTask mTask = ThinkingSDKTask.SingleTask();
+        private ThinkingSDKTask mTask {
+            get {
+                return ThinkingSDKTask.SingleTask();
+            }
+            set {
+                this.mTask = value;
+            }
+        }
         private static ThinkingSDKInstance mCurrentInstance;
+        private MonoBehaviour mMono;
+        private static MonoBehaviour sMono;
 
         ResponseHandle mResponseHandle;
         public void SetTimeCalibratieton(ThinkingSDKTimeCalibration timeCalibration)
@@ -65,8 +75,10 @@ namespace ThinkingSDK.PC.Main
          
             
         }
-        public ThinkingSDKInstance(string appid, string server, ThinkingSDKConfig config)
+        public ThinkingSDKInstance(string appid, string server, ThinkingSDKConfig config, MonoBehaviour mono = null)
         {
+            this.mMono = mono;
+            sMono = mono;
             mResponseHandle = delegate (Dictionary<string, object> result) {
                 mTask.Release();
             };
@@ -78,7 +90,7 @@ namespace ThinkingSDK.PC.Main
             {
                 this.mConfig = config;
             }
-            this.mConfig.UpdateConfig();
+            this.mConfig.UpdateConfig(mono);
             this.mAppid = appid;
             this.mServer = server;
             if (this.mConfig.GetMode() == Mode.NORMAL)
@@ -98,7 +110,7 @@ namespace ThinkingSDK.PC.Main
         }
         public static ThinkingSDKInstance CreateLightInstance()
         {
-            ThinkingSDKInstance lightInstance = new LightThinkingSDKInstance(mCurrentInstance.mAppid, mCurrentInstance.mServer, mCurrentInstance.mConfig);
+            ThinkingSDKInstance lightInstance = new LightThinkingSDKInstance(mCurrentInstance.mAppid, mCurrentInstance.mServer, mCurrentInstance.mConfig, sMono);
             return lightInstance;
         }
         public ThinkingSDKTimeInter GetTime(DateTime dateTime)
@@ -176,9 +188,8 @@ namespace ThinkingSDK.PC.Main
             this.mAccountID = "";
             ThinkingSDKFile.DeleteData(this.mAppid,ThinkingSDKConstant.ACCOUNT_ID);
         }
-       
         //TODO
-        public virtual void EnableAutoTrack(AUTO_TRACK_EVENTS events)
+        public virtual void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
         {
             if ((events & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
             {
@@ -186,20 +197,53 @@ namespace ThinkingSDK.PC.Main
                 if (result == null)
                 {
                     ThinkingSDKFile.SaveData(mAppid, ThinkingSDKConstant.IS_INSTALL, 1);
-                    Track(ThinkingSDKConstant.INSTALL_EVENT);
+                    if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_START.ToString()))
+                    {
+                        ThinkingSDKUtil.AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()]);
+                    }
+                    Track(ThinkingSDKConstant.INSTALL_EVENT, properties);
                 } 
             }
-
             if ((events & AUTO_TRACK_EVENTS.APP_START) != 0)
             {
-                Track(ThinkingSDKConstant.START_EVENT);
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_START.ToString()))
+                {
+                    ThinkingSDKUtil.AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()]);
+                }
+                Track(ThinkingSDKConstant.START_EVENT, properties);
+            }
+        }
+        // 设置自动采集事件的自定义属性
+        public virtual void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        {
+            if ((events & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
+            {
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_INSTALL.ToString()))
+                {
+                    ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()], properties);
+                }
+                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()] = properties;
+            }
+            if ((events & AUTO_TRACK_EVENTS.APP_START) != 0)
+            {
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_START.ToString()))
+                {
+                    ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()], properties);
+                }
+                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()] = properties;
+            }
+            if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
+            {
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_CRASH.ToString()))
+                {
+                    ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_CRASH.ToString()], properties);
+                }
+                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_CRASH.ToString()] = properties;
             }
         }
         public void Track(string eventName)
         {
-            
             Track(eventName, null, DateTime.MinValue);
-            
         }
         public void Track(string eventName, Dictionary<string, object> properties)
         {
@@ -207,7 +251,6 @@ namespace ThinkingSDK.PC.Main
         }
         public void Track(string eventName, Dictionary<string, object> properties, DateTime date)
         {
-            
             Track(eventName, properties, date, false);
         }
         public void Track(string eventName, Dictionary<string, object> properties, DateTime date, bool immediately)
@@ -282,7 +325,7 @@ namespace ThinkingSDK.PC.Main
 
             if (immediately)
             {
-                mRequest.SendData(null, list);
+                mRequest.SendData_2(null, list);
             }
             else
             {

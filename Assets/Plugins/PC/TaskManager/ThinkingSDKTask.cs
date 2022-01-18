@@ -4,44 +4,45 @@ using System.Threading;
 using ThinkingSDK.PC.Utils;
 using ThinkingSDK.PC.Request;
 using ThinkingSDK.PC.Constant;
+using UnityEngine;
+using System.Collections;
 
 namespace ThinkingSDK.PC.TaskManager
 {
-    public class ThinkingSDKTask
+    public class ThinkingSDKTask : MonoBehaviour
     {
-        private System.Threading.Semaphore mSM = new Semaphore(1, 1);
         private readonly static object _locker = new object();
 
         private List<ThinkingSDKBaseRequest> requestList = new List<ThinkingSDKBaseRequest>();
         private List<ResponseHandle> responseHandleList = new List<ResponseHandle>();
         private List<IList<Dictionary<string, object>>> dataList = new List<IList<Dictionary<string, object>>>();
 
-        static Queue<Thread> _threadQueue = new Queue<Thread>(); //队列
-        static EventWaitHandle _waitHandle = new AutoResetEvent(false); //通知Work线程的信号
 
-        private static ThinkingSDKTask mSingleTask = new ThinkingSDKTask();
+        private static ThinkingSDKTask mSingleTask;// = new ThinkingSDKTask();
+
+        private bool isWaiting = false;
 
         public static ThinkingSDKTask SingleTask()
         {
             return mSingleTask;
         }
-        private ThinkingSDKTask() 
-        {
-            Thread newThread = new Thread(() => {
-                while (true) 
-                {
-                    if (requestList.Count > 0)
-                    {
-                        WaitOne();
-                        StartRequestSendData();
-                    }
-                    else
-                    {
-                        _waitHandle.WaitOne();
-                    }
-                }
-                });
-            newThread.Start();
+
+        private void Awake() {
+            mSingleTask = this;
+            responseHandleList = new List<ResponseHandle>();
+            requestList = new List<ThinkingSDKBaseRequest>();
+            dataList = new List<IList<Dictionary<string, object>>>();
+        }
+
+        private void Start() {
+        }
+
+        private void Update() {
+            if (requestList.Count > 0 && !isWaiting)
+            {
+                WaitOne();
+                StartRequestSendData();
+            }
         }
 
         /// <summary>
@@ -49,14 +50,14 @@ namespace ThinkingSDK.PC.TaskManager
         /// </summary>
         public void WaitOne()
         {
-            mSM.WaitOne();
+            isWaiting = true;
         }
         /// <summary>
         /// 释放信号
         /// </summary>
         public void Release()
         {
-            mSM.Release();
+            isWaiting = false;
         }
         public void SyncInvokeAllTask()
         {
@@ -71,8 +72,6 @@ namespace ThinkingSDK.PC.TaskManager
                 responseHandleList.Add(responseHandle);
                 dataList.Add(list);
             }
-
-            _waitHandle.Set();
         }
 
         private void StartRequestSendData() 
@@ -90,7 +89,7 @@ namespace ThinkingSDK.PC.TaskManager
                 }
                 if (mRequest != null) 
                 {
-                    mRequest.SendData(responseHandle, list);
+                    this.StartCoroutine(this.SendData(mRequest, responseHandle, list));
                     lock(_locker)
                     {
                         requestList.RemoveAt(0);
@@ -100,6 +99,9 @@ namespace ThinkingSDK.PC.TaskManager
                 }
 
             }
+        }
+        private IEnumerator SendData(ThinkingSDKBaseRequest mRequest, ResponseHandle responseHandle, IList<Dictionary<string, object>> list) {
+            yield return mRequest.SendData_2(responseHandle, list);
         }
     }
 }

@@ -9,11 +9,22 @@
 #import "TDPublicConfig.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
 #import "TDFile.h"
+#include <mach/mach.h>
+#include <malloc/malloc.h>
+#import <sys/sysctl.h>
+#import "TDValidator.h"
+#include <mach-o/arch.h>
+#import "TDPMFPSMonitor.h"
+
+#define TD_PM_UNIT_KB 1024.0
+#define TD_PM_UNIT_MB (1024.0 * TD_PM_UNIT_KB)
+#define TD_PM_UNIT_GB (1024.0 * TD_PM_UNIT_MB)
 
 @interface TDDeviceInfo ()
 
 @property (nonatomic, readwrite) BOOL isFirstOpen;
 @property (nonatomic, strong) CTTelephonyNetworkInfo *telephonyInfo;
+@property (nonatomic, strong) TDPMFPSMonitor *fpsMonitor;
 
 @end
 
@@ -34,11 +45,14 @@
         self.libName = @"iOS";
         self.libVersion = TDPublicConfig.version;
 
+        [self startCollectAPM];
+        
         NSDictionary *deviceInfo = [self getDeviceUniqueId];
         _uniqueId = [deviceInfo objectForKey:@"uniqueId"];
         _deviceId = [deviceInfo objectForKey:@"deviceId"];
         _automaticData = [self collectAutomaticProperties];
         _appVersion = [[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"];
+        
     }
     return self;
 }
@@ -50,6 +64,15 @@
 - (void)updateAutomaticData {
     _automaticData = [self collectAutomaticProperties];
 }
+
+//-(NSDictionary *)getAutomaticData {
+//    if (_automaticData) {
+//        NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:_automaticData];
+//        [self addAPMParams:dic];
+//        _automaticData = dic;
+//    }
+//    return _automaticData;
+//}
 
 - (NSDictionary *)collectAutomaticProperties {
     NSMutableDictionary *p = [NSMutableDictionary dictionary];
@@ -86,8 +109,11 @@
         p[@"#system_language"] = [[preferredLanguages componentsSeparatedByString:@"-"] firstObject];;
     }
     
+//    p = [self addAPMParams:p];
+    
     return [p copy];
 }
+
 + (NSString*)bundleId
 {
      return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
@@ -216,5 +242,128 @@
     
     return anonymityId;
 }
+
+
+#pragma mark - memory
+//返回memory空闲值，单位为Byte
++ (int64_t)td_pm_func_getFreeMemory {
+    size_t length = 0;
+    int mib[6] = {0};
+    
+    int pagesize = 0;
+    mib[0] = CTL_HW;
+    mib[1] = HW_PAGESIZE;
+    length = sizeof(pagesize);
+    if (sysctl(mib, 2, &pagesize, &length, NULL, 0) < 0){
+        return -1;
+    }
+    
+    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+    
+    vm_statistics_data_t vmstat;
+    
+    if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) != KERN_SUCCESS){
+        return -1;
+    }
+    
+    int64_t freeMem = vmstat.free_count * pagesize;
+    int64_t inactiveMem = vmstat.inactive_count * pagesize;
+    
+    return freeMem + inactiveMem;
+}
+
+//获取memory总大小，单位Byte
++ (int64_t)td_pm_func_getRamSize{
+    int mib[2];
+    size_t length = 0;
+    
+    mib[0] = CTL_HW;
+    mib[1] = HW_MEMSIZE;
+    long ram;
+    length = sizeof(ram);
+    if (sysctl(mib, 2, &ram, &length, NULL, 0) < 0) {
+        return -1;
+    }
+    return ram;
+}
+
+#pragma mark - disk
+
++ (NSDictionary *)td_pm_getFileAttributeDic {
+    NSError *error;
+    NSDictionary *directory = [[NSFileManager defaultManager] attributesOfFileSystemForPath:NSHomeDirectory() error:&error];
+    if (error) {
+        return nil;
+    }
+    return directory;
+}
+
++ (long long)td_get_disk_free_size {
+    NSDictionary<NSFileAttributeKey, id> *directory = [self td_pm_getFileAttributeDic];
+    if (directory) {
+        return [[directory objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
+    }
+    return -1;
+}
+
++ (long long)td_get_storage_size {
+    NSDictionary<NSFileAttributeKey, id> *directory = [self td_pm_getFileAttributeDic];
+    return directory ? ((NSNumber *)[directory objectForKey:NSFileSystemSize]).unsignedLongLongValue:-1;
+}
+
+
+#pragma mark - CPU
+
+- (NSNumber *)is_simulator {
+    static dispatch_once_t onceToken;
+    static NSNumber *isSimulator;
+    dispatch_once(&onceToken, ^{
+        NSInteger cputype = NXGetLocalArchInfo()->cputype;
+        if ((cputype == CPU_TYPE_X86) || (cputype == CPU_TYPE_X86_64)) {
+            isSimulator = [NSNumber numberWithBool:YES];
+        } else {
+            isSimulator = [NSNumber numberWithBool:NO];
+        }
+    });
+    return isSimulator;
+}
+
+#pragma mark -  安装时间
++ (NSDate *)td_getInstallTime {
+    NSURL* urlToDocumentsFolder = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+    __autoreleasing NSError *error;
+    NSDate *installDate = [[[NSFileManager defaultManager] attributesOfItemAtPath:urlToDocumentsFolder.path error:&error] objectForKey:NSFileCreationDate];
+    if (!error) {
+        return installDate;
+    }
+    return [NSDate date];
+}
+
+#pragma mark - APM
+- (void)startCollectAPM {
+//    _fpsMonitor = [[TDPMFPSMonitor alloc] init];
+//    [_fpsMonitor setEnable:YES];
+}
+
+// 性能参数
+- (NSDictionary *)addAPMParams:(NSDictionary *)p {
+
+    if (!p) return p;
+    if (![p isKindOfClass:[NSDictionary class]]) return p;
+    
+    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:p];
+    NSString *ram = [NSString stringWithFormat:@"%.1f/%.1f", [TDDeviceInfo td_pm_func_getFreeMemory]/TD_PM_UNIT_GB, [TDDeviceInfo td_pm_func_getRamSize]/TD_PM_UNIT_GB];
+    if (ram && ram.length) {
+        [dic setObject:ram forKey:@"#ram"];
+    }
+    NSString *disk = [NSString stringWithFormat:@"%.1f/%.1f", [TDDeviceInfo td_get_disk_free_size]/TD_PM_UNIT_GB, [TDDeviceInfo td_get_storage_size]/TD_PM_UNIT_GB];
+    if (disk && disk.length) {
+        [dic setObject:disk forKey:@"#disk"];
+    }
+    [dic setObject:[self is_simulator] forKey:@"#simulator"];
+    [dic setObject:[_fpsMonitor getPFS] forKey:@"#fps"];
+    return dic;
+}
+
 
 @end

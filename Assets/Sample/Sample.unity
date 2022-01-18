@@ -184,7 +184,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: startManually
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.size
@@ -196,7 +196,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[1].mode
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[0].appid
@@ -204,10 +204,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[1].appid
-      value: b444dc7dee6747bf92c35c09277ab7ef
+      value: 22e445595b0f42bd8c5fe35bc44b88d6
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[0].timeZone
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
+      propertyPath: tokens.Array.data[1].timeZone
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
@@ -220,7 +224,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1362306111410183020, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: tokens.Array.data[1].serverUrl
-      value: https://global-ta.slots-patch.com
+      value: https://receiver-ta-dev.thinkingdata.cn
       objectReference: {fileID: 0}
     - target: {fileID: 3471622134282543401, guid: 986ad473b78d14e08b1f05d368cb1591, type: 3}
       propertyPath: m_Name

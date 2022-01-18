@@ -139,5 +139,11 @@ namespace ThinkingSDK.PC.Utils
                 originalDic[kv.Key] = kv.Value;
             }
         }
+        //获取时间戳
+        public static long GetTimeStamp()
+        {
+            TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            return Convert.ToInt64(ts.TotalMilliseconds);
+        }     
     }
 }

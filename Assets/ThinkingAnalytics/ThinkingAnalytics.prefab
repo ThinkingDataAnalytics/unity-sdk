@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 57277738888238098}
   - component: {fileID: 1362306111410183020}
+  - component: {fileID: 4628215816442124098}
   m_Layer: 0
   m_Name: ThinkingAnalytics
   m_TagString: Untagged
@@ -52,3 +53,15 @@ MonoBehaviour:
     mode: 0
     timeZone: 0
     timeZoneId: 
+--- !u!114 &4628215816442124098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3471622134282543401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb96ead89c0c544608be4e0ad781de78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

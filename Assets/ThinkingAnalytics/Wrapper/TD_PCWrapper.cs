@@ -12,12 +12,11 @@ using ThinkingSDK.PC.Config;
 
 namespace ThinkingAnalytics.Wrapper
 {
-    public partial class ThinkingAnalyticsWrapper
+    public partial class ThinkingAnalyticsWrapper: ThinkingSDK.PC.Main.IDynamicSuperProperties
     {
-#if  (UNITY_STANDALONE || UNITY_EDITOR)
+#if  (UNITY_STANDALONE || UNITY_EDITOR || UNITY_WEBGL)
         private void init()
         {
-
         //     public enum TATimeZone
         //{
         //    Local,
@@ -66,7 +65,7 @@ namespace ThinkingAnalytics.Wrapper
             {
                 config.SetMode(Mode.DEBUG_ONLY);
             }
-            ThinkingPCSDK.Init(token.appid,token.serverUrl,config);
+            ThinkingPCSDK.Init(token.appid,token.serverUrl,config, this.taMono);
         }
 
         private void identify(string uniqueId)
@@ -255,6 +254,11 @@ namespace ThinkingAnalytics.Wrapper
             return ThinkingPCSDK.GetDeviceId();
         }
 
+        public void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        {
+            ThinkingPCSDK.SetDynamicSuperProperties(this);
+        }
+
         private void optOutTracking()
         {
             ThinkingPCSDK.OptTracking(false, token.appid);
@@ -277,7 +281,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
-            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken, false);
+            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken, this.taMono, false);
             ThinkingPCSDK.CreateLightInstance(delegateToken.appid);
             return result;
         }
@@ -288,21 +292,40 @@ namespace ThinkingAnalytics.Wrapper
             return ThinkingPCSDK.TimeString(dateTime,token.appid);
         }
 
-        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents)
+        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
         {
+            Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
             {
-                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL, token.appid);
+                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL, propertiesDic, token.appid);
             }
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_START) != 0)
             {
-                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START,token.appid);
+                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START, propertiesDic, token.appid);
             }
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
             {
-                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH,token.appid);
+                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH, propertiesDic, token.appid);
             }
         }
+
+        private void setAutoTrackProperties(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
+        {
+            Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
+            {
+                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL, propertiesDic, token.appid);
+            }
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_START) != 0)
+            {
+                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START, propertiesDic, token.appid);
+            }
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
+            {
+                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH, propertiesDic, token.appid);
+            }
+        }
+
         private static void enable_log(bool enableLog)
         {
             ThinkingPCSDK.EnableLog(enableLog);

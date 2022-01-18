@@ -29,7 +29,13 @@
     if ([object isKindOfClass:[NSString class]]) {
         return object;
     } else if ([object isKindOfClass:[NSNumber class]]) {
+        // 浮点型精度丢失问题
         if ([object stringValue] && [[object stringValue] rangeOfString:@"."].location != NSNotFound) {
+            return [NSDecimalNumber decimalNumberWithDecimal:((NSNumber *)object).decimalValue];
+        }
+        // 科学计数法精度丢失问题
+        if ([object stringValue] && ([[object stringValue] rangeOfString:@"e"].location != NSNotFound ||
+                                     [[object stringValue] rangeOfString:@"E"].location != NSNotFound )) {
             return [NSDecimalNumber decimalNumberWithDecimal:((NSNumber *)object).decimalValue];
         }
         return object;

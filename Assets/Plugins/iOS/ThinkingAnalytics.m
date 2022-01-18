@@ -11,6 +11,16 @@
 #define NETWORK_TYPE_WIFI 2
 #define NETWORK_TYPE_ALL 3
 
+//定义一个名字参数和C#类一样的方法
+typedef const char * (*ResultHandler) (const char *userId);
+//生命一个静态变量存储回调unity的函数指针
+static ResultHandler resultHandler;
+//设置回调游戏的托管函数
+void RegisterRecieveGameCallback(ResultHandler handlerPointer) 
+{
+    resultHandler = handlerPointer;
+}
+
 static NSMutableDictionary *light_instances;
 static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 
@@ -336,6 +346,16 @@ const char *get_device_id() {
     return strdup([distinct_id UTF8String]);
 }
 
+void set_dynamic_super_properties(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [getInstance(app_id_string) registerDynamicSuperProperties:^NSDictionary * _Nonnull{
+        const char *ret = resultHandler(app_id);
+        NSDictionary *dynamicSuperProperties = nil;
+        convertToDictionary(ret, &dynamicSuperProperties);
+        return dynamicSuperProperties;
+    }];
+}
+
 void enable_tracking(const char *app_id, BOOL enabled) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [getInstance(app_id_string) enableTracking:enabled];
@@ -370,9 +390,18 @@ void create_light_instance(const char *app_id, const char *delegate_app_id) {
     pthread_rwlock_unlock(&rwlock);
 }
 
-void enable_autoTrack(const char *app_id, int autoTrackEvents) {
+void enable_autoTrack(const char *app_id, int autoTrackEvents, const char *properties) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents];
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents properties:properties_dict];
+}
+
+void set_autoTrack_properties(const char *app_id, int autoTrackEvents, const char *properties) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] setAutoTrackProperties: autoTrackEvents properties:properties_dict];
 }
 
 const char *get_time_string(const char *app_id, long long time_stamp_millis) {

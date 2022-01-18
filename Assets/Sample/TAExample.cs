@@ -20,89 +20,118 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
     // 动态公共属性接口
     public Dictionary<string, object> GetDynamicSuperProperties()
     {
-       return new Dictionary<string, object>() {
-           {"DynamicProperty", DateTime.Now}
-       };
+        return new Dictionary<string, object>() 
+        {
+            {"DynamicProperty", DateTime.Now}
+        };
     }
     private void Awake()
     {
     }
     private void Start()
     {
+        // 自动初始化 ThinkingAnalytics 时，可以在 Start() 中调用 EnableAutoTrack() 开启自动采集事件
+        // 开启自动采集事件
+        // ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
     }
 
-    void OnGUI() {
+    void OnGUI() 
+    {
         GUILayout.BeginArea(new Rect(Margin, Screen.height * 0.15f, Screen.width-2*Margin, Screen.height));
         scrollPosition = GUILayout.BeginScrollView(new Vector2(0, 0), GUILayout.Width(Screen.width - 2 * Margin), GUILayout.Height(Screen.height - 100));
         GUIStyle style = GUI.skin.label;
         style.fontSize = 25;
-        GUILayout.Label("初始化/设置用户ID",style);
+        GUILayout.Label("Initialization / UserIDSetting",style);
 
         GUIStyle buttonStyle = GUI.skin.button;
         buttonStyle.fontSize = 20;
         GUILayout.BeginHorizontal(GUI.skin.box,GUILayout.Height(Height));
-        if (GUILayout.Button("手动初始化", GUILayout.Height(Height)))
+        if (GUILayout.Button("ManualInitialization", GUILayout.Height(Height)))
         {
-            string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
-            string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
-            ThinkingAnalyticsAPI.TAMode mode = ThinkingAnalyticsAPI.TAMode.NORMAL;
-            ThinkingAnalyticsAPI.TATimeZone timeZone = ThinkingAnalyticsAPI.TATimeZone.Local;
-            ThinkingAnalyticsAPI.Token token = new ThinkingAnalyticsAPI.Token(appId, serverUrl, mode, timeZone);
-            ThinkingAnalyticsAPI.Token[] tokens = new ThinkingAnalyticsAPI.Token[1];
-            tokens[0] = token;
-            ThinkingAnalyticsAPI.StartThinkingAnalytics(tokens);
+            /*** 预置体挂载 ThinkingAnalyticsAPI 脚本，手动初始化 ***/
+            ThinkingAnalyticsAPI.StartThinkingAnalytics();
             // 开启自动采集事件
             ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
+
+            /*** 手动挂载 ThinkingAnalyticsAPI 脚本，手动初始化 ***/
+            // string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
+            // string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
+            // ThinkingAnalyticsAPI.TAMode mode = ThinkingAnalyticsAPI.TAMode.NORMAL;
+            // ThinkingAnalyticsAPI.TATimeZone timeZone = ThinkingAnalyticsAPI.TATimeZone.Local;
+            // ThinkingAnalyticsAPI.Token token = new ThinkingAnalyticsAPI.Token(appId, serverUrl, mode, timeZone);
+            // ThinkingAnalyticsAPI.Token[] tokens = new ThinkingAnalyticsAPI.Token[1];
+            // tokens[0] = token;
+            // ThinkingAnalyticsAPI.StartThinkingAnalytics(tokens);
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("设设置账号ID", GUILayout.Height(Height)))
+        if (GUILayout.Button("SetAccountID", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.Login("TA");
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("设置访客ID", GUILayout.Height(Height)))
+        if (GUILayout.Button("SetDistinctID", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.Identify("TA_Distinct1");
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("清除账号ID", GUILayout.Height(Height)))
+        if (GUILayout.Button("ClearAccountID", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.Logout();
         }
         GUILayout.EndHorizontal();
 
         GUILayout.Space(20);
-        GUILayout.Label("上传事件", GUI.skin.label);
+        GUILayout.Label("EventTracking", GUI.skin.label);
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
-        if (GUILayout.Button("普通事件", GUILayout.Height(Height)))
+        if (GUILayout.Button("TrackEvent", GUILayout.Height(Height)))
         {
+            List<object> listProperties = new List<object>() {
+                "C1",
+                true,
+                30.03,
+                DateTime.Now.AddHours(2),
+            };
+            Dictionary<string, object> complexProperties = new Dictionary<string, object>(){
+                {"key_string", "B1"},
+                {"key_bool", true},
+                {"key_number", 20.02},
+                {"key_date", DateTime.Now.AddHours(1)},
+                {"key_array",listProperties}
+            };
+            List<object> listComplexProperties = new List<object>() {
+                complexProperties,
+                complexProperties,
+                complexProperties
+            };
             Dictionary<string, object> properties = new Dictionary<string, object>(){
-                {"KEY_STRING", "B1"},
-                {"KEY_BOOL", true},
-                {"KEY_NUMBER", 50.65},
-                {"Key_Test","好的"}
+                {"key_string", "A1"},
+                {"key_bool", true},
+                {"key_number", 10.01},
+                {"key_date", DateTime.Now},
+                {"key_array",listProperties},                
+                {"key_complex",complexProperties},
+                {"key_complex_array",listComplexProperties}
             };
             ThinkingAnalyticsAPI.Track("TA",properties);
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("首次事件", GUILayout.Height(Height)))
+        if (GUILayout.Button("TrackFirstEvent", GUILayout.Height(Height)))
         {
             Dictionary<string, object> properties = new Dictionary<string, object>(){
-                {"KEY_STRING", "B1"},
-                {"KEY_BOOL", true},
-                {"KEY_NUMBER", 50.65}
+                {"key_string", "B1"},
+                {"key_bool", true},
+                {"key_number", 50.65}
             };
             TDFirstEvent firstEvent = new TDFirstEvent("DEVICE_FIRST", properties);
             ThinkingAnalyticsAPI.Track(firstEvent);
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("可更新事件", GUILayout.Height(Height)))
+        if (GUILayout.Button("TrackUpdateEvent", GUILayout.Height(Height)))
         {
             // 示例： 上报可被更新的事件，假设事件名为 UPDATABLE_EVENT
             TDUpdatableEvent updatableEvent = new TDUpdatableEvent("UPDATABLE_EVENT",
                 new Dictionary<string, object>{
                     {"status", 3},
-                    
                     {"price", 100}},
                 "test_event_id");
             ThinkingAnalyticsAPI.Track(updatableEvent);
@@ -110,7 +139,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("可重写事件", GUILayout.Height(Height)))
+        if (GUILayout.Button("TrackOverwriteEvent", GUILayout.Height(Height)))
         {
             TDOverWritableEvent overWritableEvent = new TDOverWritableEvent("OVERWRITABLE_EVENT",
                 new Dictionary<string, object>{
@@ -122,15 +151,17 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("记录事件时长", GUILayout.Height(Height)))
+        if (GUILayout.Button("TrackEventWithTimeTravel", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.TimeEvent("TATimeEvent");
+            #if !(UNITY_WEBGL)
             Thread.Sleep(1000);
+            #endif
             ThinkingAnalyticsAPI.Track("TATimeEvent");
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("自定义事件发生时间", GUILayout.Height(Height)))
+        if (GUILayout.Button("TrackEventWithDate", GUILayout.Height(Height)))
         {
             Dictionary<string, object> properties = new Dictionary<string, object>();
             properties["proper1"] = 1;
@@ -141,7 +172,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("轻实例", GUILayout.Height(Height)))
+        if (GUILayout.Button("TrackEventWithLightInstance", GUILayout.Height(Height)))
         {
             // 创建轻实例，返回轻实例的 token （类似于 APP ID）
             string lightToken = ThinkingAnalyticsAPI.CreateLightInstance();
@@ -154,15 +185,15 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
 
 
         GUILayout.Space(20);
-        GUILayout.Label("用户属性", GUI.skin.label);
+        GUILayout.Label("UserProperty", GUI.skin.label);
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
         if (GUILayout.Button("UserSet", GUILayout.Height(Height)))
         {
             Dictionary<string, object> userProperties = new Dictionary<string, object>();
-            userProperties["UserProperty1"] = 1;
-            userProperties["UserProperty2"] = false;
-            userProperties["UserProperty3"] = DateTime.Now;
-            userProperties["UserProperty4"] = "UserStrProperty";
+            userProperties["userproperty1"] = 1;
+            userProperties["userproperty2"] = false;
+            userProperties["userproperty3"] = DateTime.Now;
+            userProperties["userproperty4"] = "UserStrProperty";
             ThinkingAnalyticsAPI.UserSet(userProperties,DateTime.Now.AddHours(-1));
         }
 
@@ -170,22 +201,22 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         if (GUILayout.Button("UserSetOnce", GUILayout.Height(Height)))
         {
             Dictionary<string, object> userProperties = new Dictionary<string, object>();
-            userProperties["UserProperty1"] = 1;
-            userProperties["UserProperty2"] = false;
-            userProperties["UserProperty3"] = DateTime.Now;
-            userProperties["UserProperty4"] = "UserStrProperty";
+            userProperties["userproperty1"] = 1;
+            userProperties["userproperty2"] = false;
+            userProperties["userproperty3"] = DateTime.Now;
+            userProperties["userproperty4"] = "UserStrProperty";
             ThinkingAnalyticsAPI.UserSetOnce(userProperties);
 
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UserAdd", GUILayout.Height(Height)))
         {
-            ThinkingAnalyticsAPI.UserAdd("UserCoin", 1);
+            ThinkingAnalyticsAPI.UserAdd("usercoin", 1);
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UserUnset", GUILayout.Height(Height)))
         {
-            ThinkingAnalyticsAPI.UserUnset("UserProperty1");
+            ThinkingAnalyticsAPI.UserUnset("userproperty1");
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UserDelete", GUILayout.Height(Height)))
@@ -202,7 +233,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             ThinkingAnalyticsAPI.UserAppend(
                 new Dictionary<string, object>
                 {
-                    {"USER_LIST", stringList }
+                    {"user_list", stringList }
                 }
             );
         }
@@ -211,36 +242,36 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
    
 
         GUILayout.Space(20);
-        GUILayout.Label("其他配置选项", GUI.skin.label);
+        GUILayout.Label("OtherSetting", GUI.skin.label);
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
-        if (GUILayout.Button("获取设备ID", GUILayout.Height(Height)))
+        if (GUILayout.Button("GetDeviceID", GUILayout.Height(Height)))
         {
             Debug.Log("设备ID为:" + ThinkingAnalyticsAPI.GetDeviceId());
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("暂停数据上报", GUILayout.Height(Height)))
+        if (GUILayout.Button("Pause", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.EnableTracking(false);
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("继续数据上报", GUILayout.Height(Height)))
+        if (GUILayout.Button("Continue", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.EnableTracking(true);
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("停止数据上报", GUILayout.Height(Height)))
+        if (GUILayout.Button("Stop", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.OptOutTracking();
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("开始数据上报", GUILayout.Height(Height)))
+        if (GUILayout.Button("Start", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.OptInTracking();
         }
        
         GUILayout.Space(20);
-        if (GUILayout.Button("校准时间", GUILayout.Height(Height)))
+        if (GUILayout.Button("CalibrateTime", GUILayout.Height(Height)))
         {
             //时间戳,单位毫秒 对应时间为1608782412000 2020-12-24 12:00:12
             ThinkingAnalyticsAPI.CalibrateTime(1608782412000);
@@ -251,9 +282,9 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         GUILayout.EndHorizontal();
 
         GUILayout.Space(20);
-        GUILayout.Label("设置公共属性", GUI.skin.label);
+        GUILayout.Label("PropertiesSetting", GUI.skin.label);
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
-        if (GUILayout.Button("设置静态公共属性", GUILayout.Height(Height)))
+        if (GUILayout.Button("SetSuperProperties", GUILayout.Height(Height)))
         {
             Dictionary<string, object> superProperties = new Dictionary<string, object>();
             List<object> listProperties = new List<object>();
@@ -269,7 +300,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             ThinkingAnalyticsAPI.SetSuperProperties(superProperties);
         }
         GUILayout.Space(20);
-        if (GUILayout.Button("更新静态公共属性", GUILayout.Height(Height)))
+        if (GUILayout.Button("UpdateSuperProperties", GUILayout.Height(Height)))
         {
             Dictionary<string, object> superProperties = new Dictionary<string, object>();
             superProperties["super1"] = 2;
@@ -278,26 +309,26 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         }
        
         GUILayout.Space(20);
-        if (GUILayout.Button("清空部分静态公共属性", GUILayout.Height(Height)))
+        if (GUILayout.Button("ClearSuperProperties", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.UnsetSuperProperty("super1");
-            ThinkingAnalyticsAPI.UnsetSuperProperty("superX");
+            ThinkingAnalyticsAPI.UnsetSuperProperty("superx");
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("清空所有静态公共属性", GUILayout.Height(Height)))
+        if (GUILayout.Button("ClearAllSuperProperties", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.ClearSuperProperties();
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("设置动态公共属性", GUILayout.Height(Height)))
+        if (GUILayout.Button("SetDynamicSuperProperties", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.SetDynamicSuperProperties(this);
         }
 
         GUILayout.Space(20);
-        if (GUILayout.Button("获取预置属性", GUILayout.Height(Height)))
+        if (GUILayout.Button("GetPresetProperties", GUILayout.Height(Height)))
         {
             TDPresetProperties presetProperties = ThinkingAnalyticsAPI.GetPresetProperties();
             string deviceModel = presetProperties.DeviceModel;

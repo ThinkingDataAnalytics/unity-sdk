@@ -1,4 +1,6 @@
 #import "ThinkingAnalyticsSDK.h"
+#import "TDStartTracker.h"
+#import "TDInstallTracker.h"
 
 FOUNDATION_EXTERN NSString * const TD_EVENT_PROPERTY_TITLE;
 FOUNDATION_EXTERN NSString * const TD_EVENT_PROPERTY_URL_PROPERTY;

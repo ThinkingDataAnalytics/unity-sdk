@@ -12,13 +12,13 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.2.2
+    SDK VERSION:2.2.4
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
 #warning "Your Unity version is not supported by us - ThinkingAnalyticsSDK disabled"
 #endif
-#if !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN)
+#if !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_STANDALONE_OSX || UNITY_STANDALONE_WIN || UNITY_WEBGL)
 #define DISABLE_TA
 #warning "Your Unity Platfrom is not supported by us - ThinkingAnalyticsSDK disabled"
 #endif
@@ -36,6 +36,9 @@ using UnityEditor.iOS.Xcode;
 #endif
 using System.IO;
 using ThinkingAnalytics.TaException;
+#if UNITY_IOS && !UNITY_EDITOR
+using System.Runtime.InteropServices;
+#endif
 
 namespace ThinkingAnalytics
 {
@@ -157,13 +160,13 @@ namespace ThinkingAnalytics
         { 
             get {return (string)PresetProperties["#os_version"];}
         }
-		public int ScreenHeight 
+		public long ScreenHeight 
         { 
-            get {return (int)PresetProperties["#screen_height"];}
+            get {return (long)PresetProperties["#screen_height"];}
         }
-		public int ScreenWidth 
+		public long ScreenWidth 
         { 
-            get {return (int)PresetProperties["#screen_width"];}
+            get {return (long)PresetProperties["#screen_width"];}
         }
 		public string SystemLanguage 
         { 
@@ -209,7 +212,7 @@ namespace ThinkingAnalytics
 
             public Token(string appId, string serverUrl, TAMode mode, TATimeZone timeZone, string timeZoneId = null)
             {
-                appid = appId;
+                this.appid = appId.Replace(" ", "");
                 this.serverUrl = serverUrl;
                 this.mode = mode;
                 this.timeZone = timeZone;
@@ -281,7 +284,7 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.2.2";
+        public readonly string VERSION = "2.2.4";
 
         private static ThinkingAnalyticsAPI taAPIInstance;
 
@@ -397,15 +400,23 @@ namespace ThinkingAnalytics
         /// 开启自动采集功能.
         /// </summary>
         /// <param name="appId">项目 ID(可选)</param>
-        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, string appId = "")
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties = null, string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).EnableAutoTrack(events);
+                if (properties == null)
+                {
+                    properties = new Dictionary<string, object>();
+                }
+                getInstance(appId).EnableAutoTrack(events, properties);
 
                 //C#异常捕获提前，包含所有端
                 if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
                 {
+                    foreach (var item in properties.Keys)
+                    {
+                        taAPIInstance.autoTrackProperties[item] = properties[item];
+                    }
                     ThinkingSDKExceptionHandler eHandler = new ThinkingSDKExceptionHandler();
                     eHandler.SetTaExceptionHandler(taAPIInstance);
                     eHandler.RegisterTaExceptionHandler();
@@ -413,9 +424,29 @@ namespace ThinkingAnalytics
             }
         }
 
+        public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).SetAutoTrackProperties(events, properties);
+                //C#异常捕获提前，包含所有端
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
+                {
+                    foreach (var item in properties.Keys)
+                    {
+                        taAPIInstance.autoTrackProperties[item] = properties[item];
+                    }
+                }
+            }
+        }
+
         /// 异常捕获回调
         public void InvokeTaExceptionHandler(string eventName, Dictionary<string, object> properties)
         {
+            foreach (var item in autoTrackProperties.Keys)
+            {
+                properties[item] = autoTrackProperties[item];
+            }
             Track(eventName, properties);
         }
 
@@ -775,6 +806,7 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).SetDynamicSuperProperties(dynamicSuperProperties);
+                taAPIInstance.dynamicSuperProperties = dynamicSuperProperties;
             }
         }
 
@@ -835,6 +867,9 @@ namespace ThinkingAnalytics
         public static string CreateLightInstance(string appId = "") {
             if (tracking_enabled)
             {
+                if (string.IsNullOrEmpty(appId)) {
+                    appId = default_appid;
+                }
                 ThinkingAnalyticsWrapper lightInstance = getInstance(appId).CreateLightInstance();
                 instance_lock.EnterWriteLock();
                 try
@@ -892,15 +927,6 @@ namespace ThinkingAnalytics
             #endif
             TD_Log.EnableLog(taAPIInstance.enableLog);
             ThinkingAnalyticsWrapper.SetVersionInfo(taAPIInstance.VERSION);
-            if (TA_instance == null)
-            {
-                DontDestroyOnLoad(taAPIInstance.gameObject);
-                TA_instance = taAPIInstance;
-            } else
-            {
-                Destroy(taAPIInstance.gameObject);
-                return;
-            }
 
             if (tracking_enabled)
             {
@@ -908,20 +934,27 @@ namespace ThinkingAnalytics
                 {
                     tokens = taAPIInstance.tokens;
                 }
-                default_appid = tokens[0].appid;
+                default_appid = tokens[0].appid.Replace(" ", "");
                 instance_lock.EnterWriteLock();
                 try
                 {
                     ThinkingAnalyticsWrapper.EnableLog(taAPIInstance.enableLog);
                     foreach (Token token in tokens)
                     {
-                        Debug.Log("StartThinkingAnalytics token: "+token.appid);
                         if (!string.IsNullOrEmpty(token.appid))
                         {
-                            ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token);
-                            wrapper.SetNetworkType(taAPIInstance.networkType);
-                            sInstances.Add(token.appid,wrapper);
-
+                            if (sInstances.ContainsKey(token.appid))
+                            {
+                                Debug.Log("ThinkingAnalytics is repeated start with appId: "+token.appid);
+                            }
+                            else 
+                            {
+                                Token token1 = new Token(token.appid, token.serverUrl, token.mode, token.timeZone, token.timeZoneId);
+                                Debug.Log("ThinkingAnalytics start with appId: "+token1.appid);
+                                ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token1, taAPIInstance);
+                                wrapper.SetNetworkType(taAPIInstance.networkType);
+                                sInstances.Add(token1.appid,wrapper);
+                            }
                         }
                     }
                 }
@@ -933,10 +966,6 @@ namespace ThinkingAnalytics
                 {
                     tracking_enabled = false;
                 }
-                //else
-                //{
-                //    getInstance(default_appid).SetNetworkType(networkType);
-                //}
             }
         }
 
@@ -944,15 +973,60 @@ namespace ThinkingAnalytics
         {
             taAPIInstance = this;
 
+            if (TA_instance == null)
+            {
+                DontDestroyOnLoad(taAPIInstance.gameObject);
+                TA_instance = taAPIInstance;
+            } 
+            else
+            {
+                Destroy(taAPIInstance.gameObject);
+                return;
+            }
+
             if (startManually == false) 
             {
                 ThinkingAnalyticsAPI.StartThinkingAnalytics();
             }
         }
 
+        private void Start() {
+            #if UNITY_IOS && !UNITY_EDITOR
+            //设置回调托管函数指针
+            ResultHandler handler = new ResultHandler(resultHandler);
+            IntPtr handlerPointer = Marshal.GetFunctionPointerForDelegate(handler);
+            //调用OC的方法，将C#的回调方法函数指针传给OC
+            RegisterRecieveGameCallback(handlerPointer);
+            #endif
+        }
+
+        #if UNITY_IOS && !UNITY_EDITOR
+        //声明一个OC的注册回调方法函数指针的函数方法，每一个参数都是函数指针
+        [DllImport("__Internal")]
+        public static extern void RegisterRecieveGameCallback
+        (
+            IntPtr handlerPointer
+        );    
+
+        //先声明方法、delegate修饰标记是回调方法
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate string ResultHandler(string msg);
+
+        //实现回调方法 MonoPInvokeCallback修饰会让OC通过函数指针回调此方法
+        [AOT.MonoPInvokeCallback(typeof(ResultHandler))]
+        static string resultHandler(string msg) 
+        {
+            Debug.Log("收到来自oc的参数  - " + msg);
+            Dictionary<string, object>dynamicSuperProperties = taAPIInstance.dynamicSuperProperties.GetDynamicSuperProperties();
+            return TD_MiniJSON.Serialize(dynamicSuperProperties);
+        }
+        #endif 
 
 
 
+
+        private IDynamicSuperProperties dynamicSuperProperties;
+        private Dictionary<string, object> autoTrackProperties = new Dictionary<string, object>();
         private static ThinkingAnalyticsAPI TA_instance;
         private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID
         private static bool tracking_enabled = true;

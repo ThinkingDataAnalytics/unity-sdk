@@ -9,6 +9,7 @@ namespace ThinkingAnalytics.Wrapper
     public partial class ThinkingAnalyticsWrapper
     {
 #if UNITY_ANDROID && !(UNITY_EDITOR)
+        private static ThinkingAnalyticsWrapper wrapper;
         private static readonly string JSON_CLASS = "org.json.JSONObject";
         private static readonly AndroidJavaClass sdkClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK");
         private static readonly AndroidJavaClass configClass = new AndroidJavaClass("cn.thinkingdata.android.TDConfig");
@@ -55,6 +56,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private void init()
         {
+            wrapper = this;
             AndroidJavaObject context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"); //获得Context
             AndroidJavaObject config = configClass.CallStatic<AndroidJavaObject>("getInstance", context, token.appid, token.serverUrl);
             config.Call("setModeInt", (int) token.mode);
@@ -311,6 +313,13 @@ namespace ThinkingAnalytics.Wrapper
             return instance.Call<string>("getDeviceId");
         }
 
+        public void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        {
+            Debug.Log("setDynamicSuperProperties in TD_AndroidWrapper");
+            ListenerAdapter adapter = new ListenerAdapter();
+            instance.Call("setDynamicSuperPropertiesTrackerListener", adapter);
+        }
+
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType) {
             switch (networkType)
             {
@@ -326,9 +335,14 @@ namespace ThinkingAnalytics.Wrapper
             }
         }
 
-        private void enableAutoTrack(AUTO_TRACK_EVENTS events)
+        private void enableAutoTrack(AUTO_TRACK_EVENTS events, string properties)
         {
-            instance.Call("enableAutoTrack", (int) events);
+            instance.Call("enableAutoTrack", (int) events, getJSONObject(properties));
+        }
+
+        private void setAutoTrackProperties(AUTO_TRACK_EVENTS events, string properties)
+        {
+            instance.Call("setAutoTrackProperties", (int) events, getJSONObject(properties));
         }
 
         private void optOutTracking()
@@ -358,7 +372,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
         {
-            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken, false);
+            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken, this.taMono, false);
             AndroidJavaObject lightInstance = instance.Call<AndroidJavaObject>("createLightInstance");
             result.setInstance(lightInstance);
             return result;
@@ -373,6 +387,19 @@ namespace ThinkingAnalytics.Wrapper
         {
             sdkClass.CallStatic("calibrateTimeWithNtpForUnity", ntpServer);
         }
+
+        public interface IDynamicSuperPropertiesTrackerListener
+        {
+            string getDynamicSuperPropertiesString();
+        }
+        private class ListenerAdapter : AndroidJavaProxy {
+            public ListenerAdapter() : base("cn.thinkingdata.android.ThinkingAnalyticsSDK$DynamicSuperPropertiesTrackerListener") {}
+            public string getDynamicSuperPropertiesString()
+            {
+                return TD_MiniJSON.Serialize(wrapper.GetDynamicSuperProperties());
+            }
+        }
+
 #endif
     }
 }

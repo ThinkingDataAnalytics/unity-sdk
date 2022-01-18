@@ -1,4 +1,6 @@
 ﻿using System;
+using ThinkingSDK.PC.Constant;
+using ThinkingSDK.PC.Storage;
 using UnityEngine;
 
 namespace ThinkingSDK.PC.Utils
@@ -8,7 +10,22 @@ namespace ThinkingSDK.PC.Utils
         //设备ID
         public static string DeviceID()
         {
-            return SystemInfo.deviceUniqueIdentifier;
+            #if (UNITY_WEBGL)
+                return RandomDeviceID();
+            #else
+                return SystemInfo.deviceUniqueIdentifier;
+            #endif
+        }
+        //随机数持久化,作为设备ID的备选(WebGL获取不到设备ID)
+        public static string RandomDeviceID()
+        {
+            string randomID = (string)ThinkingSDKFile.GetData(ThinkingSDKConstant.RANDOM_DEVICE_ID, typeof(string));
+            if (string.IsNullOrEmpty(randomID))
+            {
+                randomID = System.Guid.NewGuid().ToString("N");
+                ThinkingSDKFile.SaveData(ThinkingSDKConstant.RANDOM_DEVICE_ID, randomID);
+            }
+            return randomID;
         }
         //网络类型
         public static string NetworkType()

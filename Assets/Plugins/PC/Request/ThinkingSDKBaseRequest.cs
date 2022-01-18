@@ -9,6 +9,8 @@ using System.IO;
 using System.Text;
 using System.IO.Compression;
 using System.Runtime.Serialization;
+using UnityEngine.Networking;
+using System.Collections;
 
 namespace ThinkingSDK.PC.Request
 {
@@ -21,7 +23,7 @@ namespace ThinkingSDK.PC.Request
         private string mAppid;
         private string mURL;
         private IList<Dictionary<string, object>> mData;
-        
+
         public ThinkingSDKBaseRequest(string appid, string url, IList<Dictionary<string, object>> data)
         {
             mAppid = appid;
@@ -92,38 +94,7 @@ namespace ThinkingSDK.PC.Request
             return isOk;
         }
 
-        abstract public void SendData(ResponseHandle responseHandle);
-        abstract public void SendData(ResponseHandle responseHandle, IList<Dictionary<string, object>> data);
-        //public static void PostWithJSON(string url,string appid,Dictionary<string,object> param,ResponseHandle responseHandle)
-        //{
-        //    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-        //    request.Method = "POST";
-        //    request.ContentType = "text/plain";
-        //    request.ReadWriteTimeout = 30 * 1000;
-        //    request.Timeout = 30 * 1000;
-        //    request.Headers.Set("appid", appid);
-        //    request.Headers.Set("TA-Integration-Type", "PC");
-        //    request.Headers.Set("TA-Integration-Version","2.6.1");
-        //    request.Headers.Set("TA-Integration-Count", "1");
-        //    request.Headers.Set("TA-Integration-Extra", "PC");
-        //    string content = ThinkingSDKJSON.Serialize(param);
-        //    string encodeContent = Encode(content); 
-        //    byte[] contentCompressed = Encoding.UTF8.GetBytes(encodeContent);
-        //    using (Stream stream = request.GetRequestStream())
-        //    {
-        //        stream.Write(contentCompressed, 0, contentCompressed.Length);
-        //        stream.Flush();
-        //    }
-        //    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-        //    var responseResult = new StreamReader(response.GetResponseStream()).ReadToEnd();
-        //    if (responseResult != null)
-        //    {
-        //        ThinkingSDKLogger.Print("Request URL=" + url);
-        //        ThinkingSDKLogger.Print("Response:=" + responseResult);
-        //    }
-
-        //}
-
+        abstract public IEnumerator SendData_2(ResponseHandle responseHandle, IList<Dictionary<string, object>> data);
 
         //public static void postWithFORM(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle)
         //{
@@ -150,53 +121,98 @@ namespace ThinkingSDK.PC.Request
         //    }
         //}
 
-        public static void GetWithFORM(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle)
+        // public static void GetWithFORM(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle, MonoBehaviour mono)
+        // {
+        //     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "?appid=" + appid + "&data=" + ThinkingSDKJSON.Serialize(param));
+        //     request.Method = "GET";
+        //     request.ContentType = "application/x-www-form-urlencoded";
+        //     request.ReadWriteTimeout = 30 * 1000;
+        //     request.Timeout = 30 * 1000;
+
+        //     HttpWebResponse response = null;
+        //     Stream responseStream = null;
+        //     Dictionary<string,object> resultDict = new Dictionary<string, object>();
+        //     try
+        //     {
+        //         response = (HttpWebResponse)request.GetResponse();
+        //         responseStream = response.GetResponseStream();
+        //         var responseResult = new StreamReader(responseStream).ReadToEnd();
+        //         if (responseResult != null)
+        //         {
+        //             ThinkingSDKLogger.Print("Request URL=" + url);
+        //             ThinkingSDKLogger.Print("Response:=" + responseResult);
+
+        //             resultDict = ThinkingSDKJSON.Deserialize(responseResult);
+        //         }
+        //     }
+        //     catch (WebException ex)
+        //     {
+        //         ThinkingSDKLogger.Print("server response :" + ex.Message);
+        //     }
+        //     finally
+        //     {
+        //         if (responseStream != null)
+        //         {
+        //             responseStream.Close();
+        //         }
+        //         if (response != null)
+        //         {
+        //             response.Close();
+        //         }
+        //         if (request != null)
+        //         {
+        //             request.Abort();
+        //         }
+        //         if (responseHandle != null) 
+        //         {
+        //             responseHandle(resultDict);
+        //         }
+        //     }  
+        // }
+        public static IEnumerator GetWithFORM_2(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "?appid=" + appid + "&data=" + ThinkingSDKJSON.Serialize(param));
-            request.Method = "GET";
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.ReadWriteTimeout = 30 * 1000;
-            request.Timeout = 30 * 1000;
+            string uri = url + "?appid=" + appid + "&data=" + ThinkingSDKJSON.Serialize(param);
 
-            HttpWebResponse response = null;
-            Stream responseStream = null;
-            Dictionary<string,object> resultDict = new Dictionary<string, object>();
-            try
+            using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
             {
-                response = (HttpWebResponse)request.GetResponse();
-                responseStream = response.GetResponseStream();
-                var responseResult = new StreamReader(responseStream).ReadToEnd();
-                if (responseResult != null)
-                {
-                    ThinkingSDKLogger.Print("Request URL=" + url);
-                    ThinkingSDKLogger.Print("Response:=" + responseResult);
+                webRequest.timeout = 30;
+                webRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-                    resultDict = ThinkingSDKJSON.Deserialize(responseResult);
-                }
-            }
-            catch (WebException ex)
-            {
-                ThinkingSDKLogger.Print("server response :" + ex.Message);
-            }
-            finally
-            {
-                if (responseStream != null)
+                ThinkingSDKLogger.Print("Request URL=" + uri);
+
+                // Request and wait for the desired page.
+                yield return webRequest.SendWebRequest();
+
+                Dictionary<string,object> resultDict = new Dictionary<string, object>();
+                #if UNITY_2020_1_OR_NEWER
+                switch (webRequest.result)
                 {
-                    responseStream.Close();
+                    case UnityWebRequest.Result.ConnectionError:
+                    case UnityWebRequest.Result.DataProcessingError:
+                    case UnityWebRequest.Result.ProtocolError:
+                        ThinkingSDKLogger.Print("Error response : " + webRequest.error);
+                        break;
+                    case UnityWebRequest.Result.Success:
+                        ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
+                        resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                        break;
                 }
-                if (response != null)
+                #else
+                if (webRequest.isHttpError || webRequest.isNetworkError)
                 {
-                    response.Close();
+                    ThinkingSDKLogger.Print("Error response : " + webRequest.error);
                 }
-                if (request != null)
+                else
                 {
-                    request.Abort();
+                    ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
+                    resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
                 }
+                #endif
                 if (responseHandle != null) 
                 {
                     responseHandle(resultDict);
                 }
-            }  
+            }
         }
     }
 }

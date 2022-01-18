@@ -24,7 +24,6 @@ namespace ThinkingSDK.PC.Time
             // return dt;
             
             DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            Debug.Log("now dt is " + dt.AddMilliseconds(timestamp));
             return dt.AddMilliseconds(timestamp);
         }
 

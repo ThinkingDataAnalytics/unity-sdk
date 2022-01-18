@@ -26,10 +26,12 @@
 #import "TDPresetProperties.h"
 #endif
 
+
+
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- SDK VERSION = 2.7.2
+ SDK VERSION = 2.7.3
  ThinkingData API
  
  ## 初始化API
@@ -67,9 +69,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable ThinkingAnalyticsSDK *)sharedInstance;
 
 /**
- 根据 APPID 获取实例
+ 根据 APPID 或者 instanceName 获取实例
 
- @param appid APP ID
+ @param appid APP ID 或者 instanceName
  @return SDK 实例
  */
 + (ThinkingAnalyticsSDK *)sharedInstanceWithAppid:(NSString *)appid;
@@ -349,6 +351,22 @@ NS_ASSUME_NONNULL_BEGIN
  详细文档 http://doc.thinkingdata.cn/tgamanual/installation/ios_sdk_installation/ios_sdk_autotrack.html
  */
 - (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType;
+
+/**
+ 开启自动采集事件功能
+
+ @param eventType 枚举 ThinkingAnalyticsAutoTrackEventType 的列表，表示需要开启的自动采集事件类型
+ @param properties 自定义属性
+ */
+- (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType properties:(NSDictionary *)properties;
+
+/**
+ 设置和更新自动采集事件的自定义属性的值
+ 
+ @param eventType 枚举 ThinkingAnalyticsAutoTrackEventType 的列表，表示需要开启的自动采集事件类型
+ @param properties 自定义属性
+ */
+- (void)setAutoTrackProperties:(ThinkingAnalyticsAutoTrackEventType)eventType properties:(NSDictionary *)properties;
 
 /**
  获取设备 ID
