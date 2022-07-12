@@ -55,7 +55,6 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
 
 
             // 2. 手动初始化（动态挂载 ThinkingAnalyticsAPI 脚本）
-            // gameObject.AddComponent(typeof(ThinkingAnalyticsAPI));
             // new GameObject("ThinkingAnalytics", typeof(ThinkingAnalyticsAPI));
 
             // 2.1 设置实例参数

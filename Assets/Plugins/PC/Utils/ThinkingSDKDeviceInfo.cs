@@ -10,6 +10,10 @@ namespace ThinkingSDK.PC.Utils
         //设备ID
         public static string DeviceID()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.DEVICE_ID))
+            {
+                return "";
+            }
             #if (UNITY_WEBGL)
                 return RandomDeviceID();
             #else
@@ -17,7 +21,7 @@ namespace ThinkingSDK.PC.Utils
             #endif
         }
         //随机数持久化,作为设备ID的备选(WebGL获取不到设备ID)
-        public static string RandomDeviceID()
+        private static string RandomDeviceID()
         {
             string randomID = (string)ThinkingSDKFile.GetData(ThinkingSDKConstant.RANDOM_DEVICE_ID, typeof(string));
             if (string.IsNullOrEmpty(randomID))
@@ -30,6 +34,10 @@ namespace ThinkingSDK.PC.Utils
         //网络类型
         public static string NetworkType()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.NETWORK_TYPE))
+            {
+                return "";
+            }
             string networkType = "NULL";
             if (Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork)
             {
@@ -44,11 +52,19 @@ namespace ThinkingSDK.PC.Utils
         //移动网络运营商信息
         public static string Carrier()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.CARRIER))
+            {
+                return "";
+            }
             return "NULL";
         }
         //os类型
         public static string OS()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.OS))
+            {
+                return "";
+            }
             string os = "other";
             if (SystemInfo.operatingSystemFamily == OperatingSystemFamily.Linux)
             {
@@ -67,31 +83,55 @@ namespace ThinkingSDK.PC.Utils
         //OS版本信息
         public static string OSVersion()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.OS_VERSION))
+            {
+                return "";
+            }
             return SystemInfo.operatingSystem;
         }
         //屏幕宽度
         public static int ScreenWidth()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.SCREEN_WIDTH))
+            {
+                return 0;
+            }
             return (int)(UnityEngine.Screen.currentResolution.width);
         }
         //屏幕高度
         public static int ScreenHeight()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.SCREEN_HEIGHT))
+            {
+                return 0;
+            }
             return (int)(UnityEngine.Screen.currentResolution.height);
         }
         //显卡厂商名称
         public static string Manufacture()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.MANUFACTURE))
+            {
+                return "";
+            }
             return SystemInfo.graphicsDeviceVendor;
         }
         //设备型号
         public static string DeviceModel()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.DEVICE_MODEL))
+            {
+                return "";
+            }
             return SystemInfo.deviceModel;
         }
         //本机语言
         public static string MachineLanguage()
         {
+            if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.SYSTEM_LANGUAGE))
+            {
+                return "";
+            }
             switch (Application.systemLanguage)
             {
                 case SystemLanguage.Afrikaans:

@@ -47,3 +47,35 @@ namespace ThinkingAnalytics.Editors
  }
 
  #endif
+
+#if UNITY_EDITOR && UNITY_ANDROID
+
+using System.IO;
+using UnityEditor;
+using UnityEditor.Android;
+using UnityEngine;
+
+using System.Xml;
+using System.Collections.Generic;
+
+class TD_PostProcessBuild : IPostGenerateGradleAndroidProject
+{
+    // 拷贝个性化配置文件 ta_public_config.xml
+    public int callbackOrder { get { return 0; } }
+    public void OnPostGenerateGradleAndroidProject(string path)
+    {
+        // 拷贝个性化配置文件 ta_public_config.xml
+        string desPath = path + "/../launcher/src/main/res/values/ta_public_config.xml";        
+        if (File.Exists(desPath))
+        {
+            File.Delete(desPath);
+        }
+        TextAsset textAsset = Resources.Load<TextAsset>("ta_public_config"); 
+        if (textAsset != null && textAsset.bytes != null)
+        {
+            File.WriteAllBytes(desPath, textAsset.bytes);
+        }
+    }
+}
+
+#endif

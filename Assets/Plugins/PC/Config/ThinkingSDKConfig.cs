@@ -26,8 +26,8 @@ namespace ThinkingSDK.PC.Config
         private string mConfigUrl;
         private Mode mMode = Mode.NORMAL;
         private TimeZoneInfo mTimeZone;
-        public int mUploadInterval = 60;
-        public int mUploadSize = 100;
+        public int mUploadInterval = 30;
+        public int mUploadSize = 30;
         private List<string> mDisableEvents = new List<string>();
         private static Dictionary<string, ThinkingSDKConfig> sInstances = new Dictionary<string, ThinkingSDKConfig>();
         private ThinkingSDKConfig(string token,string serverUrl)

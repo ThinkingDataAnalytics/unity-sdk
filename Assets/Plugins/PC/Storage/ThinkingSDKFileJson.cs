@@ -52,13 +52,14 @@ namespace ThinkingSDK.PC.Storage
         internal static List<Dictionary<string, object>> DequeueBatchTrackingData(int batchSize)
         {
             List<Dictionary<string, object>> batch = new List<Dictionary<string, object>>();
-            int dataIndex = 0;
+            int dataIndex = EventIndexID();
             int maxIndex = EventAutoIncrementingID() - 1;
             while (batch.Count < batchSize && dataIndex <= maxIndex) {
                 String trackingKey = "Event" + dataIndex.ToString();
                 if (PlayerPrefs.HasKey(trackingKey)) {
                     try {
                         Dictionary<string, object> data = ThinkingSDKJSON.Deserialize(PlayerPrefs.GetString(trackingKey));
+                        data.Remove("id");
                         batch.Add(data);
                     }
                     catch (Exception e) {

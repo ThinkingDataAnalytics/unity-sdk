@@ -105,13 +105,13 @@ const char *get_distinct_id(const char *app_id) {
     return strdup([distinct_id UTF8String]);
 }
 
-void login(const char *app_id, const char *account_id) {
+void ta_login(const char *app_id, const char *account_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *id_string = account_id != NULL ? [NSString stringWithUTF8String:account_id] : nil;
     [getInstance(app_id_string) login:id_string];
 }
 
-void logout(const char *app_id) {
+void ta_logout(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [getInstance(app_id_string) logout];
 }

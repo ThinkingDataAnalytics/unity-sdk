@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Globalization;
 
 namespace ThinkingSDK.PC.Utils
 {
@@ -175,7 +176,7 @@ namespace ThinkingSDK.PC.Utils
                     case TOKEN.STRING:
                         string str = ParseString();
                         DateTime dateTime;
-                        if (DateTime.TryParse(str, out dateTime))
+                        if (DateTime.TryParseExact(str, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime))
                         {
                             return dateTime;
                         }

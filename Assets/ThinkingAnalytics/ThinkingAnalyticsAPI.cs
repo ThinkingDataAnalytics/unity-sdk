@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.3.0
+    SDK VERSION:2.3.1
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -122,8 +122,27 @@ namespace ThinkingAnalytics
     {
         
         public TDPresetProperties(Dictionary<string, object> properties) {
+            properties = TDEncodeDate(properties);
             PresetProperties = properties;
         }
+        private Dictionary<string, object> TDEncodeDate(Dictionary<string, object> properties) 
+        {
+            Dictionary<string, object> mProperties  = new Dictionary<string, object>(); 
+            foreach (KeyValuePair<string, object> kv in properties)
+            {
+                if (kv.Value is DateTime) 
+                {
+                    DateTime dateTime = (DateTime) kv.Value;
+                    mProperties.Add(kv.Key, dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                }
+                else 
+                {
+                    mProperties.Add(kv.Key, kv.Value);
+                }
+            }
+            return mProperties;
+        }
+
 		public string AppVersion 
         { 
             get {return (string)(PresetProperties.ContainsKey("#app_version") ? PresetProperties["#app_version"] : "");}
@@ -160,13 +179,13 @@ namespace ThinkingAnalytics
         { 
             get {return (string)(PresetProperties.ContainsKey("#os_version") ? PresetProperties["#os_version"] : "");}
         }
-		public long ScreenHeight 
+		public double ScreenHeight 
         { 
-            get {return (int)(PresetProperties.ContainsKey("#screen_height") ? (int)PresetProperties["#screen_height"] : 0);}
+            get {return Convert.ToDouble(PresetProperties.ContainsKey("#screen_height") ? PresetProperties["#screen_height"] : 0);}
         }
-		public long ScreenWidth 
+		public double ScreenWidth 
         { 
-            get {return (int)(PresetProperties.ContainsKey("#screen_width") ? (int)PresetProperties["#screen_width"] : 0);}
+            get {return Convert.ToDouble(PresetProperties.ContainsKey("#screen_width") ? PresetProperties["#screen_width"] : 0);}
         }
 		public string SystemLanguage 
         { 
@@ -174,7 +193,7 @@ namespace ThinkingAnalytics
         }
 		public double ZoneOffset 
         { 
-            get {return (double)(PresetProperties.ContainsKey("#zone_offset") ? PresetProperties["#zone_offset"] : 0);}
+            get {return Convert.ToDouble(PresetProperties.ContainsKey("#zone_offset") ? PresetProperties["#zone_offset"] : 0);}
         }
 		private Dictionary<string, object> PresetProperties { get; set; }
 
@@ -285,8 +304,6 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.3.0";
-
         private static ThinkingAnalyticsAPI taAPIInstance;
 
         //配置Xcode选项
@@ -323,15 +340,41 @@ namespace ThinkingAnalytics
             proj.AddFrameworkToProject(targetGuid,"CoreTelephony.framework", true);
             proj.AddFrameworkToProject(targetGuid,"SystemConfiguration.framework", true);
             proj.AddFrameworkToProject(targetGuid,"Security.framework", true);
+            proj.AddFrameworkToProject(targetGuid,"UserNotifications.framework", true);
 
             //Add Lib
             proj.AddFileToBuild(targetGuid, proj.AddFile("usr/lib/libsqlite3.tbd", "libsqlite3.tbd", PBXSourceTree.Sdk));
             proj.AddFileToBuild(targetGuid, proj.AddFile("usr/lib/libz.tbd", "libz.tbd", PBXSourceTree.Sdk));
 
             proj.WriteToFile (projPath);
+
+            //Info.plist
+            //禁用预置属性
+            string plistPath = Path.Combine(targetPath, "Info.plist");
+            PlistDocument plist = new PlistDocument();
+            plist.ReadFromFile(plistPath);
+            plist.root.CreateArray("TDDisPresetProperties");
+            foreach (string item in TD_PublicConfig.DisPresetProperties)
+            {
+                plist.root["TDDisPresetProperties"].AsArray().AddString(item);
+            }
+            plist.WriteToFile(plistPath);            
         }        
         #endif
 
+        /// <summary>
+        /// 是否打开日志log
+        /// </summary>
+        /// <param name="enable">允许打印日志</param>
+        public static void EnableLog(bool enable, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                taAPIInstance.enableLog = enable;
+                TD_Log.EnableLog(taAPIInstance.enableLog);
+                ThinkingAnalyticsWrapper.EnableLog(taAPIInstance.enableLog);
+            }
+        }
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID
         /// </summary>
@@ -393,7 +436,6 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).Flush();
-
             }
         }
 
@@ -412,7 +454,28 @@ namespace ThinkingAnalytics
                 getInstance(appId).EnableAutoTrack(events, properties);
 
                 //C#异常捕获提前，包含所有端
-                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && TD_PublicConfig.DisableCSharpException)
+                {
+                    foreach (var item in properties.Keys)
+                    {
+                        taAPIInstance.autoTrackProperties[item] = properties[item];
+                    }
+                    ThinkingSDKExceptionHandler eHandler = new ThinkingSDKExceptionHandler();
+                    eHandler.SetTaExceptionHandler(taAPIInstance);
+                    eHandler.RegisterTaExceptionHandler();
+                }
+            }
+        }
+
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, object callback, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                Dictionary<string, object> properties = new Dictionary<string, object>();
+                getInstance(appId).EnableAutoTrack(events, properties);
+
+                //C#异常捕获提前，包含所有端
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && TD_PublicConfig.DisableCSharpException)
                 {
                     foreach (var item in properties.Keys)
                     {
@@ -431,7 +494,7 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).SetAutoTrackProperties(events, properties);
                 //C#异常捕获提前，包含所有端
-                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && TD_PublicConfig.DisableCSharpException)
                 {
                     foreach (var item in properties.Keys)
                     {
@@ -490,9 +553,6 @@ namespace ThinkingAnalytics
             }
         }
 
-
-
-
         public static void Track(ThinkingAnalyticsEvent analyticsEvent, string appId = "")
         {
             if (tracking_enabled)
@@ -501,7 +561,6 @@ namespace ThinkingAnalytics
             }
         }
         
-
         /// <summary>
         /// 设置公共事件属性. 公共事件属性指的就是每个事件都会带有的属性.
         /// </summary>
@@ -940,12 +999,15 @@ namespace ThinkingAnalytics
         {
             #if DISABLE_TA
             tracking_enabled = false;
+            #else
+            tracking_enabled = true;
             #endif
             TD_Log.EnableLog(taAPIInstance.enableLog);
-            ThinkingAnalyticsWrapper.SetVersionInfo(taAPIInstance.VERSION);
+            ThinkingAnalyticsWrapper.SetVersionInfo(TD_PublicConfig.LIB_VERSION);
 
             if (tracking_enabled)
             {
+                TD_PublicConfig.GetPublicConfig();
                 if (tokens == null)
                 {
                     tokens = taAPIInstance.tokens;
@@ -966,7 +1028,7 @@ namespace ThinkingAnalytics
                             else 
                             {
                                 Token token1 = new Token(token.appid, token.serverUrl, token.mode, token.timeZone, token.timeZoneId);
-                                TD_Log.d("ThinkingAnalytics start with appId: "+token1.appid);
+                                TD_Log.d("ThinkingAnalytics start with appId: " + token1.appid + ", serverUrl: " + token1.serverUrl + ", mode: " + token1.mode);
                                 ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token1, taAPIInstance);
                                 wrapper.SetNetworkType(taAPIInstance.networkType);
                                 sInstances.Add(token1.appid,wrapper);
@@ -1044,7 +1106,7 @@ namespace ThinkingAnalytics
         private Dictionary<string, object> autoTrackProperties = new Dictionary<string, object>();
         private static ThinkingAnalyticsAPI TA_instance;
         private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID
-        private static bool tracking_enabled = true;
+        private static bool tracking_enabled = false;
         private static ReaderWriterLockSlim instance_lock = new ReaderWriterLockSlim();
         private static readonly Dictionary<string, ThinkingAnalyticsWrapper> sInstances = 
             new Dictionary<string, ThinkingAnalyticsWrapper>();

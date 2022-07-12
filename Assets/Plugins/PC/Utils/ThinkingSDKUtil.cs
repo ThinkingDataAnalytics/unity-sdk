@@ -1,4 +1,6 @@
-﻿using System;
+﻿using UnityEngine;
+using System;
+using System.Xml;
 using System.Collections.Generic;
 using ThinkingSDK.PC.Config;
 using ThinkingSDK.PC.Constant;
@@ -12,6 +14,7 @@ namespace ThinkingSDK.PC.Utils
         {
 
         }
+        public static List<string> DisPresetProperties = ThinkingSDKUtil.GetDisPresetProperties();
         /*
          *判断是否为有效URL
          */
@@ -44,6 +47,45 @@ namespace ThinkingSDK.PC.Utils
             deviceInfo[ThinkingSDKConstant.NETWORK_TYPE] = ThinkingSDKDeviceInfo.NetworkType();
             deviceInfo[ThinkingSDKConstant.APP_BUNDLEID] = ThinkingSDKAppInfo.AppIdentifier();
             return deviceInfo;
+        }
+        // 禁用的预置属性
+        private static List<string> GetDisPresetProperties()
+        {
+            List<string> properties = new List<string>();
+            
+            TextAsset textAsset = Resources.Load<TextAsset>("ta_public_config"); 
+            if (textAsset != null && textAsset.text != null)
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                // xmlDoc.Load(srcPath);
+                xmlDoc.LoadXml(textAsset.text);
+                XmlNode root = xmlDoc.SelectSingleNode("resources");
+                //遍历节点
+                for (int i=0; i<root.ChildNodes.Count; i++)
+                {
+                    XmlNode x1 = root.ChildNodes[i];
+                    if (x1.NodeType == XmlNodeType.Element)
+                    {
+                        XmlElement e1 = x1 as XmlElement;
+                        if (e1.HasAttributes) 
+                        {
+                            string name = e1.GetAttribute("name");
+                            if (name == "TDDisPresetProperties" && e1.HasChildNodes)
+                            {
+                                for (int j=0; j<e1.ChildNodes.Count; j++)
+                                {
+                                    XmlNode x2 = e1.ChildNodes[j];
+                                    if (x2.NodeType == XmlNodeType.Element)
+                                    {
+                                        properties.Add(x2.InnerText);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return properties;
         }
         //随机数持久化,作为访客ID的备选
         public static string RandomID(bool persistent = true)

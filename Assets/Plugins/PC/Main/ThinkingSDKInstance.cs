@@ -92,7 +92,10 @@ namespace ThinkingSDK.PC.Main
                 this.mConfig = config;
             }
             this.mConfig.UpdateConfig(mono, delegate (Dictionary<string, object> result) {
-                sMono.StartCoroutine(WaitAndFlush());
+                if (this.mConfig.GetMode() == Mode.NORMAL)
+                {
+                    sMono.StartCoroutine(WaitAndFlush());
+                }
             });
             this.mAppid = appid;
             this.mServer = server;
@@ -280,7 +283,15 @@ namespace ThinkingSDK.PC.Main
             {
                 data.SetProperties(this.mSupperProperties,false);
             }
-            data.SetProperties(ThinkingSDKUtil.DeviceInfo(), false);
+            Dictionary<string, object> deviceInfo = ThinkingSDKUtil.DeviceInfo();
+            foreach (string item in ThinkingSDKUtil.DisPresetProperties)
+            {
+                if (deviceInfo.ContainsKey(item))
+                {
+                    deviceInfo.Remove(item);
+                }
+            }
+            data.SetProperties(deviceInfo, false);
 
             float duration = 0;
             if (mTimeEvents.ContainsKey(data.EventName()))
@@ -339,7 +350,7 @@ namespace ThinkingSDK.PC.Main
                 Dictionary<string, object> dataDic = data.ToDictionary();
                 ThinkingSDKLogger.Print("Save event: " + ThinkingSDKJSON.Serialize(dataDic));
                 int count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic);
-                if (count >= this.mConfig.mUploadSize)
+                if (this.mConfig.GetMode() != Mode.NORMAL || count >= this.mConfig.mUploadSize)
                 {
                     Flush();
                 }
@@ -361,35 +372,21 @@ namespace ThinkingSDK.PC.Main
         public virtual void Flush()
         {
             mTask.SyncInvokeAllTask();
-            List<Dictionary<string, object>> list = ThinkingSDKFileJson.DequeueBatchTrackingData(mConfig.mUploadSize);
-            if (list.Count>0)
-            {
-                ThinkingSDKLogger.Print("Flush event: " + list.Count);
-                string eventIds = "";
-                for (int i = 0; i < list.Count; i++)
+
+            int batchSize = (this.mConfig.GetMode() != Mode.NORMAL) ? 1 : mConfig.mUploadSize;
+            ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
+                int eventCount = 0;
+                if (result != null)
                 {
-                    Dictionary<string, object> data = list[i];
-                    eventIds += " ";
-                    eventIds += data["id"];
+                    eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(batchSize);
                 }
-                ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
-                    int eventCount = 0;
-                    if (result != null)
-                    {
-                        eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(mConfig.mUploadSize);
-                    }
-                    mTask.Release();
-                    if (eventCount>0)
-                    {
-                        Flush();
-                    }
-                };
-                mTask.StartRequest(mRequest, responseHandle, list);
-            }
-            else
-            {
-                // ThinkingSDKLogger.Print("Flush event: 0");
-            }
+                mTask.Release();
+                if (eventCount>0)
+                {
+                    Flush();
+                }
+            };
+            mTask.StartRequest(mRequest, responseHandle, batchSize);
         }
         public void Track(ThinkingSDKEventData analyticsEvent)
         {

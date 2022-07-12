@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 using ThinkingSDK.PC.Request;
 using ThinkingSDK.PC.Constant;
-using UnityEngine;
-using System.Collections;
+using ThinkingSDK.PC.Storage;
 
 namespace ThinkingSDK.PC.TaskManager
 {
@@ -13,12 +14,14 @@ namespace ThinkingSDK.PC.TaskManager
 
         private List<ThinkingSDKBaseRequest> requestList = new List<ThinkingSDKBaseRequest>();
         private List<ResponseHandle> responseHandleList = new List<ResponseHandle>();
-        private List<IList<Dictionary<string, object>>> dataList = new List<IList<Dictionary<string, object>>>();
+        private List<int> batchSizeList = new List<int>();
 
 
-        private static ThinkingSDKTask mSingleTask;// = new ThinkingSDKTask();
+        private static ThinkingSDKTask mSingleTask;
 
         private bool isWaiting = false;
+
+        private int mBatchSize = 30;
 
         public static ThinkingSDKTask SingleTask()
         {
@@ -27,9 +30,6 @@ namespace ThinkingSDK.PC.TaskManager
 
         private void Awake() {
             mSingleTask = this;
-            responseHandleList = new List<ResponseHandle>();
-            requestList = new List<ThinkingSDKBaseRequest>();
-            dataList = new List<IList<Dictionary<string, object>>>();
         }
 
         private void Start() {
@@ -62,13 +62,13 @@ namespace ThinkingSDK.PC.TaskManager
 
         }
 
-        public void StartRequest(ThinkingSDKBaseRequest mRequest, ResponseHandle responseHandle, IList<Dictionary<string, object>> list)
+        public void StartRequest(ThinkingSDKBaseRequest mRequest, ResponseHandle responseHandle, int batchSize)
         {
             lock(_locker)
             {
                 requestList.Add(mRequest);
                 responseHandleList.Add(responseHandle);
-                dataList.Add(list);
+                batchSizeList.Add(batchSize);
             }
         }
 
@@ -83,16 +83,26 @@ namespace ThinkingSDK.PC.TaskManager
                 {
                     mRequest = requestList[0];
                     responseHandle = responseHandleList[0];
-                    list = dataList[0];
+                    list = ThinkingSDKFileJson.DequeueBatchTrackingData(batchSizeList[0]);
                 }
                 if (mRequest != null) 
                 {
-                    this.StartCoroutine(this.SendData(mRequest, responseHandle, list));
+                    if (list.Count>0)
+                    {
+                        this.StartCoroutine(this.SendData(mRequest, responseHandle, list));                        
+                    }
+                    else
+                    {
+                        if (responseHandle != null) 
+                        {
+                            responseHandle(null);
+                        }
+                    }
                     lock(_locker)
                     {
                         requestList.RemoveAt(0);
                         responseHandleList.RemoveAt(0);
-                        dataList.RemoveAt(0);
+                        batchSizeList.RemoveAt(0);
                     }
                 }
 

@@ -18,9 +18,9 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern string get_distinct_id(string app_id);
         [DllImport("__Internal")]
-        private static extern void login(string app_id, string account_id);
+        private static extern void ta_login(string app_id, string account_id);
         [DllImport("__Internal")]
-        private static extern void logout(string app_id);
+        private static extern void ta_logout(string app_id);
         [DllImport("__Internal")]
         private static extern void track(string app_id, string event_name, string properties, long time_stamp_millis, string timezone);
         [DllImport("__Internal")]
@@ -111,12 +111,12 @@ namespace ThinkingAnalytics.Wrapper
 
         private void login(string accountId)
         {
-            login(token.appid, accountId);
+            ta_login(token.appid, accountId);
         }
 
         private void logout()
         {
-            logout(token.appid);
+            ta_logout(token.appid);
         }
 
         private void flush()
