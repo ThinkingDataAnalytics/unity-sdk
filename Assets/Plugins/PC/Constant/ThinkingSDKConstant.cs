@@ -83,6 +83,7 @@ namespace ThinkingSDK.PC.Constant
         public static readonly string USER_UNSET = "user_unset";
         public static readonly string USER_DEL = "user_del";
         public static readonly string USER_APPEND = "user_append";
+        public static readonly string USER_UNIQ_APPEND = "user_uniq_append";
 
         //是否暂停数据上报
         public static readonly string ENABLE_TRACK = "enable_track";
@@ -95,6 +96,8 @@ namespace ThinkingSDK.PC.Constant
         public static readonly string INSTALL_EVENT = "ta_app_install";
         //启动事件
         public static readonly string START_EVENT = "ta_app_start";
+        //结束事件
+        public static readonly string END_EVENT = "ta_app_end";
         //崩溃事件
         public static readonly string CRASH_EVENT = "ta_app_crash";
         //崩溃原因

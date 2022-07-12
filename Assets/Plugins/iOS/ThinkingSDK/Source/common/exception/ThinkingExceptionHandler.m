@@ -4,19 +4,11 @@
 #include <stdatomic.h>
 #import "TDLogging.h"
 
-static NSString * const UncaughtExceptionHandlerSignalExceptionName = @"UncaughtExceptionHandlerSignalExceptionName";
-static NSString * const UncaughtExceptionHandlerSignalKey = @"UncaughtExceptionHandlerSignalKey";
-
-static volatile atomic_int_fast32_t UncaughtExceptionCount = 0;
-static const atomic_int_fast32_t UncaughtExceptionMaximum = 10;
-
-@interface ThinkingExceptionHandler ()
-
-@property (nonatomic) NSUncaughtExceptionHandler *defaultExceptionHandler;
-@property (nonatomic, strong) NSHashTable *thinkingAnalyticsSDKInstances;
-@property (nonatomic, unsafe_unretained) struct sigaction *prev_signal_handlers;
-
-@end
+static NSString * const TDUncaughtExceptionHandlerSignalExceptionName = @"UncaughtExceptionHandlerSignalExceptionName";
+static NSString * const TDUncaughtExceptionHandlerSignalKey = @"UncaughtExceptionHandlerSignalKey";
+static int TDSignals[] = {SIGILL, SIGABRT, SIGBUS, SIGSEGV, SIGFPE, SIGPIPE, SIGTRAP};
+static volatile atomic_int_fast32_t TDExceptionCount = 0;
+static const atomic_int_fast32_t TDExceptionMaximum = 9;
 
 @implementation ThinkingExceptionHandler
 
@@ -33,63 +25,58 @@ static const atomic_int_fast32_t UncaughtExceptionMaximum = 10;
     self = [super init];
     if (self) {
         _thinkingAnalyticsSDKInstances = [NSHashTable weakObjectsHashTable];
-        _prev_signal_handlers = calloc(NSIG, sizeof(struct sigaction));
-        
+        _td_signalHandlers = calloc(NSIG, sizeof(struct sigaction));
         [self setupHandlers];
     }
     return self;
 }
 
-static int signals[] = {SIGILL, SIGABRT, SIGBUS, SIGSEGV, SIGFPE, SIGPIPE, SIGTRAP};
 - (void)setupHandlers {
-    _defaultExceptionHandler = NSGetUncaughtExceptionHandler();
+    _td_lastExceptionHandler = NSGetUncaughtExceptionHandler();
     NSSetUncaughtExceptionHandler(&TDHandleException);
     
     struct sigaction action;
     sigemptyset(&action.sa_mask);
     action.sa_flags = SA_SIGINFO;
     action.sa_sigaction = &TDSignalHandler;
-    for (int i = 0; i < sizeof(signals) / sizeof(int); i++) {
+    for (int i = 0; i < sizeof(TDSignals) / sizeof(int); i++) {
         struct sigaction prev_action;
-        int err = sigaction(signals[i], &action, &prev_action);
+        int err = sigaction(TDSignals[i], &action, &prev_action);
         if (err == 0) {
-            memcpy(_prev_signal_handlers + signals[i], &prev_action, sizeof(prev_action));
+            memcpy(_td_signalHandlers + TDSignals[i], &prev_action, sizeof(prev_action));
         } else {
-            TDLogError(@"Errored while trying to set up sigaction for signal %d", signals[i]);
+            TDLogError(@"Error Signal: %d", TDSignals[i]);
         }
     }
 }
 
 static void TDHandleException(NSException *exception) {
     ThinkingExceptionHandler *handler = [ThinkingExceptionHandler sharedHandler];
-    
-    atomic_int_fast32_t exceptionCount = atomic_fetch_add_explicit(&UncaughtExceptionCount, 1, memory_order_relaxed);
-    if (exceptionCount <= UncaughtExceptionMaximum) {
+
+    atomic_int_fast32_t exceptionCount = atomic_fetch_add_explicit(&TDExceptionCount, 1, memory_order_relaxed);
+    if (exceptionCount <= TDExceptionMaximum) {
         [handler td_handleUncaughtException:exception];
     }
-    
-    if (handler.defaultExceptionHandler) {
-        handler.defaultExceptionHandler(exception);
+    if (handler.td_lastExceptionHandler) {
+        handler.td_lastExceptionHandler(exception);
     }
-}
-
-- (void)dealloc {
-    free(_prev_signal_handlers);
 }
 
 static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *context) {
     ThinkingExceptionHandler *handler = [ThinkingExceptionHandler sharedHandler];
+    NSMutableDictionary *crashInfo;
+    NSString *reason;
+    NSException *exception;
     
-    atomic_int_fast32_t exceptionCount = atomic_fetch_add_explicit(&UncaughtExceptionCount, 1, memory_order_relaxed);
-    if (exceptionCount <= UncaughtExceptionMaximum) {
-        NSDictionary *userInfo = @{UncaughtExceptionHandlerSignalKey: @(signalNumber)};
-        NSException *exception = [NSException exceptionWithName:UncaughtExceptionHandlerSignalExceptionName
-                                                         reason:[NSString stringWithFormat:@"Signal %d was raised.", signalNumber]
-                                                       userInfo:userInfo];
+    atomic_int_fast32_t exceptionCount = atomic_fetch_add_explicit(&TDExceptionCount, 1, memory_order_relaxed);
+    if (exceptionCount <= TDExceptionMaximum) {
+        [crashInfo setObject:[NSNumber numberWithInt:signalNumber] forKey:TDUncaughtExceptionHandlerSignalKey];
+        reason = [NSString stringWithFormat:@"Signal %d was raised.", signalNumber];
+        exception = [NSException exceptionWithName:TDUncaughtExceptionHandlerSignalExceptionName reason:reason userInfo:crashInfo];
         [handler td_handleUncaughtException:exception];
     }
     
-    struct sigaction prev_action = handler.prev_signal_handlers[signalNumber];
+    struct sigaction prev_action = handler.td_signalHandlers[signalNumber];
     if (prev_action.sa_handler == SIG_DFL) {
         signal(signalNumber, SIG_DFL);
         raise(signalNumber);
@@ -104,7 +91,27 @@ static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *cont
     }
 }
 
+
 - (void)td_handleUncaughtException:(NSException *)exception {
+
+    NSDate *trackDate = [NSDate date];
+    NSDictionary *dic = [self td_getCrashInfo:exception];
+    for (ThinkingAnalyticsSDK *instance in self.thinkingAnalyticsSDKInstances) {
+        [instance autotrack:TD_APP_CRASH_EVENT properties:dic withTime:trackDate];
+        if (![instance isAutoTrackEventTypeIgnored:ThinkingAnalyticsEventTypeAppEnd]) {
+            [instance autotrack:TD_APP_END_EVENT properties:nil withTime:trackDate];
+        }
+    }
+    
+    dispatch_sync([ThinkingAnalyticsSDK td_trackQueue], ^{});
+    NSSetUncaughtExceptionHandler(NULL);
+    for (int i = 0; i < sizeof(TDSignals) / sizeof(int); i++) {
+        signal(TDSignals[i], SIG_DFL);
+    }
+}
+
+// 解析crash信息
+- (NSMutableDictionary *)td_getCrashInfo:(NSException *)exception {
     NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
     NSString *crashStr;
     @try {
@@ -123,30 +130,58 @@ static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *cont
         }
 
         [properties setValue:crashStr forKey:TD_CRASH_REASON];
-
-        NSDate *trackDate = [NSDate date];
-        
-        // 多实例 触发end事件和Crash事件
-        for (ThinkingAnalyticsSDK *instance in self.thinkingAnalyticsSDKInstances) {
-            [instance autotrack:TD_APP_CRASH_EVENT properties:properties withTime:trackDate];
-            if (![instance isAutoTrackEventTypeIgnored:ThinkingAnalyticsEventTypeAppEnd]) {
-                [instance autotrack:TD_APP_END_EVENT properties:nil withTime:trackDate];
-            }
-        }
-        
-        // 阻塞当前线程，完成 serialQueue 中数据相关的任务
-        dispatch_sync([ThinkingAnalyticsSDK serialQueue], ^{});
-        
     } @catch(NSException *exception) {
         TDLogError(@"%@ error: %@", self, exception);
     }
-    
-    NSSetUncaughtExceptionHandler(NULL);
-    for (int i = 0; i < sizeof(signals) / sizeof(int); i++) {
-        signal(signals[i], SIG_DFL);
-    }
-    TDLogInfo(@"Encountered an uncaught exception.");
+    return properties;
 }
+
+
+//- (void)td_handleUncaughtException:(NSException *)exception {
+//    NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
+//    NSMutableString *crashStr = [NSMutableString string];
+//    @try {
+//        if ([exception callStackSymbols]) {
+//            [crashStr appendFormat:@"Exception Reason:%@", [exception reason]];
+//            [crashStr appendString:@"\n"];
+//            [crashStr appendFormat:@"Exception Stack:%@", [exception callStackSymbols]];
+//        } else {
+//            NSString *exceptionStack = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
+//            if ([exception reason] && [[exception reason] isKindOfClass:[NSString class]] && [exception reason].length) {
+//                [crashStr appendString:[exception reason]];
+//            }
+//            [crashStr appendFormat:@" %@", exceptionStack];
+//        }
+//        NSString *crashInfo = [crashStr stringByReplacingOccurrencesOfString:@"\n" withString:@"<br>"];
+//
+//        NSUInteger strLength = [((NSString *)crashInfo) lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+//        NSUInteger strMaxLength = TA_PROPERTY_CRASH_LENGTH_LIMIT;
+//        if (strLength > strMaxLength) {
+//            crashInfo = [NSMutableString stringWithString:[self limitString:crashInfo withLength:strMaxLength - 1]];
+//        }
+//        [dic setValue:crashInfo forKey:TD_CRASH_REASON];
+//        NSDate *trackDate = [NSDate date];
+//
+//        // 多实例 触发end事件和Crash事件
+//        for (ThinkingAnalyticsSDK *instance in self.thinkingAnalyticsSDKInstances) {
+//            [instance autotrack:TD_APP_CRASH_EVENT properties:dic withTime:trackDate];
+//            if (![instance isAutoTrackEventTypeIgnored:ThinkingAnalyticsEventTypeAppEnd]) {
+//                [instance autotrack:TD_APP_END_EVENT properties:nil withTime:trackDate];
+//            }
+//        }
+//    } @catch(NSException *exception) {
+//        TDLogError(@"Exception Error: %@", exception);
+//    }
+//
+//    dispatch_sync([ThinkingAnalyticsSDK td_trackQueue], ^{});
+//    NSSetUncaughtExceptionHandler(NULL);
+//    for (int i = 0; i < sizeof(TDSignals) / sizeof(int); i++) {
+//        signal(TDSignals[i], SIG_DFL);
+//    }
+//}
+
+
+
 
 - (NSString *)limitString:(NSString *)originalString withLength:(NSInteger)length {
     NSStringEncoding encoding = CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingUTF8);

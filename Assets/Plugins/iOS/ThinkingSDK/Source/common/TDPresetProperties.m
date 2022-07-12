@@ -74,35 +74,4 @@
     return [_presetProperties copy];
 }
 
-//{
-//    NSMutableDictionary *properties = [NSMutableDictionary dictionary];
-//
-//    // 获取静态预置属性
-//
-//
-//    // 获取动态预制属性
-//    for (NSString *clsName in kTDDyldPropertyNames) {
-//        Class cls = NSClassFromString(clsName);
-//        SEL sel = NSSelectorFromString(kTDGetPropertySelName);
-//        if (cls && sel && [cls respondsToSelector:sel]) {
-//            NSDictionary *result = [NSObject performSelector:sel onTarget:cls withArguments:@[]];
-//            if ([result isKindOfClass:[NSDictionary class]] && result.allKeys.count > 0) {
-//                [properties addEntriesFromDictionary:result];
-//            }
-//        }
-//    }
-//
-//    // 过滤不需要的预置属性
-//    NSArray *propertykeys = properties.allKeys;
-//    NSArray *registerkeys = [TDPresetProperties disPresetProperties];
-//    NSMutableSet *set1 = [NSMutableSet setWithArray:propertykeys];
-//    NSMutableSet *set2 = [NSMutableSet setWithArray:registerkeys];
-//    [set1 intersectSet:set2];// 求交集
-//    if (set1.allObjects.count) {
-//        [properties removeObjectsForKeys:set1.allObjects];
-//    }
-//
-//    return properties;
-//}
-
 @end

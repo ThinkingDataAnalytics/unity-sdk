@@ -15,6 +15,7 @@ namespace ThinkingSDK.PC.TaskManager
         private List<ThinkingSDKBaseRequest> requestList = new List<ThinkingSDKBaseRequest>();
         private List<ResponseHandle> responseHandleList = new List<ResponseHandle>();
         private List<int> batchSizeList = new List<int>();
+        private List<string> appIdList = new List<string>();
 
 
         private static ThinkingSDKTask mSingleTask;
@@ -62,13 +63,14 @@ namespace ThinkingSDK.PC.TaskManager
 
         }
 
-        public void StartRequest(ThinkingSDKBaseRequest mRequest, ResponseHandle responseHandle, int batchSize)
+        public void StartRequest(ThinkingSDKBaseRequest mRequest, ResponseHandle responseHandle, int batchSize, string appId)
         {
             lock(_locker)
             {
                 requestList.Add(mRequest);
                 responseHandleList.Add(responseHandle);
                 batchSizeList.Add(batchSize);
+                appIdList.Add(appId);
             }
         }
 
@@ -83,7 +85,7 @@ namespace ThinkingSDK.PC.TaskManager
                 {
                     mRequest = requestList[0];
                     responseHandle = responseHandleList[0];
-                    list = ThinkingSDKFileJson.DequeueBatchTrackingData(batchSizeList[0]);
+                    list = ThinkingSDKFileJson.DequeueBatchTrackingData(batchSizeList[0], appIdList[0]);
                 }
                 if (mRequest != null) 
                 {
@@ -103,6 +105,7 @@ namespace ThinkingSDK.PC.TaskManager
                         requestList.RemoveAt(0);
                         responseHandleList.RemoveAt(0);
                         batchSizeList.RemoveAt(0);
+                        appIdList.RemoveAt(0);
                     }
                 }
 

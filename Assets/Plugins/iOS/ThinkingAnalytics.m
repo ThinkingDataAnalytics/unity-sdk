@@ -12,7 +12,7 @@
 #define NETWORK_TYPE_ALL 3
 
 //定义一个名字参数和C#类一样的方法
-typedef const char * (*ResultHandler) (const char *userId);
+typedef const char * (*ResultHandler) (const char *type, const char *jsonData);
 //生命一个静态变量存储回调unity的函数指针
 static ResultHandler resultHandler;
 //设置回调游戏的托管函数
@@ -54,10 +54,12 @@ char* strdup(const char* string) {
 }
 
 
-void start(const char *app_id, const char *url, int mode, const char *timezone_id) {
+void start(const char *app_id, const char *url, int mode, const char *timezone_id, bool enable_encrypt, int encrypt_version, const char *encrypt_public_key, int pinning_mode, bool allow_invalid_certificates, bool validates_domain_name) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *url_string = url != NULL ? [NSString stringWithUTF8String:url] : nil;
     TDConfig *config = [[TDConfig alloc] init];
+    config.appid = app_id_string;
+    config.configureURL = url_string;
     if (mode == 1) {
         // DEBUG
         config.debugMode = ThinkingAnalyticsDebug;
@@ -70,7 +72,15 @@ void start(const char *app_id, const char *url, int mode, const char *timezone_i
     if (timezone) {
         config.defaultTimeZone = timezone;
     }
-    [ThinkingAnalyticsSDK startWithAppId:app_id_string withUrl: url_string withConfig:config];
+    if (enable_encrypt == YES) {
+        NSString *encrypt_public_key_string = encrypt_public_key != NULL ? [NSString stringWithUTF8String:encrypt_public_key] : nil;
+        // 开启加密功能
+        config.enableEncrypt = YES; 
+        // 配置版本号、公钥等密钥信息
+        config.secretKey = [[TDSecretKey alloc] initWithVersion:encrypt_version publicKey:encrypt_public_key_string];
+    }
+
+    [ThinkingAnalyticsSDK startWithConfig:config];
 }
 
 void enable_log(BOOL enable_log) {
@@ -341,6 +351,25 @@ void user_append_with_time(const char *app_id, const char *properties, long long
     }
 }
 
+void user_uniq_append(const char *app_id, const char *properties) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    if (properties_dict) {
+        [getInstance(app_id_string) user_uniqAppend:properties_dict];
+    }
+}
+
+void user_uniq_append_with_time(const char *app_id, const char *properties, long long time_stamp_millis) {
+    NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSDictionary *properties_dict = nil;
+    convertToDictionary(properties, &properties_dict);
+    if (properties_dict) {
+        [getInstance(app_id_string) user_uniqAppend:properties_dict withTime:time];
+    }
+}
+
 const char *get_device_id() {
     NSString *distinct_id = [[ThinkingAnalyticsSDK sharedInstance] getDeviceId];
     return strdup([distinct_id UTF8String]);
@@ -349,11 +378,30 @@ const char *get_device_id() {
 void set_dynamic_super_properties(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [getInstance(app_id_string) registerDynamicSuperProperties:^NSDictionary * _Nonnull{
-        const char *ret = resultHandler(app_id);
+        const char *ret = resultHandler("DynamicSuperProperties", nil);
         NSDictionary *dynamicSuperProperties = nil;
         convertToDictionary(ret, &dynamicSuperProperties);
         return dynamicSuperProperties;
     }];
+}
+
+void set_track_status(const char *app_id, int status) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    ThinkingAnalyticsSDK* instance = getInstance(app_id_string);
+    switch (status) {
+        case 1:
+            [instance setTrackStatus:TATrackStatusPause];
+            break;
+        case 2:
+            [instance setTrackStatus:TATrackStatusStop];
+            break;
+        case 3:
+            [instance setTrackStatus:TATrackStatusSaveOnly];
+            break;
+        case 4:
+        default:
+            [instance setTrackStatus:TATrackStatusNormal];
+    }
 }
 
 void enable_tracking(const char *app_id, BOOL enabled) {
@@ -397,6 +445,19 @@ void enable_autoTrack(const char *app_id, int autoTrackEvents, const char *prope
     [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents properties:properties_dict];
 }
 
+void enable_autoTrack_with_callback(const char *app_id, int autoTrackEvents) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents callback:^NSDictionary * _Nonnull(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
+        NSMutableDictionary *callbackProperties = [NSMutableDictionary dictionaryWithDictionary:properties];
+        [callbackProperties setObject:@(eventType) forKey:@"EventType"];
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:callbackProperties options:NSJSONWritingPrettyPrinted error:nil];
+        const char *ret = resultHandler("AutoTrackProperties", jsonData.bytes);
+        NSDictionary *autoTrackProperties = nil;
+        convertToDictionary(ret, &autoTrackProperties);
+        return autoTrackProperties;
+    }];
+}
+
 void set_autoTrack_properties(const char *app_id, int autoTrackEvents, const char *properties) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *properties_dict = nil;
@@ -418,4 +479,8 @@ void calibrate_time(long long time_stamp_millis) {
 void calibrate_time_with_ntp(const char *ntp_server) {
     NSString *ntp_server_string = ntp_server != NULL ? [NSString stringWithUTF8String:ntp_server] : nil;
     [ThinkingAnalyticsSDK calibrateTimeWithNtp:ntp_server_string];
+}
+
+void enable_third_party_sharing(int share_type) {
+    [[ThinkingAnalyticsSDK sharedInstance] enableThirdPartySharing:share_type];
 }

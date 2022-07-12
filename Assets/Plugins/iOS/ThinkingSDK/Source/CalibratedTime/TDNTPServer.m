@@ -1,10 +1,3 @@
-//
-//  TDNTPServer.m
-//  NTPKit
-//
-//  Created by Nico Cvitak on 2016-05-01.
-//  Copyright © 2016 Nicholas Cvitak. All rights reserved.
-//
 
 #import "TDNTPServer.h"
 
@@ -23,10 +16,8 @@
     NSTimeInterval _offset;
 }
 
-//! The number of seconds from 1900 to 1970
 static const uint32_t kSecondsFrom1900To1970 = 2208988800UL;
 
-//! Returns the local time as an NTP ufixed64 timestamp
 static ufixed64_t ntp_localtime_get_ufixed64() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -98,15 +89,12 @@ static ufixed64_t ntp_localtime_get_ufixed64() {
             return YES;
         }
         
-        // setup hints.
         struct addrinfo hints = {0}, *addrinfo = NULL;
-        hints.ai_family = AF_UNSPEC; // getaddrinfo will resolve (AF_INET or AF_INET6)
-        hints.ai_socktype = SOCK_DGRAM; // UDP
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_DGRAM;
         
-        // get port string.
         NSString *port = [[NSString alloc] initWithFormat:@"%lu", (unsigned long) _port];
         
-        // get address info.
         int getaddrinfo_err = getaddrinfo(_hostname.UTF8String, port.UTF8String, &hints, &addrinfo);
         if (getaddrinfo_err != 0) {
             if (error) {
@@ -117,7 +105,6 @@ static ufixed64_t ntp_localtime_get_ufixed64() {
             return NO;
         }
         
-        // create the socket.
         const int sock = socket(addrinfo->ai_family, addrinfo->ai_socktype, addrinfo->ai_protocol);
         if (sock < 0) {
             if (error) {
@@ -127,10 +114,8 @@ static ufixed64_t ntp_localtime_get_ufixed64() {
             return NO;
         }
         
-        // set nonblocking.
         fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
         
-        // connect async with timeout.
         struct timeval timeout = { .tv_sec = _timeout, .tv_usec = (_timeout - trunc(_timeout)) * USEC_PER_SEC };
         int connect_err = connect(sock, addrinfo->ai_addr, addrinfo->ai_addrlen) ? errno : 0;
         if (connect_err == EINPROGRESS) {
@@ -155,10 +140,8 @@ static ufixed64_t ntp_localtime_get_ufixed64() {
             return NO;
         }
         
-        // set blocking.
         fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) & ~O_NONBLOCK);
         
-        // set timeout.
         setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
         setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
         
@@ -187,17 +170,12 @@ static ufixed64_t ntp_localtime_get_ufixed64() {
         if (![self connectWithError:error]) {
             return NO;
         }
-        
-        // setup NTP packet.
+    
         ntp_packet_t packet = {0};
-        packet.version_number = 4; // NTPv4.
-        packet.mode = 3; // client mode.
-        packet.transmit_timestamp = ntp_localtime_get_ufixed64(); // client transmit time.
-        
-        // convert to network byte order.
+        packet.version_number = 4;
+        packet.mode = 3;
+        packet.transmit_timestamp = ntp_localtime_get_ufixed64();
         packet = hton_ntp_packet(packet);
-        
-        // send packet to server.
         const ssize_t send_s = send(_socket, &packet, sizeof(packet), 0);
         const int send_err = send_s == sizeof(packet) ? 0 : send_s >= 0 ? EIO : errno;
         if (send_err) {
@@ -207,7 +185,6 @@ static ufixed64_t ntp_localtime_get_ufixed64() {
             return NO;
         }
         
-        // receive packet from server.
         const ssize_t recv_s = recv(_socket, &packet, sizeof(packet), 0);
         const int recv_err = recv_s == sizeof(packet) ? 0 : recv_s >= 0 ? EIO : errno;
         if (recv_err) {
@@ -217,15 +194,12 @@ static ufixed64_t ntp_localtime_get_ufixed64() {
             return NO;
         }
         
-        // convert to host byte order.
         packet = ntoh_ntp_packet(packet);
-        
-        // calculate and update host delay.
         const double T[4] = {
-            ufixed64_as_double(packet.originate_timestamp), // client transmit time.
-            ufixed64_as_double(packet.receive_timestamp), // server receive time.
-            ufixed64_as_double(packet.transmit_timestamp), // server transmit time.
-            ufixed64_as_double(ntp_localtime_get_ufixed64()), // client receive time.
+            ufixed64_as_double(packet.originate_timestamp),
+            ufixed64_as_double(packet.receive_timestamp),
+            ufixed64_as_double(packet.transmit_timestamp),
+            ufixed64_as_double(ntp_localtime_get_ufixed64()),
         };
         _offset = ((T[1] - T[0]) + (T[2] - T[3])) / 2.0;
         

@@ -10,21 +10,12 @@ namespace ThinkingAnalytics.Wrapper
         public MonoBehaviour taMono;
         public readonly ThinkingAnalyticsAPI.Token token;
         private IDynamicSuperProperties dynamicSuperProperties;
+        private IAutoTrackEventCallback autoTrackEventCallback;
 
         private static System.Random rnd = new System.Random();
 
         private string serilize<T>(Dictionary<string, T> data) {
             return TD_MiniJSON.Serialize(data, getTimeString);
-        }
-
-        public Dictionary<string, object> GetDynamicSuperProperties()
-        {
-            if (this.dynamicSuperProperties != null) {
-                return this.dynamicSuperProperties.GetDynamicSuperProperties();
-            } 
-            else {
-                return new Dictionary<string, object>();
-            }
         }
 
         public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, MonoBehaviour mono, bool initRequired = true)
@@ -67,6 +58,12 @@ namespace ThinkingAnalytics.Wrapper
         public void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
         {
             enableAutoTrack(events, serilize(properties));
+        }
+
+        public void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback)
+        {
+            this.autoTrackEventCallback = eventCallback;
+            enableAutoTrack(events, eventCallback);
         }
 
         public void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
@@ -214,6 +211,18 @@ namespace ThinkingAnalytics.Wrapper
             userAppend(serilize(properties), dateTime);
         }
 
+        public void UserUniqAppend(Dictionary<string, object> properties) 
+        {
+            TD_PropertiesChecker.CheckProperties(properties);
+            userUniqAppend(serilize(properties));
+        }
+
+        public void UserUniqAppend(Dictionary<string, object> properties, DateTime dateTime) 
+        {
+            TD_PropertiesChecker.CheckProperties(properties);
+            userUniqAppend(serilize(properties), dateTime);
+        }
+
         public void UserDelete()
         {
             userDelete();
@@ -247,6 +256,11 @@ namespace ThinkingAnalytics.Wrapper
             }
             this.dynamicSuperProperties = dynamicSuperProperties;
             setDynamicSuperProperties(dynamicSuperProperties);
+        }
+
+        public void SetTrackStatus(TA_TRACK_STATUS status)
+        {
+            setTrackStatus(status);
         }
 
         public void OptOutTracking()
@@ -287,6 +301,11 @@ namespace ThinkingAnalytics.Wrapper
         public static void CalibrateTimeWithNtp(string ntpServer)
         {
             calibrateTimeWithNtp(ntpServer);
+        }
+
+        public void EnableThirdPartySharing(TAThirdPartyShareType shareType)
+        {
+            enableThirdPartySharing(shareType);
         }
     }
 }

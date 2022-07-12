@@ -5,15 +5,15 @@
 
 - (BOOL)td_sendAction:(SEL)action to:(id)to from:(id)from forEvent:(UIEvent *)event {
     if ([from isKindOfClass:[UIControl class]]) {
-        //UISegmentedControl  UISwitch  UIStepper  UISlider
         if (([from isKindOfClass:[UISwitch class]] ||
             [from isKindOfClass:[UISegmentedControl class]] ||
             [from isKindOfClass:[UIStepper class]])) {
             [[TDAutoTrackManager sharedManager] trackEventView:from];
         }
         
-        //UIButton UIPageControl UITabBarButton _UIButtonBarButton
-        else if ([event isKindOfClass:[UIEvent class]] && event.type == UIEventTypeTouches && [[[event allTouches] anyObject] phase] == UITouchPhaseEnded) {
+        else if ([event isKindOfClass:[UIEvent class]] &&
+                 event.type == UIEventTypeTouches &&
+                 [[[event allTouches] anyObject] phase] == UITouchPhaseEnded) {
             [[TDAutoTrackManager sharedManager] trackEventView:from];
         }
     }

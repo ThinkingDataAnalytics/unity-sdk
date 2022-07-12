@@ -125,9 +125,7 @@ namespace ThinkingSDK.PC.Request
                 webRequest.uploadHandler = (UploadHandler) new UploadHandlerRaw(contentCompressed);
                 webRequest.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer();
 
-                ThinkingSDKLogger.Print("Request URL=" + uri);
-                ThinkingSDKLogger.Print("------------------SendContent------------------");
-                ThinkingSDKLogger.Print(content);
+                ThinkingSDKLogger.Print("Post event: " + content + "\n  Request URL: " + uri);
 
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();

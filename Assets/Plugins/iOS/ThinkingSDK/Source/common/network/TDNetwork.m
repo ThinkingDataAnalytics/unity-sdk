@@ -9,6 +9,7 @@ static NSString *kTAIntegrationType = @"TA-Integration-Type";
 static NSString *kTAIntegrationVersion = @"TA-Integration-Version";
 static NSString *kTAIntegrationCount = @"TA-Integration-Count";
 static NSString *kTAIntegrationExtra = @"TA-Integration-Extra";
+static NSString *kTADatasType = @"TA-Datas-Type";
 
 @implementation TDNetwork
 
@@ -112,14 +113,14 @@ static NSString *kTAIntegrationExtra = @"TA-Integration-Extra";
         @"#app_id": self.appid,
         @"#flush_time": @(time),
     };
-//    NSDictionary *flushDic = @{
-//        @"data": recordArray,
-//        @"automaticData": [TDDeviceInfo sharedManager].automaticData,
-//        @"#app_id": self.appid,
-//    };
-//    NSMutableDictionary *flushDic = [[TDDeviceInfo sharedManager].automaticData mutableCopy];
-//    flushDic[@"data"] = recordArray;
-//    flushDic[@"#app_id"] = self.appid;
+    
+    __block BOOL isEncrypt;
+    [recordArray enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([obj.allKeys containsObject:@"ekey"]) {
+            isEncrypt = YES;
+            *stop = YES;
+        }
+    }];
     
     NSString *jsonString = [TDJSONUtil JSONStringForObject:flushDic];
     NSMutableURLRequest *request = [self buildRequestWithJSONString:jsonString];
@@ -127,6 +128,9 @@ static NSString *kTAIntegrationExtra = @"TA-Integration-Extra";
     [request addValue:[TDDeviceInfo sharedManager].libVersion forHTTPHeaderField:kTAIntegrationVersion];
     [request addValue:@(recordArray.count).stringValue forHTTPHeaderField:kTAIntegrationCount];
     [request addValue:@"iOS" forHTTPHeaderField:kTAIntegrationExtra];
+    if (isEncrypt) {
+        [request addValue:@"1" forHTTPHeaderField:kTADatasType];
+    }
     
     dispatch_semaphore_t flushSem = dispatch_semaphore_create(0);
 
@@ -160,9 +164,11 @@ static NSString *kTAIntegrationExtra = @"TA-Integration-Extra";
 }
 
 - (NSMutableURLRequest *)buildRequestWithJSONString:(NSString *)jsonString {
-    NSData *zippedData = [NSData gzipData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]];
+    
+    NSData *zippedData = [NSData td_gzipData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]];
     NSString *postBody = [zippedData base64EncodedStringWithOptions:0];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:self.serverURL];
+//    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://192.168.20.23:8991/sync"]];
     [request setHTTPMethod:@"POST"];
     [request setHTTPBody:[postBody dataUsingEncoding:NSUTF8StringEncoding]];
     NSString *contentType = [NSString stringWithFormat:@"text/plain"];

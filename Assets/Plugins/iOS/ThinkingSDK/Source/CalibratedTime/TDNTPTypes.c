@@ -1,11 +1,3 @@
-//
-//  TDNTPTypes.c
-//  NTPKit
-//
-//  Created by Nico Cvitak on 2016-05-02.
-//  Copyright © 2016 Nicholas Cvitak. All rights reserved.
-//
-
 #include "TDNTPTypes.h"
 
 #include <assert.h>

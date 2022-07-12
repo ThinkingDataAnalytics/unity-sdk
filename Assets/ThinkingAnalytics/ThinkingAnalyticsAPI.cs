@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.3.1
+    SDK VERSION:2.4.0
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -44,6 +44,14 @@ namespace ThinkingAnalytics
     public interface IDynamicSuperProperties
     {
         Dictionary<string, object> GetDynamicSuperProperties();
+    }
+
+    /// <summary>
+    /// Auto track event callback interfaces.
+    /// </summary>
+    public interface IAutoTrackEventCallback
+    {
+        Dictionary<string, object> AutoTrackEventCallback(int type, Dictionary<string, object>properties);
     }
 
     /// <summary>
@@ -217,6 +225,15 @@ namespace ThinkingAnalytics
         ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH
     }
 
+    // 数据上报状态
+    public enum TA_TRACK_STATUS
+    {
+        PAUSE = 1, // 暂停数据上报
+        STOP = 2, // 停止数据上报，并清除缓存
+        SAVE_ONLY = 3, // 数据入库，但不上报
+        NORMAL = 4 // 恢复数据上报
+    }
+
     [DisallowMultipleComponent]
     public class ThinkingAnalyticsAPI : MonoBehaviour, TaExceptionHandler
     {
@@ -229,6 +246,12 @@ namespace ThinkingAnalytics
             public TAMode mode;
             public TATimeZone timeZone;
             public string timeZoneId;
+            public bool enableEncrypt; // 开启加密传输，默认false（仅支持iOS/Android）
+            public int encryptVersion; // 密钥版本号（仅支持iOS/Android）
+            public string encryptPublicKey; // 加密公钥（仅支持iOS/Android）
+            public SSLPinningMode pinningMode; // SSL证书验证模式，默认NONE（仅支持iOS/Android）
+            public bool allowInvalidCertificates; // 是否允许自建证书或者过期SSL证书，默认false（仅支持iOS/Android）
+            public bool validatesDomainName; // 是否验证证书域名，默认true（仅支持iOS/Android）
 
             public Token(string appId, string serverUrl, TAMode mode = TAMode.NORMAL, TATimeZone timeZone = TATimeZone.Local, string timeZoneId = null)
             {
@@ -237,6 +260,12 @@ namespace ThinkingAnalytics
                 this.mode = mode;
                 this.timeZone = timeZone;
                 this.timeZoneId = timeZoneId;
+                this.enableEncrypt = false;
+                this.encryptVersion = 0;
+                this.encryptPublicKey = null;
+                this.pinningMode = SSLPinningMode.NONE;
+                this.allowInvalidCertificates = false;
+                this.validatesDomainName = true;
             }
 
             public string getTimeZoneId()
@@ -454,7 +483,7 @@ namespace ThinkingAnalytics
                 getInstance(appId).EnableAutoTrack(events, properties);
 
                 //C#异常捕获提前，包含所有端
-                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && TD_PublicConfig.DisableCSharpException)
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && !TD_PublicConfig.DisableCSharpException)
                 {
                     foreach (var item in properties.Keys)
                     {
@@ -467,20 +496,16 @@ namespace ThinkingAnalytics
             }
         }
 
-        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, object callback, string appId = "")
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback, string appId = "")
         {
             if (tracking_enabled)
             {
-                Dictionary<string, object> properties = new Dictionary<string, object>();
-                getInstance(appId).EnableAutoTrack(events, properties);
+                taAPIInstance.autoTrackEventCallback = eventCallback;
+                getInstance(appId).EnableAutoTrack(events, eventCallback);
 
                 //C#异常捕获提前，包含所有端
-                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && TD_PublicConfig.DisableCSharpException)
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && !TD_PublicConfig.DisableCSharpException)
                 {
-                    foreach (var item in properties.Keys)
-                    {
-                        taAPIInstance.autoTrackProperties[item] = properties[item];
-                    }
                     ThinkingSDKExceptionHandler eHandler = new ThinkingSDKExceptionHandler();
                     eHandler.SetTaExceptionHandler(taAPIInstance);
                     eHandler.RegisterTaExceptionHandler();
@@ -494,7 +519,7 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).SetAutoTrackProperties(events, properties);
                 //C#异常捕获提前，包含所有端
-                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && TD_PublicConfig.DisableCSharpException)
+                if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && !TD_PublicConfig.DisableCSharpException)
                 {
                     foreach (var item in properties.Keys)
                     {
@@ -807,6 +832,33 @@ namespace ThinkingAnalytics
         }
 
         /// <summary>
+        /// 对 List 类型的用户属性进行去重追加.
+        /// </summary>
+        /// <param name="properties">用户属性</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserUniqAppend(Dictionary<string, object> properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserUniqAppend(properties);
+            }
+        }
+
+        /// <summary>
+        /// 对 List 类型的用户属性进行去重追加.
+        /// </summary>
+        /// <param name="properties">用户属性</param>
+        /// <param name="dateTime">操作时间</param>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void UserUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).UserUniqAppend(properties, dateTime);
+            }
+        }
+
+        /// <summary>
         /// 删除用户数据. 之后再查询该名用户的用户属性，但该用户产生的事件仍然可以被查询到
         /// </summary>
         /// <param name="appId">项目 ID(可选)</param>
@@ -871,6 +923,20 @@ namespace ThinkingAnalytics
         }
 
         /// <summary>
+        /// 设置数据上报状态
+        /// </summary>
+        /// <param name="status">上报状态，详见 TA_TRACK_STATUS 定义</param>
+        /// <param name="appId">项目ID</param>
+        public static void SetTrackStatus(TA_TRACK_STATUS status, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                getInstance(appId).SetTrackStatus(status);
+            }
+        }
+
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
+        /// <summary>
         /// 停止上报数据，并且清空本地缓存数据(未上报的数据、已设置的访客ID、账号ID、公共属性)
         /// </summary>
         /// <param name="appId">项目ID</param>
@@ -882,6 +948,7 @@ namespace ThinkingAnalytics
             }
         }
 
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         /// <summary>
         /// 停止上报数据，清空本地缓存数据，并且发送 user_del 到服务端.
         /// </summary>
@@ -894,6 +961,7 @@ namespace ThinkingAnalytics
             }
         }
 
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         /// <summary>
         /// 恢复上报数据
         /// </summary>
@@ -906,6 +974,7 @@ namespace ThinkingAnalytics
             }
         }
 
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         /// <summary>
         /// 暂停/恢复上报数据，本地缓存不会被清空
         /// </summary>
@@ -978,6 +1047,21 @@ namespace ThinkingAnalytics
             }
         }
 
+        /// <summary>
+        /// 三方数据共享
+        /// 
+        /// 通过与三方系统共享TA账号体系，打通三方数据
+        /// </summary>
+        /// <param name="shareType">三方系统类型</param>
+        /// <param name="properties">三方系统自定义属性（部分系统自定义属性的设置是覆盖式更新，所以需要将自定义属性传入TA SDK，此属性将会与TA账号体系一并传入三方系统）</param>
+        public static void EnableThirdPartySharing(TAThirdPartyShareType shareType)
+        {
+            if (tracking_enabled)
+            {
+                getInstance(default_appid).EnableThirdPartySharing(shareType);
+            }
+        }
+
         #region internal
 
         public static void StartThinkingAnalytics(string appId, string serverUrl)
@@ -1017,8 +1101,9 @@ namespace ThinkingAnalytics
                 try
                 {
                     ThinkingAnalyticsWrapper.EnableLog(taAPIInstance.enableLog);
-                    foreach (Token token in tokens)
+                    for (int i=0; i<tokens.Length; i++)
                     {
+                        Token token = tokens[i];
                         if (!string.IsNullOrEmpty(token.appid))
                         {
                             if (sInstances.ContainsKey(token.appid))
@@ -1027,11 +1112,11 @@ namespace ThinkingAnalytics
                             }
                             else 
                             {
-                                Token token1 = new Token(token.appid, token.serverUrl, token.mode, token.timeZone, token.timeZoneId);
-                                TD_Log.d("ThinkingAnalytics start with appId: " + token1.appid + ", serverUrl: " + token1.serverUrl + ", mode: " + token1.mode);
-                                ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token1, taAPIInstance);
+                                token.appid = token.appid.Replace(" ", "");
+                                TD_Log.d("ThinkingAnalytics start with appId: " + token.appid + ", serverUrl: " + token.serverUrl + ", mode: " + token.mode);
+                                ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token, taAPIInstance);
                                 wrapper.SetNetworkType(taAPIInstance.networkType);
-                                sInstances.Add(token1.appid,wrapper);
+                                sInstances.Add(token.appid, wrapper);
                             }
                         }
                     }
@@ -1045,6 +1130,14 @@ namespace ThinkingAnalytics
                     tracking_enabled = false;
                 }
             }
+
+            #if UNITY_IOS && !UNITY_EDITOR //iOS动态回调
+            //设置回调托管函数指针
+            ResultHandler handler = new ResultHandler(resultHandler);
+            IntPtr handlerPointer = Marshal.GetFunctionPointerForDelegate(handler);
+            //调用OC的方法，将C#的回调方法函数指针传给OC
+            RegisterRecieveGameCallback(handlerPointer);
+            #endif //iOS动态回调
         }
 
         void Awake()
@@ -1069,16 +1162,9 @@ namespace ThinkingAnalytics
         }
 
         private void Start() {
-            #if UNITY_IOS && !UNITY_EDITOR
-            //设置回调托管函数指针
-            ResultHandler handler = new ResultHandler(resultHandler);
-            IntPtr handlerPointer = Marshal.GetFunctionPointerForDelegate(handler);
-            //调用OC的方法，将C#的回调方法函数指针传给OC
-            RegisterRecieveGameCallback(handlerPointer);
-            #endif
         }
 
-        #if UNITY_IOS && !UNITY_EDITOR
+        #if UNITY_IOS && !UNITY_EDITOR //iOS动态回调
         //声明一个OC的注册回调方法函数指针的函数方法，每一个参数都是函数指针
         [DllImport("__Internal")]
         public static extern void RegisterRecieveGameCallback
@@ -1088,21 +1174,37 @@ namespace ThinkingAnalytics
 
         //先声明方法、delegate修饰标记是回调方法
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate string ResultHandler(string msg);
+        public delegate string ResultHandler(string type, string jsonData);
 
         //实现回调方法 MonoPInvokeCallback修饰会让OC通过函数指针回调此方法
         [AOT.MonoPInvokeCallback(typeof(ResultHandler))]
-        static string resultHandler(string msg) 
+        static string resultHandler(string type, string jsonData) 
         {
-            Dictionary<string, object>dynamicSuperProperties = taAPIInstance.dynamicSuperProperties.GetDynamicSuperProperties();
-            return TD_MiniJSON.Serialize(dynamicSuperProperties);
+            if (type == "AutoTrackProperties")
+            {
+                if (taAPIInstance.autoTrackEventCallback != null)
+                {
+                    Dictionary<string, object>properties = TD_MiniJSON.Deserialize(jsonData);
+                    int eventType = Convert.ToInt32(properties["EventType"]);
+                    properties.Remove("EventType");
+                    Dictionary<string, object>autoTrackProperties = taAPIInstance.autoTrackEventCallback.AutoTrackEventCallback(eventType, properties);
+                    return TD_MiniJSON.Serialize(autoTrackProperties);
+                }
+            } 
+            else if (type == "DynamicSuperProperties")
+            {
+                if (taAPIInstance.dynamicSuperProperties != null)
+                {
+                    Dictionary<string, object>dynamicSuperProperties = taAPIInstance.dynamicSuperProperties.GetDynamicSuperProperties();
+                    return TD_MiniJSON.Serialize(dynamicSuperProperties);
+                }
+            }
+            return "{}";
         }
-        #endif 
-
-
-
+        #endif //iOS动态回调
 
         private IDynamicSuperProperties dynamicSuperProperties;
+        private IAutoTrackEventCallback autoTrackEventCallback;
         private Dictionary<string, object> autoTrackProperties = new Dictionary<string, object>();
         private static ThinkingAnalyticsAPI TA_instance;
         private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID
@@ -1126,7 +1228,7 @@ namespace ThinkingAnalytics
                 } 
                 else 
                 {
-                    TD_Log.d("请先初始化 ThinkingAnalytics SDK");
+                    TD_Log.d("Please initialize ThinkingAnalytics SDK");
                     return null;
                 }
             } finally

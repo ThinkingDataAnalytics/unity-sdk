@@ -2,6 +2,6 @@
 
 @interface NSData (TDGzip)
 
-+ (NSData *)gzipData:(NSData *)pUncompressedData;
++ (NSData *)td_gzipData:(NSData *)dataa;
 
 @end

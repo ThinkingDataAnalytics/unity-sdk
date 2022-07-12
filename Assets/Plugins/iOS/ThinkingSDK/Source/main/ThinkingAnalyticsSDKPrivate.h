@@ -37,6 +37,7 @@ static kEDEventTypeName const TD_EVENT_TYPE_USER_SET        = @"user_set";
 static kEDEventTypeName const TD_EVENT_TYPE_USER_SETONCE    = @"user_setOnce";
 static kEDEventTypeName const TD_EVENT_TYPE_USER_UNSET      = @"user_unset";
 static kEDEventTypeName const TD_EVENT_TYPE_USER_APPEND     = @"user_append";
+static kEDEventTypeName const TD_EVENT_TYPE_USER_UNIQ_APPEND= @"user_uniq_append";
 
 static NSString * const TD_EVENT_START                      = @"eventStart";
 static NSString * const TD_EVENT_DURATION                   = @"eventDuration";
@@ -81,8 +82,13 @@ static NSString * const TA_JS_TRACK_SCHEME = @"thinkinganalytics://trackEvent";
 @property (atomic, strong) NSMutableSet *ignoredViewTypeList;
 @property (atomic, strong) NSMutableSet *ignoredViewControllers;
 @property (nonatomic, assign) BOOL relaunchInBackGround;// 标识是否是后台自启动事件
+
+/// 标识是否暂停网络上报，默认 NO 上报网络正常流程；YES 入本地数据库但不网络上报
+@property (atomic, assign, getter=isTrackPause) BOOL trackPause;
+
 @property (nonatomic, assign) BOOL isEnabled;
 @property (atomic, assign) BOOL isOptOut;
+
 @property (nonatomic, strong, nullable) NSTimer *timer;
 @property (nonatomic, strong) NSPredicate *regexKey;
 @property (nonatomic, strong) NSPredicate *regexAutoTrackKey;
@@ -106,8 +112,8 @@ static NSString * const TA_JS_TRACK_SCHEME = @"thinkinganalytics://trackEvent";
 - (BOOL)isAutoTrackEventTypeIgnored:(ThinkingAnalyticsAutoTrackEventType)eventType;
 - (BOOL)isViewTypeIgnored:(Class)aClass;
 - (void)retrievePersistedData;
-+ (dispatch_queue_t)serialQueue;
-+ (dispatch_queue_t)networkQueue;
++ (dispatch_queue_t)td_trackQueue;
++ (dispatch_queue_t)td_networkQueue;
 + (UIApplication *)sharedUIApplication;
 - (NSInteger)saveEventsData:(NSDictionary *)data;
 - (void)flushImmediately:(NSDictionary *)dataDic;

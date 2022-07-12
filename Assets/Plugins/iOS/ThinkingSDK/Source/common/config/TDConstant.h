@@ -170,3 +170,26 @@ typedef NS_OPTIONS(NSInteger, ThinkingNetworkType) {
     ThinkingNetworkTypeALL      = 0xFF,
 };
 
+
+typedef NS_OPTIONS(NSInteger, TDThirdPartyShareType) {
+    TDThirdPartyShareTypeNONE               = 0,
+    TDThirdPartyShareTypeAPPSFLYER          = 1 << 0,
+    TDThirdPartyShareTypeIRONSOURCE         = 1 << 1,
+    TDThirdPartyShareTypeADJUST             = 1 << 2,
+    TDThirdPartyShareTypeBRANCH             = 1 << 3,
+    TDThirdPartyShareTypeTOPON              = 1 << 4,
+    TDThirdPartyShareTypeTRACKING           = 1 << 5,
+    TDThirdPartyShareTypeTRADPLUS           = 1 << 6,
+};
+
+//MARK: - 数据上报状态
+typedef NS_ENUM(NSInteger, TATrackStatus) {
+    /// 暂停SDK上报
+    TATrackStatusPause,
+    /// 停止SDK上报并清除缓存
+    TATrackStatusStop,
+    /// 可以入库 暂停发送数据
+    TATrackStatusSaveOnly,
+    /// 恢复所有状态
+    TATrackStatusNormal
+};

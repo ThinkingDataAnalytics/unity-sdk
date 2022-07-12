@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@interface TDKeychainItemWrapper : NSObject
+@interface TDKeychainHelper : NSObject
 
 - (void)saveDeviceId:(NSString *)string;
 - (void)saveInstallTimes:(NSString *)string;

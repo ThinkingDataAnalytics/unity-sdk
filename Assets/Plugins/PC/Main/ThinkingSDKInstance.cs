@@ -23,10 +23,22 @@ namespace ThinkingSDK.PC.Main
         APP_INSTALL = 1 << 5, // 应用安装后首次打开的时候触发上报，对应 ta_app_install
         ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH
     }
-
-    public interface IDynamicSuperProperties
+    // 数据上报状态
+    public enum TA_TRACK_STATUS
     {
-         Dictionary<string, object> GetDynamicSuperProperties();
+        PAUSE = 1, // 暂停数据上报
+        STOP = 2, // 停止数据上报，并清除缓存
+        SAVE_ONLY = 3, // 数据入库，但不上报
+        NORMAL = 4 // 恢复数据上报
+    }
+
+    public interface IDynamicSuperProperties_PC
+    {
+         Dictionary<string, object> GetDynamicSuperProperties_PC();
+    }
+    public interface IAutoTrackEventCallback_PC
+    {
+        Dictionary<string, object> AutoTrackEventCallback_PC(int type, Dictionary<string, object>properties);
     }
     public class ThinkingSDKInstance
     {
@@ -37,12 +49,13 @@ namespace ThinkingSDK.PC.Main
         private bool mOptTracking = true;
         private Dictionary<string, object> mTimeEvents = new Dictionary<string, object>();
         private bool mEnableTracking = true;
+        private bool mEventSaveOnly = false; //事件数据仅保存，不上报
         protected Dictionary<string, object> mSupperProperties = new Dictionary<string, object>();
         protected Dictionary<string, Dictionary<string, object>> mAutoTrackProperties = new Dictionary<string, Dictionary<string, object>>();
         private ThinkingSDKConfig mConfig;
         private ThinkingSDKBaseRequest mRequest;
         private ThinkingSDKTimeCalibration mTimeCalibration;
-        private IDynamicSuperProperties mDynamicProperties;
+        private IDynamicSuperProperties_PC mDynamicProperties;
         private ThinkingSDKTask mTask {
             get {
                 return ThinkingSDKTask.SingleTask();
@@ -54,6 +67,7 @@ namespace ThinkingSDK.PC.Main
         private static ThinkingSDKInstance mCurrentInstance;
         private MonoBehaviour mMono;
         private static MonoBehaviour sMono;
+        private ThinkingSDKAutoTrack mAutoTrack;
 
         ResponseHandle mResponseHandle;
         public void SetTimeCalibratieton(ThinkingSDKTimeCalibration timeCalibration)
@@ -113,8 +127,14 @@ namespace ThinkingSDK.PC.Main
             }
             DefaultData();
             mCurrentInstance = this;
-            // 动态加载 ThinkingSDKTask
-            new GameObject("ThinkingSDKTask", typeof(ThinkingSDKTask));
+            // 动态加载 ThinkingSDKTask ThinkingSDKAutoTrack
+            GameObject mThinkingSDKTask = new GameObject("ThinkingSDKTask", typeof(ThinkingSDKTask));
+            UnityEngine.Object.DontDestroyOnLoad(mThinkingSDKTask);
+
+            GameObject mThinkingSDKAutoTrack = new GameObject("ThinkingSDKAutoTrack", typeof(ThinkingSDKAutoTrack));
+            this.mAutoTrack = (ThinkingSDKAutoTrack) mThinkingSDKAutoTrack.GetComponent(typeof(ThinkingSDKAutoTrack));
+            this.mAutoTrack.SetAppId(mAppid);
+            UnityEngine.Object.DontDestroyOnLoad(mThinkingSDKAutoTrack);
         }
         public static ThinkingSDKInstance CreateLightInstance()
         {
@@ -199,57 +219,16 @@ namespace ThinkingSDK.PC.Main
         //TODO
         public virtual void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
         {
-            if ((events & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
-            {
-                object result = ThinkingSDKFile.GetData(mAppid, ThinkingSDKConstant.IS_INSTALL, typeof(int));
-                if (result == null)
-                {
-                    ThinkingSDKFile.SaveData(mAppid, ThinkingSDKConstant.IS_INSTALL, 1);
-                    if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_INSTALL.ToString()))
-                    {
-                        ThinkingSDKUtil.AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()]);
-                    }
-                    Track(ThinkingSDKConstant.INSTALL_EVENT, properties);
-                    Flush();
-                } 
-            }
-            if ((events & AUTO_TRACK_EVENTS.APP_START) != 0)
-            {
-                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_START.ToString()))
-                {
-                    ThinkingSDKUtil.AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()]);
-                }
-                Track(ThinkingSDKConstant.START_EVENT, properties);
-                Flush();
-            }
+            this.mAutoTrack.EnableAutoTrack(events, properties, mAppid);
+        }
+        public virtual void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback_PC eventCallback)
+        {
+            this.mAutoTrack.EnableAutoTrack(events, eventCallback, mAppid);
         }
         // 设置自动采集事件的自定义属性
         public virtual void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
         {
-            if ((events & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
-            {
-                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_INSTALL.ToString()))
-                {
-                    ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()], properties);
-                }
-                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()] = properties;
-            }
-            if ((events & AUTO_TRACK_EVENTS.APP_START) != 0)
-            {
-                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_START.ToString()))
-                {
-                    ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()], properties);
-                }
-                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()] = properties;
-            }
-            if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
-            {
-                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_CRASH.ToString()))
-                {
-                    ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_CRASH.ToString()], properties);
-                }
-                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_CRASH.ToString()] = properties;
-            }
+            this.mAutoTrack.SetAutoTrackProperties(events, properties);
         }
         public void Track(string eventName)
         {
@@ -277,7 +256,7 @@ namespace ThinkingSDK.PC.Main
         {
             if (this.mDynamicProperties != null)
             {
-                data.SetProperties(this.mDynamicProperties.GetDynamicSuperProperties(),false);
+                data.SetProperties(this.mDynamicProperties.GetDynamicSuperProperties_PC(),false);
             }
             if (this.mSupperProperties != null && this.mSupperProperties.Count > 0)
             {
@@ -348,8 +327,8 @@ namespace ThinkingSDK.PC.Main
             else
             {
                 Dictionary<string, object> dataDic = data.ToDictionary();
-                ThinkingSDKLogger.Print("Save event: " + ThinkingSDKJSON.Serialize(dataDic));
-                int count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic);
+                ThinkingSDKLogger.Print("Save event: " + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppID: " + mAppid);
+                int count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic, mAppid);
                 if (this.mConfig.GetMode() != Mode.NORMAL || count >= this.mConfig.mUploadSize)
                 {
                     Flush();
@@ -371,22 +350,49 @@ namespace ThinkingSDK.PC.Main
         /// </summary>
         public virtual void Flush()
         {
-            mTask.SyncInvokeAllTask();
+            if (mEventSaveOnly == false) {
+                mTask.SyncInvokeAllTask();
 
-            int batchSize = (this.mConfig.GetMode() != Mode.NORMAL) ? 1 : mConfig.mUploadSize;
-            ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
-                int eventCount = 0;
-                if (result != null)
+                int batchSize = (this.mConfig.GetMode() != Mode.NORMAL) ? 1 : mConfig.mUploadSize;
+                ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
+                    int eventCount = 0;
+                    if (result != null)
+                    {
+                        eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(batchSize, mAppid);
+                    }
+                    mTask.Release();
+                    if (eventCount>0)
+                    {
+                        Flush();
+                    }
+                };
+                mTask.StartRequest(mRequest, responseHandle, batchSize, mAppid);
+            }
+        }
+        public void FlushImmediately()
+        {
+            if (mEventSaveOnly == false) {
+                mTask.SyncInvokeAllTask();
+
+                int batchSize = (this.mConfig.GetMode() != Mode.NORMAL) ? 1 : mConfig.mUploadSize;
+                ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
+                    int eventCount = 0;
+                    if (result != null)
+                    {
+                        eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(batchSize, mAppid);
+                    }
+                    mTask.Release();
+                    if (eventCount>0)
+                    {
+                        Flush();
+                    }
+                };
+                IList<Dictionary<string, object>> list = ThinkingSDKFileJson.DequeueBatchTrackingData(batchSize, mAppid);
+                if (list.Count>0)
                 {
-                    eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(batchSize);
+                    this.mMono.StartCoroutine(mRequest.SendData_2(responseHandle, list));
                 }
-                mTask.Release();
-                if (eventCount>0)
-                {
-                    Flush();
-                }
-            };
-            mTask.StartRequest(mRequest, responseHandle, batchSize);
+            }
         }
         public void Track(ThinkingSDKEventData analyticsEvent)
         {
@@ -542,6 +548,16 @@ namespace ThinkingSDK.PC.Main
             ThinkingSDKUserData data = new ThinkingSDKUserData(time, ThinkingSDKConstant.USER_APPEND, properties);
             SendData(data);
         }
+        public void UserUniqAppend(Dictionary<string, object> properties)
+        {
+            UserUniqAppend(properties, DateTime.MinValue);
+        }
+        public void UserUniqAppend(Dictionary<string, object> properties, DateTime dateTime)
+        {
+            ThinkingSDKTimeInter time = GetTime(dateTime);
+            ThinkingSDKUserData data = new ThinkingSDKUserData(time, ThinkingSDKConstant.USER_UNIQ_APPEND, properties);
+            SendData(data);
+        }
         public  void UserDelete()
         {
             UserDelete(DateTime.MinValue);
@@ -553,7 +569,7 @@ namespace ThinkingSDK.PC.Main
             ThinkingSDKUserData data = new ThinkingSDKUserData(time, ThinkingSDKConstant.USER_DEL,properties);
             SendData(data);
         }
-        public void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        public void SetDynamicSuperProperties(IDynamicSuperProperties_PC dynamicSuperProperties)
         {
             if (IsPaused())
             {
@@ -566,10 +582,41 @@ namespace ThinkingSDK.PC.Main
             bool mIsPaused = !mEnableTracking || !mOptTracking;
             if (mIsPaused)
             {
-                ThinkingSDKLogger.Print("已暂停/已停止数据上报");
+                ThinkingSDKLogger.Print("Track status is Pause or Stop");
             }
             return mIsPaused;
         }
+
+        public void SetTrackStatus(TA_TRACK_STATUS status)
+        {
+            ThinkingSDKLogger.Print("SetTrackStatus: " + status);
+            switch (status)
+            {
+                case TA_TRACK_STATUS.PAUSE:
+                    mEventSaveOnly = false;
+                    OptTracking(true);
+                    EnableTracking(false);
+                    break;
+                case TA_TRACK_STATUS.STOP:
+                    mEventSaveOnly = false;
+                    EnableTracking(true);
+                    OptTracking(false);
+                    break;
+                case TA_TRACK_STATUS.SAVE_ONLY:
+                    mEventSaveOnly = true;
+                    EnableTracking(true);
+                    OptTracking(true);
+                    break;
+                case TA_TRACK_STATUS.NORMAL:
+                default:
+                    mEventSaveOnly = false;
+                    OptTracking(true);
+                    EnableTracking(true);
+                    Flush();
+                    break;
+            }
+        }
+
         /*
         停止或开启数据上报,默认是开启状态,设置为停止时还会清空本地的访客ID,账号ID,静态公共属性
         其中true表示可以上报数据,false表示停止数据上报
@@ -587,6 +634,7 @@ namespace ThinkingSDK.PC.Main
                 this.mAccountID = null;
                 this.mDistinctID = null;
                 this.mSupperProperties = new Dictionary<string, object>();
+                ThinkingSDKFileJson.DeleteAllTrackingData(mAppid);
             }
         }
         //是否暂停数据上报,默认是正常上报状态,其中true表示可以上报数据,false表示暂停数据上报

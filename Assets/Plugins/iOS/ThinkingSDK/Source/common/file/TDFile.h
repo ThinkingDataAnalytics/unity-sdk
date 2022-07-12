@@ -35,6 +35,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)archiveSuperProperties:(nullable NSDictionary *)superProperties;
 - (NSDictionary*)unarchiveSuperProperties;
 
+- (void)archiveTrackPause:(BOOL)trackPause;
+- (BOOL)unarchiveTrackPause;
+
 - (void)archiveOptOut:(BOOL)optOut;
 - (BOOL)unarchiveOptOut;
 

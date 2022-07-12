@@ -1,22 +1,40 @@
-﻿
+﻿#if  (!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR)
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ThinkingAnalytics.Utils;
 using UnityEngine;
-#if  (!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR)
 using ThinkingSDK.PC.Main;
 using ThinkingSDK.PC.Utils;
 using ThinkingSDK.PC.DataModel;
 using ThinkingSDK.PC.Config;
-#endif
 
 namespace ThinkingAnalytics.Wrapper
 {
-    public partial class ThinkingAnalyticsWrapper: ThinkingSDK.PC.Main.IDynamicSuperProperties
+    public partial class ThinkingAnalyticsWrapper: IDynamicSuperProperties_PC, IAutoTrackEventCallback_PC
     {
-#if  (!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR)
+        IAutoTrackEventCallback mEventCallback;
+        public Dictionary<string, object> GetDynamicSuperProperties_PC()
+        {
+            if (this.dynamicSuperProperties != null) {
+                return this.dynamicSuperProperties.GetDynamicSuperProperties();
+            } 
+            else {
+                return new Dictionary<string, object>();
+            }
+        }
+
+        public Dictionary<string, object> AutoTrackEventCallback_PC(int type, Dictionary<string, object>properties)
+        {
+            if (this.mEventCallback != null) {
+                return this.mEventCallback.AutoTrackEventCallback(type, properties);
+            } 
+            else {
+                return new Dictionary<string, object>();
+            }
+        }
+
         private void init()
         {
         //     public enum TATimeZone
@@ -92,7 +110,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private void flush()
         {
-           ThinkingPCSDK.Flush();
+           ThinkingPCSDK.Flush(token.appid);
         }
 
         private static void setVersionInfo(string lib_name, string lib_version) {
@@ -246,6 +264,18 @@ namespace ThinkingAnalytics.Wrapper
             ThinkingPCSDK.UserAppend(propertiesDic,dateTime,token.appid);
         }
 
+        private void userUniqAppend(string properties)
+        {
+            Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
+            ThinkingPCSDK.UserUniqAppend(propertiesDic,token.appid);
+        }
+
+        private void userUniqAppend(string properties, DateTime dateTime)
+        {
+            Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
+            ThinkingPCSDK.UserUniqAppend(propertiesDic,dateTime,token.appid);
+        }
+
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
         {
             
@@ -256,9 +286,14 @@ namespace ThinkingAnalytics.Wrapper
             return ThinkingPCSDK.GetDeviceId();
         }
 
-        public void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        private void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
         {
             ThinkingPCSDK.SetDynamicSuperProperties(this);
+        }
+
+        private void setTrackStatus(TA_TRACK_STATUS status)
+        {
+            ThinkingPCSDK.SetTrackStatus((ThinkingSDK.PC.Main.TA_TRACK_STATUS)status, token.appid);
         }
 
         private void optOutTracking()
@@ -297,18 +332,47 @@ namespace ThinkingAnalytics.Wrapper
         private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
+            ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS pcAutoTrackEvents = ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.NONE;
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
             {
-                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL, propertiesDic, token.appid);
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL;
             }
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_START) != 0)
             {
-                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START, propertiesDic, token.appid);
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START;
+            }
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_END) != 0)
+            {
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_END;
             }
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
             {
-                ThinkingPCSDK.EnableAutoTrack(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH, propertiesDic, token.appid);
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH;
             }
+            ThinkingPCSDK.EnableAutoTrack(pcAutoTrackEvents, propertiesDic, token.appid);
+        }
+
+        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, IAutoTrackEventCallback eventCallback)
+        {
+            ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS pcAutoTrackEvents = ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.NONE;
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
+            {
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL;
+            }
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_START) != 0)
+            {
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START;
+            }
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_END) != 0)
+            {
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_END;
+            }
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
+            {
+                pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH;
+            }
+            this.mEventCallback = eventCallback;
+            ThinkingPCSDK.EnableAutoTrack(pcAutoTrackEvents, this);
         }
 
         private void setAutoTrackProperties(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
@@ -341,6 +405,11 @@ namespace ThinkingAnalytics.Wrapper
         {
             ThinkingPCSDK.CalibrateTimeWithNtp(ntpServer);
         }
-#endif
+
+        private void enableThirdPartySharing(TAThirdPartyShareType shareType)
+        {
+            ThinkingSDKLogger.Print("Third Party Sharing is not support on PC");
+        }
     }
 }
+#endif

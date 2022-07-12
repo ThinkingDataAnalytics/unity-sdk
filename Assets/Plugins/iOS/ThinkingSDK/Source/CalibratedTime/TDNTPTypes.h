@@ -1,11 +1,3 @@
-//
-//  TDNTPTypes.h
-//  NTPKit
-//
-//  Created by Nico Cvitak on 2016-05-02.
-//  Copyright © 2016 Nicholas Cvitak. All rights reserved.
-//
-
 #ifndef NTPTypes_h
 #define NTPTypes_h
 
@@ -56,4 +48,4 @@ ufixed64_t ntoh_ufixed64(ufixed64_t);
 ntp_packet_t hton_ntp_packet(ntp_packet_t);
 ntp_packet_t ntoh_ntp_packet(ntp_packet_t);
 
-#endif /* TDNTPTypes_h */
+#endif 

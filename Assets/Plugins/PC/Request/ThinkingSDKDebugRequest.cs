@@ -165,9 +165,7 @@ namespace ThinkingSDK.PC.Request
                 webRequest.timeout = 30;
                 webRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-                ThinkingSDKLogger.Print("Request URL=" + uri);
-                ThinkingSDKLogger.Print("------------------SendContent------------------");
-                ThinkingSDKLogger.Print(content);
+                ThinkingSDKLogger.Print("Post event: " + content + "\n  Request URL: " + uri);
 
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();

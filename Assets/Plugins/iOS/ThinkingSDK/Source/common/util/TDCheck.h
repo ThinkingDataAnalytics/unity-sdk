@@ -1,5 +1,5 @@
 //
-//  TDValidator.h
+//  TDCheck.h
 //  ThinkingSDK
 //
 //  Created by wwango on 2021/9/10.
@@ -29,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 #define TD_Valid_NSData(_object) (TD_CHECK_CLASS_NSData(_object) && (_object.length > 0))
 #define TD_Valid_NSDictionary(_object) (TD_CHECK_CLASS_NSDictionary(_object) && (_object.allKeys.count > 0))
 
-@interface TDValidator : NSObject
+@interface TDCheck : NSObject
 
 /// 遍历每个属性（递归）
 /// @param properties 需要遍历的字典

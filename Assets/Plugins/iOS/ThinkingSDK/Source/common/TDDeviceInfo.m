@@ -5,7 +5,7 @@
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
 #import <sys/utsname.h>
 
-#import "TDKeychainItemWrapper.h"
+#import "TDKeychainHelper.h"
 #import "TDPublicConfig.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
 #import "TDFile.h"
@@ -38,12 +38,11 @@
         self.libName = @"iOS";
         self.libVersion = TDPublicConfig.version;
         
-        // 默认访客ID、设备id
         NSDictionary *deviceInfo = [self getDeviceUniqueId];
-        _uniqueId = [deviceInfo objectForKey:@"uniqueId"];
-        _deviceId = [deviceInfo objectForKey:@"deviceId"];
+        _uniqueId = [deviceInfo objectForKey:@"uniqueId"];// 默认访客ID
+        _deviceId = [deviceInfo objectForKey:@"deviceId"];// 默认设备id
         
-        _automaticData = [self collectAutomaticProperties];
+        _automaticData = [self td_collectProperties];
         _appVersion = [[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"];
         
     }
@@ -54,8 +53,8 @@
     return [self sharedManager].libVersion;
 }
 
-- (void)updateAutomaticData {
-    _automaticData = [self collectAutomaticProperties];
+- (void)td_updateData {
+    _automaticData = [self td_collectProperties];
 }
 
 -(NSDictionary *)getAutomaticData {
@@ -65,7 +64,7 @@
     return _automaticData;
 }
 
-- (NSDictionary *)collectAutomaticProperties {
+- (NSDictionary *)td_collectProperties {
     NSMutableDictionary *p = [NSMutableDictionary dictionary];
     UIDevice *device = [UIDevice currentDevice];
     [p setValue:_deviceId forKey:@"#device_id"];
@@ -103,7 +102,7 @@
         @"#lib": self.libName,
         @"#lib_version": self.libVersion,
         @"#manufacturer": @"Apple",
-        @"#device_model": [self iphoneType],
+        @"#device_model": [self td_iphoneType],
         @"#os": @"iOS",
         @"#os_version": [device systemVersion],
         @"#screen_height": @((NSInteger)size.height),
@@ -125,8 +124,8 @@
 {
      return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
 }
-//TODO
-- (NSString *)iphoneType {
+
+- (NSString *)td_iphoneType {
     struct utsname systemInfo;
     uname(&systemInfo);
     NSString *platform = [NSString stringWithCString:systemInfo.machine encoding:NSASCIIStringEncoding];
@@ -190,7 +189,7 @@
     // 默认访客ID
     NSString *uniqueId;
     
-    TDKeychainItemWrapper *wrapper = [[TDKeychainItemWrapper alloc] init];
+    TDKeychainHelper *wrapper = [[TDKeychainHelper alloc] init];
     
     // 获取keychain中的设备ID和安装次数
     NSString *deviceIdKeychain = [wrapper readDeviceId];

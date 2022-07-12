@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_ANDROID && !(UNITY_EDITOR)
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using ThinkingAnalytics.Utils;
@@ -8,7 +9,6 @@ namespace ThinkingAnalytics.Wrapper
 {
     public partial class ThinkingAnalyticsWrapper
     {
-#if UNITY_ANDROID && !(UNITY_EDITOR)
         private static ThinkingAnalyticsWrapper wrapper;
         private static readonly string JSON_CLASS = "org.json.JSONObject";
         private static readonly AndroidJavaClass sdkClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK");
@@ -69,6 +69,13 @@ namespace ThinkingAnalytics.Wrapper
                 {
                     config.Call("setDefaultTimeZone", timeZone);
                 }
+            }
+
+            if (token.enableEncrypt == true)
+            {
+                config.Call("enableEncrypt", true);
+                AndroidJavaObject secreteKey = new AndroidJavaObject("cn.thinkingdata.android.encrypt.TDSecreteKey", token.encryptPublicKey, token.encryptVersion, "AES", "RSA");
+                config.Call("setSecretKey", secreteKey);
             }
 
             instance = sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", config);
@@ -294,6 +301,16 @@ namespace ThinkingAnalytics.Wrapper
             instance.Call("user_append", getJSONObject(properties), getDate(dateTime));
         }
 
+        private void userUniqAppend(string properties)
+        {
+            instance.Call("user_uniqAppend", getJSONObject(properties));
+        }
+
+        private void userUniqAppend(string properties, DateTime dateTime)
+        {
+            instance.Call("user_uniqAppend", getJSONObject(properties), getDate(dateTime));
+        }
+
         private void userDelete()
         {
             instance.Call("user_delete");
@@ -315,8 +332,8 @@ namespace ThinkingAnalytics.Wrapper
 
         public void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
         {
-            ListenerAdapter adapter = new ListenerAdapter();
-            instance.Call("setDynamicSuperPropertiesTrackerListener", adapter);
+            DynamicListenerAdapter listenerAdapter = new DynamicListenerAdapter();
+            instance.Call("setDynamicSuperPropertiesTrackerListener", listenerAdapter);
         }
 
         private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType) {
@@ -339,9 +356,38 @@ namespace ThinkingAnalytics.Wrapper
             instance.Call("enableAutoTrack", (int) events, getJSONObject(properties));
         }
 
+        private void enableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback)
+        {
+            AutoTrackListenerAdapter listenerAdapter = new AutoTrackListenerAdapter();
+            instance.Call("enableAutoTrack", (int) events, listenerAdapter);
+        }
+
         private void setAutoTrackProperties(AUTO_TRACK_EVENTS events, string properties)
         {
             instance.Call("setAutoTrackProperties", (int) events, getJSONObject(properties));
+        }
+
+        private void setTrackStatus(TA_TRACK_STATUS status)
+        {
+            AndroidJavaClass javaClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK$TATrackStatus");
+            AndroidJavaObject trackStatus;
+            switch (status)
+            {
+                case TA_TRACK_STATUS.PAUSE:
+                    trackStatus = javaClass.GetStatic<AndroidJavaObject>("PAUSE");
+                    break;
+                case TA_TRACK_STATUS.STOP:
+                    trackStatus = javaClass.GetStatic<AndroidJavaObject>("STOP");
+                    break;
+                case TA_TRACK_STATUS.SAVE_ONLY:
+                    trackStatus = javaClass.GetStatic<AndroidJavaObject>("SAVE_ONLY");
+                    break;
+                case TA_TRACK_STATUS.NORMAL:
+                default:
+                    trackStatus = javaClass.GetStatic<AndroidJavaObject>("NORMAL");
+                    break;
+            }
+            instance.Call("setTrackStatus", trackStatus);
         }
 
         private void optOutTracking()
@@ -387,18 +433,50 @@ namespace ThinkingAnalytics.Wrapper
             sdkClass.CallStatic("calibrateTimeWithNtpForUnity", ntpServer);
         }
 
+        private void enableThirdPartySharing(TAThirdPartyShareType shareType)
+        {
+            instance.Call("enableThirdPartySharing", (int) shareType);
+        }
+
+        //动态公共属性
         public interface IDynamicSuperPropertiesTrackerListener
         {
             string getDynamicSuperPropertiesString();
         }
-        private class ListenerAdapter : AndroidJavaProxy {
-            public ListenerAdapter() : base("cn.thinkingdata.android.ThinkingAnalyticsSDK$DynamicSuperPropertiesTrackerListener") {}
+        private class DynamicListenerAdapter : AndroidJavaProxy {
+            public DynamicListenerAdapter() : base("cn.thinkingdata.android.ThinkingAnalyticsSDK$DynamicSuperPropertiesTrackerListener") {}
             public string getDynamicSuperPropertiesString()
             {
-                return TD_MiniJSON.Serialize(wrapper.GetDynamicSuperProperties());
+                Dictionary<string, object> ret;
+                if (wrapper.dynamicSuperProperties != null) {
+                    ret = wrapper.dynamicSuperProperties.GetDynamicSuperProperties();
+                } 
+                else {
+                    ret = new Dictionary<string, object>();
+                }
+                return TD_MiniJSON.Serialize(ret);
             }
         }
-
-#endif
+        //自动采集事件回调
+        public interface IAutoTrackEventTrackerListener
+        {
+            string eventCallback(int type, string properties);
+        }
+        private class AutoTrackListenerAdapter : AndroidJavaProxy {
+            public AutoTrackListenerAdapter() : base("cn.thinkingdata.android.ThinkingAnalyticsSDK$AutoTrackEventTrackerListener") {}
+            string eventCallback(int type, string properties)
+            {
+                Dictionary<string, object> ret;
+                if (wrapper.autoTrackEventCallback != null) {
+                    Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
+                    ret = wrapper.autoTrackEventCallback.AutoTrackEventCallback(type, propertiesDic);
+                } 
+                else {
+                    ret = new Dictionary<string, object>();
+                }
+                return TD_MiniJSON.Serialize(ret);
+            }
+        }
     }
 }
+#endif

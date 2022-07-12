@@ -118,6 +118,11 @@ namespace ThinkingSDK.PC.Main
             GetInstance(appid).EnableAutoTrack(events, properties);
         }
 
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback_PC eventCallback, string appid = "")
+        {
+            GetInstance(appid).EnableAutoTrack(events, eventCallback);
+        }
+
         public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appid = "")
         {
             GetInstance(appid).SetAutoTrackProperties(events, properties);
@@ -144,6 +149,10 @@ namespace ThinkingSDK.PC.Main
         public static void Flush (string appid = "")
         {
             GetInstance(appid).Flush();
+        }
+        public static void FlushImmediately (string appid = "")
+        {
+            GetInstance(appid).FlushImmediately();
         }
         public static void SetSuperProperties(Dictionary<string, object> superProperties,string appid = "")
         {
@@ -220,6 +229,14 @@ namespace ThinkingSDK.PC.Main
         {
             GetInstance(appid).UserAppend(properties,dateTime);
         }
+        public static void UserUniqAppend(Dictionary<string, object> properties, string appid = "")
+        {
+            GetInstance(appid).UserUniqAppend(properties);
+        }
+        public static void UserUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appid = "")
+        {
+            GetInstance(appid).UserUniqAppend(properties,dateTime);
+        }
         public static void UserDelete(string appid="")
         {
             GetInstance(appid).UserDelete();
@@ -228,9 +245,13 @@ namespace ThinkingSDK.PC.Main
         {
             GetInstance(appid).UserDelete(dateTime);
         }
-        public static void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appid = "")
+        public static void SetDynamicSuperProperties(IDynamicSuperProperties_PC dynamicSuperProperties, string appid = "")
         {
             GetInstance(appid).SetDynamicSuperProperties(dynamicSuperProperties);
+        }
+        public static void SetTrackStatus(TA_TRACK_STATUS status, string appid = "")
+        {
+            GetInstance(appid).SetTrackStatus(status);
         }
         /*
         停止或开启数据上报,默认是开启状态,设置为停止时还会清空本地的访客ID,账号ID,静态公共属性

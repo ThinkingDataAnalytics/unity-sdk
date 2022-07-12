@@ -107,4 +107,61 @@
     return;
 }
 
+#pragma mark - EnableTracking
+- (void)enableTracking:(BOOL)enabled {
+    TDLogDebug(@"%@轻实例: enableTracking...", self);
+    self.isEnabled = enabled;
+}
+
+- (void)optOutTracking {
+    TDLogDebug(@"%@轻实例: optOutTracking...", self);
+    self.isEnabled = NO;
+}
+
+- (void)optOutTrackingAndDeleteUser {
+    TDLogDebug(@"%@轻实例: optOutTrackingAndDeleteUser...", self);
+    self.isEnabled = NO;
+}
+
+- (void)optInTracking {
+    TDLogDebug(@"%@轻实例: optInTracking...", self);
+    self.isEnabled = YES;
+}
+
+/// 数据上报状态
+/// @param status 数据上报状态
+- (void)setTrackStatus: (TATrackStatus)status {
+    switch (status) {
+            // 暂停SDK上报
+        case TATrackStatusPause: {
+            TDLogDebug(@"%@轻实例 - switchTrackStatus: TATrackStatusStop...", self);
+            self.isEnabled = NO;
+            break;
+        }
+            // 停止SDK上报并清除缓存
+        case TATrackStatusStop: {
+            TDLogDebug(@"%@轻实例 - switchTrackStatus: TATrackStatusStopAndClean...", self);
+            self.isEnabled = NO;
+            break;
+        }
+            // 可以入库 暂停发送数据
+        case TATrackStatusSaveOnly: {
+            TDLogDebug(@"%@轻实例 - switchTrackStatus: TATrackStatusPausePost...", self);
+            self.trackPause = YES;
+            break;
+        }
+            // 恢复所有状态
+        case TATrackStatusNormal: {
+            TDLogDebug(@"%@轻实例 - switchTrackStatus: TATrackStatusRestartAll...", self);
+            self.trackPause = NO;
+            self.isEnabled = YES;
+            [self flush];
+            break;
+        }
+        default:
+            break;
+    }
+}
+
+
 @end

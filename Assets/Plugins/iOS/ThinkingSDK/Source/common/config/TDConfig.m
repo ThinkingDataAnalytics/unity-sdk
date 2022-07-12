@@ -66,7 +66,7 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
 }
 
 
-- (void)updateConfig {
+- (void)updateConfig:(void(^)(NSDictionary *secretKey))block {
     NSString *serverUrlStr = [NSString stringWithFormat:@"%@/config",self.configureURL];
     TDNetwork *network = [[TDNetwork alloc] init];
     network.serverURL = [NSURL URLWithString:serverUrlStr];
@@ -90,6 +90,10 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
                 }
             }
             self.disableEvents = [result objectForKey:@"disable_event_list"];
+            
+            if (block) {
+                block([result objectForKey:@"secret_key"]);
+            }
         }
     }];
 }
@@ -115,6 +119,9 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
     config.securityPolicy = [self.securityPolicy copyWithZone:zone];
     config.defaultTimeZone = [self.defaultTimeZone copyWithZone:zone];
     config.name = [self.name copy];
+    config.enableEncrypt = self.enableEncrypt;
+    config.secretKey = [self.secretKey copyWithZone:zone];
+    
     return config;
 }
 
@@ -138,6 +145,15 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
 
 + (void)setExpirationDays:(NSInteger)expirationDays {
     [self _setExpirationDaysNumber:@(expirationDays)];
+}
+
+
+- (NSString *)getMapInstanceToken {
+    if (self.name && [self.name isKindOfClass:[NSString class]] && self.name.length) {
+        return self.name;
+    } else {
+        return self.appid;
+    }
 }
 
 @end

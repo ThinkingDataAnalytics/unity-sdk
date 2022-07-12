@@ -1,15 +1,15 @@
 //
-//  TDValidator.m
+//  TDCheck.m
 //  ThinkingSDK
 //
 //  Created by wwango on 2021/9/10.
 //  Copyright © 2021 thinkingdata. All rights reserved.
 //
 
-#import "TDValidator.h"
+#import "TDCheck.h"
 #import "TDLogging.h"
 
-@implementation TDValidator
+@implementation TDCheck
 
 + (NSDictionary *)td_checkToJSONObjectRecursive:(NSDictionary *)properties timeFormatter:(NSDateFormatter *)timeFormatter {
     return (NSDictionary *)[self td_checkToObjectRecursive:properties timeFormatter:timeFormatter];

@@ -1,17 +1,17 @@
-#import "TDKeychainItemWrapper.h"
+#import "TDKeychainHelper.h"
 #import "TDLogging.h"
 
 static NSString * const TDKeychainService = @"com.thinkingddata.analytics.service";
 static NSString * const TDInstallTimes = @"com.thinkingddata.analytics.installtimes";
 static NSString * const TDDeviceID = @"com.thinkingddata.analytics.deviceid";
 
-@interface TDKeychainItemWrapper ()
+@interface TDKeychainHelper ()
 
 @property (atomic, strong) NSDictionary *oldKeychain;
 
 @end
 
-@implementation TDKeychainItemWrapper
+@implementation TDKeychainHelper
 
 - (void)saveItem:(NSString *)string forKey:(NSString *)key {
     NSData *encodeData = [string dataUsingEncoding:NSUTF8StringEncoding];
@@ -22,14 +22,14 @@ static NSString * const TDDeviceID = @"com.thinkingddata.analytics.deviceid";
         NSMutableDictionary *query = [self keychainQueryWithAccount:key];
         OSStatus statusCode = SecItemUpdate((__bridge CFDictionaryRef)query,(__bridge CFDictionaryRef)updateAttributes);
         if (statusCode != noErr) {
-            TDLogError(@"Couldn't update the Keychain Item." );
+            TDLogError(@"Keychain Update Error" );
         }
     } else {
         NSMutableDictionary *attributes = [self keychainQueryWithAccount:key];
         attributes[(__bridge id)kSecValueData] = encodeData;
         OSStatus statusCode = SecItemAdd((__bridge CFDictionaryRef)attributes, nil);
         if (statusCode != noErr) {
-            TDLogError(@"Couldn't add the Keychain Item.");
+            TDLogError(@"Keychain Add Error");
         }
     }
 }

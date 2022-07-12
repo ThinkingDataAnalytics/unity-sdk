@@ -6,13 +6,16 @@
 #import "TDPublicConfig.h"
 #import "TDFile.h"
 #import "TDNetwork.h"
-#import "TDValidator.h"
+#import "TDCheck.h"
 #import "TDJSONUtil.h"
 #import "TDToastView.h"
 #import "NSString+TDString.h"
 #import "TDPresetProperties+TDDisProperties.h"
 #import "TDRuntime.h"
 #import "TDAppState.h"
+#import "TDEncrypt.h"
+#import "TDEventRecord.h"
+#import "TDThirdPartyProtocol.h"
 
 #if !__has_feature(objc_arc)
 #error The ThinkingSDK library must be compiled with ARC enabled
@@ -69,6 +72,9 @@ static td_force_inline ThinkingAnalyticsAutoTrackEventType _getAutoTrackEventTyp
 @property (nonatomic, strong)   TDInstallTracker *installTracker;// install事件Tracker
 
 @property (strong,nonatomic) TDFile *file;
+@property (strong,nonatomic) TDEncryptManager *encryptManager;
+@property (strong,nonatomic) id<TDThirdPartyProtocol> thirdPartyManager;
+
 @end
 
 @implementation ThinkingAnalyticsSDK
@@ -78,8 +84,8 @@ static NSString *defaultProjectAppid;
 static BOOL isWifi;
 static BOOL isWwan;
 static TDCalibratedTime *calibratedTime;
-static dispatch_queue_t serialQueue;
-static dispatch_queue_t networkQueue;
+static dispatch_queue_t td_trackQueue; // track操作、操作数据库等在td_trackQueue中进行
+static dispatch_queue_t td_networkQueue;// 网络请求在td_networkQueue中进行
 
 static double td_enterBackgroundTime = 0; //进入后台时间
 static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
@@ -159,18 +165,18 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
     static dispatch_once_t ThinkingOnceToken;
     dispatch_once(&ThinkingOnceToken, ^{
         NSString *queuelabel = [NSString stringWithFormat:@"cn.thinkingdata.%p", (void *)self];
-        serialQueue = dispatch_queue_create([queuelabel UTF8String], DISPATCH_QUEUE_SERIAL);
+        td_trackQueue = dispatch_queue_create([queuelabel UTF8String], DISPATCH_QUEUE_SERIAL);
         NSString *networkLabel = [queuelabel stringByAppendingString:@".network"];
-        networkQueue = dispatch_queue_create([networkLabel UTF8String], DISPATCH_QUEUE_SERIAL);
+        td_networkQueue = dispatch_queue_create([networkLabel UTF8String], DISPATCH_QUEUE_SERIAL);
     });
 }
 
-+ (dispatch_queue_t)serialQueue {
-    return serialQueue;
++ (dispatch_queue_t)td_trackQueue {
+    return td_trackQueue;
 }
 
-+ (dispatch_queue_t)networkQueue {
-    return networkQueue;
++ (dispatch_queue_t)td_networkQueue {
+    return td_networkQueue;
 }
 
 - (instancetype)initLight:(NSString *)appid withServerURL:(NSString *)serverURL withConfig:(TDConfig *)config {
@@ -225,15 +231,28 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
         _config.configureURL = serverURL;
         
         self.file = [[TDFile alloc] initWithAppid:[self td_getMapInstanceTag]];
+        // 恢复配置
         [self retrievePersistedData];
         
         // config获取intanceName
         NSString *instanceName = [self td_getMapInstanceTag];
+        
+        // 加载加密插件
+        if (_config.enableEncrypt) {
+            self.encryptManager = [[TDEncryptManager alloc] initWithConfig:config];
+        }
+        
         _config.getInstanceName = ^NSString * _Nonnull{
             return instanceName;
         };
-        //次序不能调整
-        [_config updateConfig];
+        
+        //次序不能调整，异步获取加密配置
+        __weak __typeof(self)weakSelf = self;
+        [_config updateConfig:^(NSDictionary * _Nonnull secretKey) {
+            if (weakSelf.config.enableEncrypt && secretKey) {
+                [weakSelf.encryptManager handleEncryptWithConfig:secretKey];
+            }
+        }];
         
         self.trackTimer = [NSMutableDictionary dictionary];
         _timeFormatter = [[NSDateFormatter alloc] init];
@@ -341,11 +360,54 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
     return nil;
 }
 
+/// 数据上报状态
+/// @param status 数据上报状态
+- (void)setTrackStatus: (TATrackStatus)status {
+    switch (status) {
+            // 停止SDK上报
+        case TATrackStatusPause: {
+            TDLogDebug(@"%@ switchTrackStatus: TATrackStatusStop...", self);
+            [self enableTracking:NO];
+            break;
+        }
+            // 停止SDK上报并清除缓存
+        case TATrackStatusStop: {
+            TDLogDebug(@"%@ switchTrackStatus: TATrackStatusStopAndClean...", self);
+            [self doOptOutTracking];
+            break;
+        }
+            // 可以入库 暂停发送数据
+        case TATrackStatusSaveOnly: {
+            TDLogDebug(@"%@ switchTrackStatus: TATrackStatusPausePost...", self);
+            self.trackPause = YES;
+            dispatch_async(td_trackQueue, ^{
+                [self.file archiveTrackPause:YES];
+            });
+            break;
+        }
+            // 恢复所有状态
+        case TATrackStatusNormal: {
+            TDLogDebug(@"%@ switchTrackStatus: TATrackStatusRestartAll...", self);
+            self.trackPause = NO;
+            self.isEnabled = YES;
+            self.isOptOut = NO;
+            dispatch_async(td_trackQueue, ^{
+                [self.file archiveTrackPause:NO];
+                [self.file archiveIsEnabled:self.isEnabled];
+                [self.file archiveOptOut:NO];
+            });
+            [self flush];
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 #pragma mark - EnableTracking
 - (void)enableTracking:(BOOL)enabled {
     self.isEnabled = enabled;
-    
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveIsEnabled:self.isEnabled];
     });
 }
@@ -378,7 +440,7 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
         self.accountId = nil;
     }
     
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         @synchronized (instances) {
             [self.dataQueue deleteAll:[self td_getMapInstanceTag]];
         }
@@ -401,11 +463,9 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
 - (void)optInTracking {
     TDLogDebug(@"%@ optInTracking...", self);
     self.isOptOut = NO;
-    
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveOptOut:NO];
     });
-    
 }
 
 #pragma mark - LightInstance
@@ -422,6 +482,7 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
     self.accountId = [self.file unarchiveAccountID];
     self.superProperty = [self.file unarchiveSuperProperties];
     self.identifyId = [self.file unarchiveIdentifyID];
+    self.trackPause = [self.file unarchiveTrackPause];
     self.isEnabled = [self.file unarchiveEnabled];
     self.isOptOut  = [self.file unarchiveOptOut];
     self.config.uploadSize = [self.file unarchiveUploadSize];
@@ -441,13 +502,21 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
     NSMutableDictionary *event = [[NSMutableDictionary alloc] initWithDictionary:data];
     NSInteger count;
     @synchronized (instances) {
-        count = [self.dataQueue addObject:event withAppid:[self td_getMapInstanceTag]];
+        
+        // 加密数据
+        if (_config.enableEncrypt) {
+            NSDictionary *dic = [self.encryptManager encryptJSONObject:event];
+            count = [self.dataQueue addObject:dic withAppid:[self td_getMapInstanceTag]];
+        } else {
+            count = [self.dataQueue addObject:event withAppid:[self td_getMapInstanceTag]];
+        }
+        
     }
     return count;
 }
 
 - (void)deleteAll {
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         @synchronized (instances) {
             [self.dataQueue deleteAll:[self td_getMapInstanceTag]];
         }
@@ -495,7 +564,7 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
         }
         SCNetworkReachabilityContext context = {0, (__bridge void *)self, NULL, NULL, NULL};
         if (SCNetworkReachabilitySetCallback(_reachability, ThinkingReachabilityCallback, &context)) {
-            if (!SCNetworkReachabilitySetDispatchQueue(_reachability, serialQueue)) {
+            if (!SCNetworkReachabilitySetDispatchQueue(_reachability, td_trackQueue)) {
                 SCNetworkReachabilitySetCallback(_reachability, NULL, NULL);
             }
         }
@@ -508,7 +577,7 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
     if (UIApplication.sharedApplication.applicationState == UIApplicationStateBackground) {
         _relaunchInBackGround = NO;
         _appRelaunched = YES;
-        dispatch_async(serialQueue, ^{
+        dispatch_async(td_trackQueue, ^{
             if (self.taskId != UIBackgroundTaskInvalid) {
                 [[ThinkingAnalyticsSDK sharedUIApplication] endBackgroundTask:self.taskId];
                 self.taskId = UIBackgroundTaskInvalid;
@@ -531,7 +600,7 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
     dispatch_group_t bgGroup = dispatch_group_create();
     
     dispatch_group_enter(bgGroup);
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         double systemUptime = NSProcessInfo.processInfo.systemUptime;
         NSNumber *currentTimeStamp = [NSNumber numberWithDouble:systemUptime];
         @synchronized (self.trackTimer) {
@@ -611,7 +680,7 @@ static double td_enterDidBecomeActiveTime = 0;// 进入前台时间
     // 记录进入前台时间
     td_enterDidBecomeActiveTime = NSProcessInfo.processInfo.systemUptime;
     
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         double systemUptime = NSProcessInfo.processInfo.systemUptime;
         NSNumber *currentTime = [NSNumber numberWithDouble:systemUptime];
         @synchronized (self.trackTimer) {
@@ -841,6 +910,24 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     [self tdInternalTrack:eventModel];
 }
 
+
+- (void)enableThirdPartySharing:(TDThirdPartyShareType)type {
+    [self enableThirdPartySharing:type customMap:@{}];
+}
+
+- (void)enableThirdPartySharing:(TDThirdPartyShareType)type customMap:(NSDictionary<NSString *, NSObject *> *)customMap {
+    if (!self.thirdPartyManager) {
+        Class cls = NSClassFromString(@"TDThirdPartyManager");
+        if (!cls) {
+    //        TDLog(@"请安装三方扩展插件");
+            return;
+        }
+        self.thirdPartyManager = [[cls alloc] init];
+    }
+    
+    [self.thirdPartyManager enableThirdPartySharing:type instance:self property:customMap];
+}
+
 #pragma mark - Private
 
 - (NSString *)checkServerURL:(NSString *)urlString {
@@ -1020,6 +1107,14 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     [self track:nil withProperties:properties withType:TD_EVENT_TYPE_USER_APPEND withTime:time];
 }
 
+- (void)user_uniqAppend:(NSDictionary<NSString *, NSArray *> *)properties {
+    [self user_uniqAppend:properties withTime:nil];
+}
+
+- (void)user_uniqAppend:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate *)time {
+    [self track:nil withProperties:properties withType:TD_EVENT_TYPE_USER_UNIQ_APPEND withTime:time];
+}
+
 + (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *)libVersion {
     if (libName.length > 0) {
         [TDDeviceInfo sharedManager].libName = libName;
@@ -1027,7 +1122,11 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     if (libVersion.length > 0) {
         [TDDeviceInfo sharedManager].libVersion = libVersion;
     }
-    [[TDDeviceInfo sharedManager] updateAutomaticData];
+    [[TDDeviceInfo sharedManager] td_updateData];
+}
+
+- (NSString *)getAccountId {
+    return _accountId;
 }
 
 - (NSString *)getDistinctId {
@@ -1068,7 +1167,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         self.superProperty = [NSDictionary dictionaryWithDictionary:tmp];
     }
     
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveSuperProperties:self.superProperty];
     });
 }
@@ -1085,7 +1184,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         tmp[propertyKey] = nil;
         self.superProperty = [NSDictionary dictionaryWithDictionary:tmp];
     }
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveSuperProperties:self.superProperty];
     });
 }
@@ -1098,7 +1197,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         self.superProperty = @{};
     }
     
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveSuperProperties:self.superProperty];
     });
 }
@@ -1115,7 +1214,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     NSString *bundleId = [TDDeviceInfo bundleId];
     NSString *networkType = [self.class getNetWorkStates];
     double offset = [self getTimezoneOffset:[NSDate date] timeZone:_config.defaultTimeZone];
-    NSDictionary *autoDic = [[TDDeviceInfo sharedManager] collectAutomaticProperties];
+    NSDictionary *autoDic = [[TDDeviceInfo sharedManager] td_collectProperties];
     NSMutableDictionary *presetDic = [NSMutableDictionary new];
     
     [presetDic setObject:bundleId?:@"" forKey:@"#bundle_id"];
@@ -1163,7 +1262,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     @synchronized (self.identifyId) {
         self.identifyId = distinctId;
     }
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveIdentifyId:distinctId];
     });
 }
@@ -1181,7 +1280,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         self.accountId = accountId;
     }
     
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveAccountID:accountId];
     });
 }
@@ -1193,7 +1292,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     @synchronized (self.accountId) {
         self.accountId = nil;
     }
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self.file archiveAccountID:nil];
     });
 }
@@ -1327,7 +1426,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
             
             ThinkingAnalyticsSDK *instance = [ThinkingAnalyticsSDK sharedInstanceWithAppid:appid];
             if (instance) {
-                dispatch_async(serialQueue, ^{
+                dispatch_async(td_trackQueue, ^{
                     [instance h5track:event_name
                               extraID:extraID
                            properties:dic
@@ -1335,7 +1434,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
                                  time:time];
                 });
             } else {
-                dispatch_async(serialQueue, ^{
+                dispatch_async(td_trackQueue, ^{
                     [self h5track:event_name
                           extraID:extraID
                        properties:dic
@@ -1347,7 +1446,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     }
 }
 
-- (void)tdInternalTrack:(TDEventModel *)eventData
+- (void) tdInternalTrack:(TDEventModel *)eventData
 {
     if ([self hasDisabled])
         return;
@@ -1490,11 +1589,12 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         return;
     }
     
+    @synchronized (self.trackTimer) {
+        [self _handleAutoTrackBack:eventData.eventName dataDic:dataDic];
+    }
+    
     if (eventData.persist) {
-        dispatch_async(serialQueue, ^{
-            // 自动采集事件回调
-            [self _handleAutoTrackBack:eventData.eventName dataDic:dataDic];
-            
+        dispatch_async(td_trackQueue, ^{
             // 过滤预置属性
             NSMutableDictionary *updateProperties = [dataDic[@"properties"] mutableCopy];
             [TDPresetProperties handleFilterDisPresetProperties:updateProperties];
@@ -1522,7 +1622,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         });
     } else {
         TDLogDebug(@"queueing data flush immediately:%@", dataDic);
-        dispatch_async(serialQueue, ^{
+        dispatch_async(td_trackQueue, ^{
             [self flushImmediately:dataDic];
         });
     }
@@ -1596,8 +1696,8 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
 }
 
 - (void)flushImmediately:(NSDictionary *)dataDic {
-    dispatch_async(serialQueue, ^{
-        dispatch_async(networkQueue, ^{
+    dispatch_async(td_trackQueue, ^{
+        dispatch_async(td_networkQueue, ^{
             [self.network flushEvents:@[dataDic]];
         });
     });
@@ -1660,7 +1760,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     }
     
     if (properties) {
-        NSDictionary *propertiesDic = [TDValidator td_checkToJSONObjectRecursive:properties timeFormatter:_timeFormatter];
+        NSDictionary *propertiesDic = [TDCheck td_checkToJSONObjectRecursive:properties timeFormatter:_timeFormatter];
         return [propertiesDic copy];
     }
     
@@ -1669,6 +1769,8 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
 
 // 发送将数据库数据
 - (void)flush {
+    if (self.trackPause)
+        return; // trackPause = YES 表示暂停数据网络上报
     [self _asyncWithCompletion:nil];
 }
 
@@ -1689,7 +1791,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         if (debugResult == -1) {
             // 降级处理
             if (self.config.debugMode == ThinkingAnalyticsDebug) {
-                dispatch_async(serialQueue, ^{
+                dispatch_async(td_trackQueue, ^{
                     [self saveEventsData:record];
                 });
                 
@@ -1703,7 +1805,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
             TDLogDebug(@"Exception occurred when sending message to Server:%@", record);
             if (self.config.debugMode == ThinkingAnalyticsDebug) {
                 // 网络异常
-                dispatch_async(serialQueue, ^{
+                dispatch_async(td_trackQueue, ^{
                     [self saveEventsData:record];
                 });
             }
@@ -1721,8 +1823,8 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
 /// 需要将此事件加到serialQueue队列中进行哦
 /// 有些场景是事件入库和发送网络请求是同时发生的。事件入库是在serialQueue中进行，上报数据是在networkQueue中进行。如要确保事件入库在先，则需要将上报数据操作添加到serialQueue
 - (void)_asyncWithCompletion:(void(^)(void))completion {
-    dispatch_async(serialQueue, ^{
-        dispatch_async(networkQueue, ^{
+    dispatch_async(td_trackQueue, ^{
+        dispatch_async(td_networkQueue, ^{
             [self _syncWithSize:kBatchSize completion:completion];
         });
     });
@@ -1746,15 +1848,24 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     
     // 获取数据库数据，取前五十条数据，并更新这五十条数据的uuid
     // uuid的作用是数据库待删除数据的标识
-    NSArray *recordArray;
-    NSArray *recoderIds;
+    NSArray<NSDictionary *> *recordArray;
+    NSArray *recodIds;
     NSArray *uuids;
     @synchronized (instances) {
-        NSDictionary *resultRecoders = [self.dataQueue getFirstRecords:kBatchSize withAppid:[self td_getMapInstanceTag]];
-        recordArray = resultRecoders[@"recoders"];
-        recoderIds = resultRecoders[@"recoderIds"];
+        // 数据库里获取前kBatchSize条数据
+        NSArray<TDEventRecord *> *records = [self.dataQueue getFirstRecords:kBatchSize withAppid:[self td_getMapInstanceTag]];
+        NSArray<TDEventRecord *> *encryptRecords = [self encryptEventRecords:records];
+        NSMutableArray *indexs = [[NSMutableArray alloc] initWithCapacity:encryptRecords.count];
+        NSMutableArray *recordContents = [[NSMutableArray alloc] initWithCapacity:encryptRecords.count];
+        for (TDEventRecord *record in encryptRecords) {
+            [indexs addObject:record.index];
+            [recordContents addObject:record.event];
+        }
+        recodIds = indexs;
+        recordArray = recordContents;
+        
         // 更新uuid
-        uuids = [self.dataQueue upadteRecordIds:recoderIds];
+        uuids = [self.dataQueue upadteRecordIds:recodIds];
     }
      
     // 数据库没有数据了
@@ -1776,11 +1887,20 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
                 if (!ret) {
                     break;
                 }
-                NSDictionary *resultRecoders = [self.dataQueue getFirstRecords:kBatchSize withAppid:[self td_getMapInstanceTag]];
-                recordArray = resultRecoders[@"recoders"];
-                recoderIds = resultRecoders[@"recoderIds"];
+                // 数据库里获取前50条数据
+                NSArray<TDEventRecord *> *records = [self.dataQueue getFirstRecords:kBatchSize withAppid:[self td_getMapInstanceTag]];
+                NSArray<TDEventRecord *> *encryptRecords = [self encryptEventRecords:records];
+                NSMutableArray *indexs = [[NSMutableArray alloc] initWithCapacity:encryptRecords.count];
+                NSMutableArray *recordContents = [[NSMutableArray alloc] initWithCapacity:encryptRecords.count];
+                for (TDEventRecord *record in encryptRecords) {
+                    [indexs addObject:record.index];
+                    [recordContents addObject:record.event];
+                }
+                recodIds = indexs;
+                recordArray = recordContents;
+                
                 // 更新uuid
-                uuids = [self.dataQueue upadteRecordIds:recoderIds];
+                uuids = [self.dataQueue upadteRecordIds:recodIds];
             }
         } else {
             break;
@@ -1792,10 +1912,34 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
 }
 
 
+/// 开启加密后，上报的数据都需要是加密数据
+/// 关闭加密后，上报数据既包含加密数据 也包含非加密数据
+- (NSArray<TDEventRecord *> *)encryptEventRecords:(NSArray<TDEventRecord *> *)records {
+    NSMutableArray *encryptRecords = [NSMutableArray arrayWithCapacity:records.count];
+    
+    if (_config.enableEncrypt && _encryptManager.isValid) {
+        for (TDEventRecord *record in records) {
+            // 数据解密了忽略啦
+            if (record.encrypted) {
+                [encryptRecords addObject:record];
+            } else {
+                // 缓存数据未加密，再加密
+                NSDictionary *obj = [self.encryptManager encryptJSONObject:record.event];
+                if (obj) {
+                    [record setSecretObject:obj];
+                    [encryptRecords addObject:record];
+                }
+            }
+        }
+        return encryptRecords.count == 0 ? records : encryptRecords;
+    } else {
+        return records;
+    }
+}
 
 - (void)dispatchOnNetworkQueue:(void (^)(void))dispatchBlock {
-    dispatch_async(serialQueue, ^{
-        dispatch_async(networkQueue, dispatchBlock);
+    dispatch_async(td_trackQueue, ^{
+        dispatch_async(td_networkQueue, dispatchBlock);
     });
 }
 
@@ -1996,7 +2140,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
     if ([self hasDisabled])
         return;
     
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self->_ignoredViewTypeList addObject:aClass];
     });
 }
@@ -2030,7 +2174,7 @@ static void ThinkingReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
         return;
     }
     
-    dispatch_async(serialQueue, ^{
+    dispatch_async(td_trackQueue, ^{
         [self->_ignoredViewControllers addObjectsFromArray:controllers];
     });
 }
