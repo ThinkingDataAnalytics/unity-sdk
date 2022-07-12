@@ -31,7 +31,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- SDK VERSION = 2.7.3
+ SDK VERSION = 2.7.4
  ThinkingData API
  
  ## 初始化API
@@ -359,6 +359,15 @@ NS_ASSUME_NONNULL_BEGIN
  @param properties 自定义属性
  */
 - (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType properties:(NSDictionary *)properties;
+
+/**
+ 开启自动采集事件功能
+
+ @param eventType 枚举 ThinkingAnalyticsAutoTrackEventType 的列表，表示需要开启的自动采集事件类型
+ @param callback 事件回调
+ 回调中eventType表示自动采集类型，properties表示入库前的事件属性，该block可返回一个字典，用于新增属性
+ */
+- (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType callback:(NSDictionary *(^)(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary *properties))callback;
 
 /**
  设置和更新自动采集事件的自定义属性的值

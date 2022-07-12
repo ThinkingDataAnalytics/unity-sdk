@@ -1,5 +1,5 @@
 #import "TDJSONUtil.h"
-#import "TDLogging.h"
+//#import "TDLogging.h"
 
 @implementation TDJSONUtil
 
@@ -19,7 +19,7 @@
     if ([NSJSONSerialization isValidJSONObject:obj]) {
         data = [NSJSONSerialization dataWithJSONObject:obj options:0 error:NULL];
     } else {
-        TDLogError(@"Invalid json: %@", obj);
+//        TDLogError(@"Invalid json: %@", obj);
     }
     
     return data;
@@ -64,7 +64,7 @@
     }
     
     NSString *s = [object description];
-    TDLogError(@"%@ warning: property values should be valid json types. got: %@. coercing to: %@", self, [object class], s);
+//    TDLogError(@"%@ warning: property values should be valid json types. got: %@. coercing to: %@", self, [object class], s);
     return s;
 }
 

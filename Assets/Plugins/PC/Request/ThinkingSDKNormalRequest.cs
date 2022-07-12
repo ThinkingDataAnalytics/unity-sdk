@@ -39,7 +39,7 @@ namespace ThinkingSDK.PC.Request
         //     request.Timeout = 30 * 1000;
         //     request.Headers.Set("appid", this.APPID());
         //     request.Headers.Set("TA-Integration-Type", "PC");
-        //     request.Headers.Set("TA-Integration-Version", "2.2.5");
+        //     request.Headers.Set("TA-Integration-Version", "2.3.0");
         //     request.Headers.Set("TA-Integration-Count", "1");
         //     request.Headers.Set("TA-Integration-Extra", "PC");
         //     Dictionary<string, object> param = new Dictionary<string, object>();
@@ -119,7 +119,7 @@ namespace ThinkingSDK.PC.Request
                 webRequest.SetRequestHeader("Content-Type", "text/plain");
                 webRequest.SetRequestHeader("appid", this.APPID());
                 webRequest.SetRequestHeader("TA-Integration-Type", "PC");
-                webRequest.SetRequestHeader("TA-Integration-Version", "2.2.5");
+                webRequest.SetRequestHeader("TA-Integration-Version", "2.3.0");
                 webRequest.SetRequestHeader("TA-Integration-Count", "1");
                 webRequest.SetRequestHeader("TA-Integration-Extra", "PC");
                 webRequest.uploadHandler = (UploadHandler) new UploadHandlerRaw(contentCompressed);
@@ -132,7 +132,7 @@ namespace ThinkingSDK.PC.Request
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
 
-                Dictionary<string,object> resultDict = new Dictionary<string, object>();
+                Dictionary<string,object> resultDict = null;
                 #if UNITY_2020_1_OR_NEWER
                 switch (webRequest.result)
                 {

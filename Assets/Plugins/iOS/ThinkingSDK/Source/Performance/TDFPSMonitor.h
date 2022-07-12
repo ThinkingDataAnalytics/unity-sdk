@@ -1,5 +1,5 @@
 //
-//  TDPMFPSMonitor.h
+//  TDFPSMonitor.h
 //  SSAPMSDK
 //
 //  Created by wwango on 2021/9/7.
@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface TDPMFPSMonitor : NSObject
+@interface TDFPSMonitor : NSObject
 
 @property (nonatomic, assign, getter=isEnable) BOOL enable;
 

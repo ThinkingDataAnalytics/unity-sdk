@@ -1,5 +1,5 @@
 //
-//  NSObject+TDUtils.h
+//  NSObject+TDUtil.h
 //  ThinkingSDK
 //
 //  Created by wwango on 2021/10/18.
@@ -10,7 +10,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface NSObject (TDUtils)
+@interface NSObject (TDUtil)
 
 + (id)performSelector:(SEL)selector onTarget:(id)target withArguments:(NSArray *)arguments;
 

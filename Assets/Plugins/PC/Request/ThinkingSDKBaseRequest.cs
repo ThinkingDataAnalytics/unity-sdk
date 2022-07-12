@@ -171,7 +171,11 @@ namespace ThinkingSDK.PC.Request
         // }
         public static IEnumerator GetWithFORM_2(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle)
         {
-            string uri = url + "?appid=" + appid + "&data=" + ThinkingSDKJSON.Serialize(param);
+            string uri = url + "?appid=" + appid;
+            if (param != null)
+            {
+                uri = uri + "&data=" + ThinkingSDKJSON.Serialize(param);
+            }
 
             using (UnityWebRequest webRequest = UnityWebRequest.Get(uri))
             {
@@ -183,7 +187,7 @@ namespace ThinkingSDK.PC.Request
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
 
-                Dictionary<string,object> resultDict = new Dictionary<string, object>();
+                Dictionary<string,object> resultDict = null;
                 #if UNITY_2020_1_OR_NEWER
                 switch (webRequest.result)
                 {

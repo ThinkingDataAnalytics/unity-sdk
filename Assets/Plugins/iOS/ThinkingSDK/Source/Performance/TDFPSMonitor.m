@@ -1,26 +1,24 @@
 //
-//  TDPMFPSMonitor.m
+//  TDFPSMonitor.m
 //  SSAPMSDK
 //
 //  Created by wwango on 2021/9/7.
 //
 
-#import "TDPMFPSMonitor.h"
+#import "TDFPSMonitor.h"
 #import <QuartzCore/CADisplayLink.h>
 #import "TDWeakProxy.h"
 
-@interface TDPMFPSMonitor () {
+@interface TDFPSMonitor () {
     CADisplayLink *_link;
     NSUInteger _count;
     NSTimeInterval _lastTime;
+    int _thinkingdata_fps;
 }
 
 @end
 
-
-@implementation TDPMFPSMonitor
-
-static float _thinkingdata_fps = -1;
+@implementation TDFPSMonitor
 
 - (void)setEnable:(BOOL)enable {
     _enable = enable;
@@ -32,7 +30,7 @@ static float _thinkingdata_fps = -1;
 }
 
 - (NSNumber *)getPFS {
-    return [NSNumber numberWithInt:(int)_thinkingdata_fps];
+    return [NSNumber numberWithInt:[NSString stringWithFormat:@"%d", _thinkingdata_fps].intValue];
 }
 
 - (void)dealloc {
@@ -45,7 +43,7 @@ static float _thinkingdata_fps = -1;
     
     if (_link) return;
     
-    _thinkingdata_fps = -1;
+    _thinkingdata_fps = 60;
     _link = [CADisplayLink displayLinkWithTarget:[TDWeakProxy proxyWithTarget:self] selector:@selector(tick:)];
 //    _link.preferredFrameRateRange = CAFrameRateRangeMake(60, 120, 120);
     [_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -70,6 +68,8 @@ static float _thinkingdata_fps = -1;
     _lastTime = link.timestamp;
     _thinkingdata_fps = _count / delta;
     _count = 0;
+    
+//    NSLog(@"@@@@@FPS:%i", _thinkingdata_fps);
 }
 
 

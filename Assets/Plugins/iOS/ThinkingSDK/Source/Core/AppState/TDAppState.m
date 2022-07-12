@@ -66,7 +66,8 @@ NSString *_td_lastKnownState;
                              UIApplicationDidEnterBackgroundNotification,
                              UIApplicationDidFinishLaunchingNotification,
                              UIApplicationWillResignActiveNotification,
-                             UIApplicationWillEnterForegroundNotification]) {
+                             UIApplicationWillEnterForegroundNotification,
+                             UIApplicationDidFinishLaunchingNotification]) {
         
         [[NSNotificationCenter defaultCenter] addObserver:[TDAppState _appState]
                                                  selector:@selector(handleAppStateDidChange:)
@@ -84,7 +85,9 @@ NSString *_td_lastKnownState;
 {
     NSString *newState;
     
-    if ([notification.name isEqualToString:UIApplicationWillResignActiveNotification]) {
+    if ([notification.name isEqualToString:UIApplicationDidFinishLaunchingNotification]) {
+
+    } else if ([notification.name isEqualToString:UIApplicationWillResignActiveNotification]) {
         newState = TDApplicationStateInactive;
     } else if ([notification.name isEqualToString:UIApplicationWillEnterForegroundNotification]) {
         newState = TDApplicationStateBackground;

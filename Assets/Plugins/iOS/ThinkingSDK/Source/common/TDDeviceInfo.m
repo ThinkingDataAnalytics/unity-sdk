@@ -9,22 +9,15 @@
 #import "TDPublicConfig.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
 #import "TDFile.h"
-#include <mach/mach.h>
-#include <malloc/malloc.h>
-#import <sys/sysctl.h>
-#import "TDValidator.h"
-#include <mach-o/arch.h>
-#import "TDPMFPSMonitor.h"
 
-#define TD_PM_UNIT_KB 1024.0
-#define TD_PM_UNIT_MB (1024.0 * TD_PM_UNIT_KB)
-#define TD_PM_UNIT_GB (1024.0 * TD_PM_UNIT_MB)
+#define kTDDyldPropertyNames @[@"TDPerformance"]
+#define kTDGetPropertySelName @"getPresetProperties"
 
 @interface TDDeviceInfo ()
 
 @property (nonatomic, readwrite) BOOL isFirstOpen;
 @property (nonatomic, strong) CTTelephonyNetworkInfo *telephonyInfo;
-@property (nonatomic, strong) TDPMFPSMonitor *fpsMonitor;
+@property (nonatomic, strong) NSDictionary *automaticData;
 
 @end
 
@@ -44,12 +37,12 @@
     if (self) {
         self.libName = @"iOS";
         self.libVersion = TDPublicConfig.version;
-
-        [self startCollectAPM];
         
+        // 默认访客ID、设备id
         NSDictionary *deviceInfo = [self getDeviceUniqueId];
         _uniqueId = [deviceInfo objectForKey:@"uniqueId"];
         _deviceId = [deviceInfo objectForKey:@"deviceId"];
+        
         _automaticData = [self collectAutomaticProperties];
         _appVersion = [[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"];
         
@@ -65,14 +58,12 @@
     _automaticData = [self collectAutomaticProperties];
 }
 
-//-(NSDictionary *)getAutomaticData {
-//    if (_automaticData) {
-//        NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:_automaticData];
-//        [self addAPMParams:dic];
-//        _automaticData = dic;
-//    }
-//    return _automaticData;
-//}
+-(NSDictionary *)getAutomaticData {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:_automaticData];
+    [dic addEntriesFromDictionary:[TDDeviceInfo getAPMParams]];
+    _automaticData = dic;
+    return _automaticData;
+}
 
 - (NSDictionary *)collectAutomaticProperties {
     NSMutableDictionary *p = [NSMutableDictionary dictionary];
@@ -80,18 +71,33 @@
     [p setValue:_deviceId forKey:@"#device_id"];
     _telephonyInfo = [[CTTelephonyNetworkInfo alloc] init];
     CTCarrier *carrier = nil;
+    NSString *carrierName = @"";
 
-#ifdef __IPHONE_12_1
-    if (@available(iOS 12.1, *)) {
-        carrier = _telephonyInfo.serviceSubscriberCellularProviders.allValues.firstObject; 
-    }
+#ifdef __IPHONE_12_0
+        if (@available(iOS 12.1, *)) {
+            // 双卡双待的情况
+            NSArray *carrierKeysArray = [_telephonyInfo.serviceSubscriberCellularProviders.allKeys sortedArrayUsingSelector:@selector(compare:)];
+            carrier = _telephonyInfo.serviceSubscriberCellularProviders[carrierKeysArray.firstObject];
+            if (!carrier.mobileNetworkCode) {
+                carrier = _telephonyInfo.serviceSubscriberCellularProviders[carrierKeysArray.lastObject];
+            }
+        }
 #endif
     
     if (!carrier) {
         carrier = [_telephonyInfo subscriberCellularProvider];
     }
-
-    [p setValue:carrier.carrierName forKey:@"#carrier"];
+    
+    // 系统特性，在SIM没有安装的情况下，carrierName也存在有值的情况，这里额外添加MCC和MNC是否有值的判断
+    // MCC、MNC、isoCountryCode在没有安装SIM卡、没在蜂窝服务范围内时候为nil
+    if (carrier.carrierName &&
+        carrier.carrierName.length > 0 &&
+        carrier.mobileNetworkCode && 
+        carrier.mobileNetworkCode.length > 0) {
+        carrierName = carrier.carrierName;
+    }
+    
+    [p setValue:carrierName forKey:@"#carrier"];
     CGSize size = [UIScreen mainScreen].bounds.size;
     [p addEntriesFromDictionary:@{
         @"#lib": self.libName,
@@ -109,7 +115,8 @@
         p[@"#system_language"] = [[preferredLanguages componentsSeparatedByString:@"-"] firstObject];;
     }
     
-//    p = [self addAPMParams:p];
+    // 添加性能指标
+    [p addEntriesFromDictionary:[TDDeviceInfo getAPMParams]];
     
     return [p copy];
 }
@@ -173,14 +180,23 @@
     return platform;
 }
 
+
+/// 获取设备id和默认的访客ID
 - (NSDictionary *)getDeviceUniqueId {
+    // 获取IDFV
     NSString *defaultDistinctId = [self getIdentifier];
+    // 设备ID
     NSString *deviceId;
+    // 默认访客ID
     NSString *uniqueId;
     
     TDKeychainItemWrapper *wrapper = [[TDKeychainItemWrapper alloc] init];
+    
+    // 获取keychain中的设备ID和安装次数
     NSString *deviceIdKeychain = [wrapper readDeviceId];
     NSString *installTimesKeychain = [wrapper readInstallTimes];
+    
+    // 获取安装标识
     BOOL isExistFirstRecord = [[[NSUserDefaults standardUserDefaults] objectForKey:@"thinking_isfirst"] boolValue];
     if (!isExistFirstRecord) {
         _isFirstOpen = YES;
@@ -190,12 +206,14 @@
         _isFirstOpen = NO;
     }
     
+    // keychain中没有，获取老版本数据
     if (deviceIdKeychain.length == 0 || installTimesKeychain.length == 0) {
         [wrapper readOldKeychain];
         deviceIdKeychain = [wrapper getDeviceIdOld];
         installTimesKeychain = [wrapper getInstallTimesOld];
     }
     
+    // 检查是否持久化过该TA实例的设备ID、安装次数
     TDFile *file = [[TDFile alloc] initWithAppid:[ThinkingAnalyticsSDK sharedInstance].appid];
     if (deviceIdKeychain.length == 0 || installTimesKeychain.length == 0) {
         deviceIdKeychain = [file unarchiveDeviceId];
@@ -203,6 +221,7 @@
     }
     
     if (deviceIdKeychain.length == 0 || installTimesKeychain.length == 0) {
+        // 新设备、新用户
         deviceId = defaultDistinctId;
         installTimesKeychain = @"1";
     } else {
@@ -222,6 +241,9 @@
         uniqueId = [NSString stringWithFormat:@"%@_%@",deviceId,installTimesKeychain];
     }
     
+    // keychain更新设备ID、安装次数
+    // file存储设备ID、安装次数
+    // uniqueId是访客ID，字符串中包含了安装次数，
     [wrapper saveDeviceId:deviceId];
     [wrapper saveInstallTimes:installTimesKeychain];
     [file archiveDeviceId:deviceId];
@@ -243,93 +265,8 @@
     return anonymityId;
 }
 
-
-#pragma mark - memory
-//返回memory空闲值，单位为Byte
-+ (int64_t)td_pm_func_getFreeMemory {
-    size_t length = 0;
-    int mib[6] = {0};
-    
-    int pagesize = 0;
-    mib[0] = CTL_HW;
-    mib[1] = HW_PAGESIZE;
-    length = sizeof(pagesize);
-    if (sysctl(mib, 2, &pagesize, &length, NULL, 0) < 0){
-        return -1;
-    }
-    
-    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-    
-    vm_statistics_data_t vmstat;
-    
-    if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count) != KERN_SUCCESS){
-        return -1;
-    }
-    
-    int64_t freeMem = vmstat.free_count * pagesize;
-    int64_t inactiveMem = vmstat.inactive_count * pagesize;
-    
-    return freeMem + inactiveMem;
-}
-
-//获取memory总大小，单位Byte
-+ (int64_t)td_pm_func_getRamSize{
-    int mib[2];
-    size_t length = 0;
-    
-    mib[0] = CTL_HW;
-    mib[1] = HW_MEMSIZE;
-    long ram;
-    length = sizeof(ram);
-    if (sysctl(mib, 2, &ram, &length, NULL, 0) < 0) {
-        return -1;
-    }
-    return ram;
-}
-
-#pragma mark - disk
-
-+ (NSDictionary *)td_pm_getFileAttributeDic {
-    NSError *error;
-    NSDictionary *directory = [[NSFileManager defaultManager] attributesOfFileSystemForPath:NSHomeDirectory() error:&error];
-    if (error) {
-        return nil;
-    }
-    return directory;
-}
-
-+ (long long)td_get_disk_free_size {
-    NSDictionary<NSFileAttributeKey, id> *directory = [self td_pm_getFileAttributeDic];
-    if (directory) {
-        return [[directory objectForKey:NSFileSystemFreeSize] unsignedLongLongValue];
-    }
-    return -1;
-}
-
-+ (long long)td_get_storage_size {
-    NSDictionary<NSFileAttributeKey, id> *directory = [self td_pm_getFileAttributeDic];
-    return directory ? ((NSNumber *)[directory objectForKey:NSFileSystemSize]).unsignedLongLongValue:-1;
-}
-
-
-#pragma mark - CPU
-
-- (NSNumber *)is_simulator {
-    static dispatch_once_t onceToken;
-    static NSNumber *isSimulator;
-    dispatch_once(&onceToken, ^{
-        NSInteger cputype = NXGetLocalArchInfo()->cputype;
-        if ((cputype == CPU_TYPE_X86) || (cputype == CPU_TYPE_X86_64)) {
-            isSimulator = [NSNumber numberWithBool:YES];
-        } else {
-            isSimulator = [NSNumber numberWithBool:NO];
-        }
-    });
-    return isSimulator;
-}
-
-#pragma mark -  安装时间
 + (NSDate *)td_getInstallTime {
+    
     NSURL* urlToDocumentsFolder = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
     __autoreleasing NSError *error;
     NSDate *installDate = [[[NSFileManager defaultManager] attributesOfItemAtPath:urlToDocumentsFolder.path error:&error] objectForKey:NSFileCreationDate];
@@ -339,31 +276,26 @@
     return [NSDate date];
 }
 
-#pragma mark - APM
-- (void)startCollectAPM {
-//    _fpsMonitor = [[TDPMFPSMonitor alloc] init];
-//    [_fpsMonitor setEnable:YES];
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+
++ (NSDictionary *)getAPMParams {
+    NSMutableDictionary *p = [NSMutableDictionary dictionary];
+    for (NSString *clsName in kTDDyldPropertyNames) {
+        Class cls = NSClassFromString(clsName);
+        SEL sel = NSSelectorFromString(kTDGetPropertySelName);
+        if (cls && sel && [cls respondsToSelector:sel]) {
+            NSDictionary *result = [cls performSelector:sel];
+//            NSDictionary *result = [NSObject performSelector:sel onTarget:cls withArguments:@[]];
+            if ([result isKindOfClass:[NSDictionary class]] && result.allKeys.count > 0) {
+                [p addEntriesFromDictionary:result];
+            }
+      
+        }
+    }
+    return p;
 }
 
-// 性能参数
-- (NSDictionary *)addAPMParams:(NSDictionary *)p {
-
-    if (!p) return p;
-    if (![p isKindOfClass:[NSDictionary class]]) return p;
-    
-    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:p];
-    NSString *ram = [NSString stringWithFormat:@"%.1f/%.1f", [TDDeviceInfo td_pm_func_getFreeMemory]/TD_PM_UNIT_GB, [TDDeviceInfo td_pm_func_getRamSize]/TD_PM_UNIT_GB];
-    if (ram && ram.length) {
-        [dic setObject:ram forKey:@"#ram"];
-    }
-    NSString *disk = [NSString stringWithFormat:@"%.1f/%.1f", [TDDeviceInfo td_get_disk_free_size]/TD_PM_UNIT_GB, [TDDeviceInfo td_get_storage_size]/TD_PM_UNIT_GB];
-    if (disk && disk.length) {
-        [dic setObject:disk forKey:@"#disk"];
-    }
-    [dic setObject:[self is_simulator] forKey:@"#simulator"];
-    [dic setObject:[_fpsMonitor getPFS] forKey:@"#fps"];
-    return dic;
-}
-
+#pragma clang diagnostic pop
 
 @end

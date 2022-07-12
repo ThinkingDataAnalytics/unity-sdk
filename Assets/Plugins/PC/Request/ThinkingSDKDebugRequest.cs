@@ -172,7 +172,7 @@ namespace ThinkingSDK.PC.Request
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
 
-                Dictionary<string,object> resultDict = new Dictionary<string, object>();
+                Dictionary<string,object> resultDict = null;
                 #if UNITY_2020_1_OR_NEWER
                 switch (webRequest.result)
                 {

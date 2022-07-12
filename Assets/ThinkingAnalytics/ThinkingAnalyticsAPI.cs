@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.2.5
+    SDK VERSION:2.3.0
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -35,10 +35,6 @@ using ThinkingAnalytics.TaException;
 #if UNITY_IOS && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
-#if UNITY_EDITOR 
-using ThinkingSDK.PC.TaskManager;
-#endif
-
 
 namespace ThinkingAnalytics
 {
@@ -166,11 +162,11 @@ namespace ThinkingAnalytics
         }
 		public long ScreenHeight 
         { 
-            get {return (long)(PresetProperties.ContainsKey("#screen_height") ? PresetProperties["#screen_height"] : 0);}
+            get {return (int)(PresetProperties.ContainsKey("#screen_height") ? (int)PresetProperties["#screen_height"] : 0);}
         }
 		public long ScreenWidth 
         { 
-            get {return (long)(PresetProperties.ContainsKey("#screen_width") ? PresetProperties["#screen_width"] : 0);}
+            get {return (int)(PresetProperties.ContainsKey("#screen_width") ? (int)PresetProperties["#screen_width"] : 0);}
         }
 		public string SystemLanguage 
         { 
@@ -289,7 +285,7 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        public readonly string VERSION = "2.2.5";
+        public readonly string VERSION = "2.3.0";
 
         private static ThinkingAnalyticsAPI taAPIInstance;
 
@@ -965,12 +961,12 @@ namespace ThinkingAnalytics
                         {
                             if (sInstances.ContainsKey(token.appid))
                             {
-                                Debug.Log("ThinkingAnalytics is repeated start with appId: "+token.appid);
+                                TD_Log.d("ThinkingAnalytics is repeated start with appId: "+token.appid);
                             }
                             else 
                             {
                                 Token token1 = new Token(token.appid, token.serverUrl, token.mode, token.timeZone, token.timeZoneId);
-                                Debug.Log("ThinkingAnalytics start with appId: "+token1.appid);
+                                TD_Log.d("ThinkingAnalytics start with appId: "+token1.appid);
                                 ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token1, taAPIInstance);
                                 wrapper.SetNetworkType(taAPIInstance.networkType);
                                 sInstances.Add(token1.appid,wrapper);
@@ -991,10 +987,6 @@ namespace ThinkingAnalytics
 
         void Awake()
         {
-            #if UNITY_EDITOR 
-            gameObject.AddComponent(typeof(ThinkingSDKTask));
-            #endif
-
             taAPIInstance = this;
 
             if (TA_instance == null)
@@ -1040,7 +1032,6 @@ namespace ThinkingAnalytics
         [AOT.MonoPInvokeCallback(typeof(ResultHandler))]
         static string resultHandler(string msg) 
         {
-            Debug.Log("收到来自oc的参数  - " + msg);
             Dictionary<string, object>dynamicSuperProperties = taAPIInstance.dynamicSuperProperties.GetDynamicSuperProperties();
             return TD_MiniJSON.Serialize(dynamicSuperProperties);
         }
@@ -1073,7 +1064,7 @@ namespace ThinkingAnalytics
                 } 
                 else 
                 {
-                    Debug.Log("请先初始化 ThinkingAnalytics SDK");
+                    TD_Log.d("请先初始化 ThinkingAnalytics SDK");
                     return null;
                 }
             } finally

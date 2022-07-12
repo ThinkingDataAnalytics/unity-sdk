@@ -8,7 +8,10 @@
 
 #import "TDFile.h"
 #import "TDLogging.h"
+#import "TDJSONUtil.h"
+
 @implementation TDFile
+
 - (instancetype)initWithAppid:(NSString*)appid
 {
     self = [super init];
@@ -18,7 +21,9 @@
     }
     return self;
 }
+
 - (void)archiveIdentifyId:(NSString *)identifyId {
+    
     NSString *filePath = [self identifyIdFilePath];
     if (![self archiveObject:[identifyId copy] withFilePath:filePath]) {
         TDLogError(@"%@ unable to archive identifyId", self);
@@ -213,6 +218,7 @@
     return [self persistenceFilePath:@"installTimes"];
 }
 
+// 持久化文件
 - (NSString *)persistenceFilePath:(NSString *)data{
     NSString *filename = [NSString stringWithFormat:@"thinking-%@-%@.plist", self.appid, data];
     return [[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject]
@@ -228,4 +234,20 @@
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"thinkingdata_accountId"];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
+
+- (NSString *)description {
+    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+    [dic setObject:self.appid forKey:@"appid"];
+    [dic setObject:[self unarchiveIdentifyID]?:@"" forKey:@"distincid"];
+    [dic setObject:[self unarchiveAccountID]?:@"" forKey:@"accountID"];
+    [dic setObject:[self unarchiveUploadSize] forKey:@"uploadSize"];
+    [dic setObject:[self unarchiveUploadInterval] forKey:@"uploadInterval"];
+    [dic setObject:[self unarchiveSuperProperties]?:@{}  forKey:@"superProperties"];
+    [dic setObject:[NSNumber numberWithBool:[self unarchiveOptOut] ]forKey:@"optOut"];
+    [dic setObject:[NSNumber numberWithBool:[self unarchiveEnabled]] forKey:@"isEnabled"];
+    [dic setObject:[self unarchiveDeviceId]?:@"" forKey:@"deviceId"];
+    [dic setObject:[self unarchiveInstallTimes]?:@"" forKey:@"installTimes"];
+    return [TDJSONUtil JSONStringForObject:dic];
+}
+
 @end

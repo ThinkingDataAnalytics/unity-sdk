@@ -33,11 +33,13 @@ static NSString *kTAIntegrationExtra = @"TA-Integration-Extra";
     NSMutableDictionary *properties = [[recordDic objectForKey:@"properties"] mutableCopy];
     
     if ([ThinkingAnalyticsSDK isTrackEvent:[record objectForKey:@"#type"]]) {
-        [properties addEntriesFromDictionary:[TDDeviceInfo sharedManager].automaticData];
+        @synchronized ([TDDeviceInfo sharedManager]) {
+            [properties addEntriesFromDictionary:[[TDDeviceInfo sharedManager] getAutomaticData]];
+        }
     }
     [recordDic setObject:properties forKey:@"properties"];
     NSString *jsonString = [TDJSONUtil JSONStringForObject:recordDic];
-    NSMutableURLRequest *request = [self buildDebugRequestWithJSONString:jsonString withAppid:appid withDeviceId:[[TDDeviceInfo sharedManager].automaticData objectForKey:@"#device_id"]];
+    NSMutableURLRequest *request = [self buildDebugRequestWithJSONString:jsonString withAppid:appid withDeviceId:[[[TDDeviceInfo sharedManager] getAutomaticData] objectForKey:@"#device_id"]];
     dispatch_semaphore_t flushSem = dispatch_semaphore_create(0);
 
     void (^block)(NSData *, NSURLResponse *, NSError *) = ^(NSData *data, NSURLResponse *response, NSError *error) {

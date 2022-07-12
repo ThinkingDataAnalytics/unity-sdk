@@ -315,7 +315,6 @@ namespace ThinkingAnalytics.Wrapper
 
         public void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
         {
-            Debug.Log("setDynamicSuperProperties in TD_AndroidWrapper");
             ListenerAdapter adapter = new ListenerAdapter();
             instance.Call("setDynamicSuperPropertiesTrackerListener", adapter);
         }

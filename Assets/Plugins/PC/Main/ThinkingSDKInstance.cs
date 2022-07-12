@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using ThinkingSDK.PC.Config;
 using ThinkingSDK.PC.Constant;
@@ -90,7 +91,9 @@ namespace ThinkingSDK.PC.Main
             {
                 this.mConfig = config;
             }
-            this.mConfig.UpdateConfig(mono);
+            this.mConfig.UpdateConfig(mono, delegate (Dictionary<string, object> result) {
+                sMono.StartCoroutine(WaitAndFlush());
+            });
             this.mAppid = appid;
             this.mServer = server;
             if (this.mConfig.GetMode() == Mode.NORMAL)
@@ -107,6 +110,8 @@ namespace ThinkingSDK.PC.Main
             }
             DefaultData();
             mCurrentInstance = this;
+            // 动态加载 ThinkingSDKTask
+            new GameObject("ThinkingSDKTask", typeof(ThinkingSDKTask));
         }
         public static ThinkingSDKInstance CreateLightInstance()
         {
@@ -197,11 +202,12 @@ namespace ThinkingSDK.PC.Main
                 if (result == null)
                 {
                     ThinkingSDKFile.SaveData(mAppid, ThinkingSDKConstant.IS_INSTALL, 1);
-                    if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_START.ToString()))
+                    if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_INSTALL.ToString()))
                     {
                         ThinkingSDKUtil.AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()]);
                     }
                     Track(ThinkingSDKConstant.INSTALL_EVENT, properties);
+                    Flush();
                 } 
             }
             if ((events & AUTO_TRACK_EVENTS.APP_START) != 0)
@@ -211,6 +217,7 @@ namespace ThinkingSDK.PC.Main
                     ThinkingSDKUtil.AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()]);
                 }
                 Track(ThinkingSDKConstant.START_EVENT, properties);
+                Flush();
             }
         }
         // 设置自动采集事件的自定义属性
@@ -313,7 +320,7 @@ namespace ThinkingSDK.PC.Main
 
             if (this.mConfig.IsDisabledEvent(data.EventName()))
             {
-                Debug.Log("disabled Event: " + data.EventName());
+                ThinkingSDKLogger.Print("disabled Event: " + data.EventName());
                 return;
             }
             IList<Dictionary<string, object>> list = new List<Dictionary<string, object>>();
@@ -329,15 +336,60 @@ namespace ThinkingSDK.PC.Main
             }
             else
             {
-                mTask.StartRequest(mRequest, mResponseHandle, list);
+                Dictionary<string, object> dataDic = data.ToDictionary();
+                ThinkingSDKLogger.Print("Save event: " + ThinkingSDKJSON.Serialize(dataDic));
+                int count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic);
+                if (count >= this.mConfig.mUploadSize)
+                {
+                    Flush();
+                }
             }
         }
+
+        private IEnumerator WaitAndFlush() 
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(mConfig.mUploadInterval);
+                Flush();
+            }
+        }
+        
         /// <summary>
         /// 发送数据
         /// </summary>
         public virtual void Flush()
         {
             mTask.SyncInvokeAllTask();
+            List<Dictionary<string, object>> list = ThinkingSDKFileJson.DequeueBatchTrackingData(mConfig.mUploadSize);
+            if (list.Count>0)
+            {
+                ThinkingSDKLogger.Print("Flush event: " + list.Count);
+                string eventIds = "";
+                for (int i = 0; i < list.Count; i++)
+                {
+                    Dictionary<string, object> data = list[i];
+                    eventIds += " ";
+                    eventIds += data["id"];
+                }
+                ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
+                    int eventCount = 0;
+                    if (result != null)
+                    {
+                        eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(mConfig.mUploadSize);
+                    }
+                    mTask.Release();
+                    if (eventCount>0)
+                    {
+                        Flush();
+                    }
+                };
+                mTask.StartRequest(mRequest, responseHandle, list);
+            }
+            else
+            {
+                // ThinkingSDKLogger.Print("Flush event: 0");
+            }
         }
         public void Track(ThinkingSDKEventData analyticsEvent)
         {

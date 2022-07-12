@@ -8,11 +8,11 @@ FOUNDATION_EXTERN NSString *const VERSION;
 
 + (TDDeviceInfo *)sharedManager;
 
-@property (nonatomic, copy) NSString *uniqueId;
-@property (nonatomic, copy) NSString *deviceId;
+
+@property (nonatomic, copy) NSString *uniqueId;// 默认访客ID，一般是设备ID+安装次数组成
+@property (nonatomic, copy) NSString *deviceId;// 设备id
 @property (nonatomic, copy) NSString *appVersion;
-@property (nonatomic, strong) NSDictionary *automaticData;
-//@property (nonatomic, strong, getter=getAutomaticData) NSDictionary *automaticData;
+
 @property (nonatomic, readonly) BOOL isFirstOpen;
 
 @property (nonatomic, copy) NSString *libName;
@@ -23,6 +23,10 @@ FOUNDATION_EXTERN NSString *const VERSION;
 - (NSDictionary *)collectAutomaticProperties;
 + (NSString*)bundleId;
 + (NSDate *)td_getInstallTime;
+
+/// 获取属性
+/// 注意线程问题
+- (NSDictionary *)getAutomaticData;
 
 @end
 

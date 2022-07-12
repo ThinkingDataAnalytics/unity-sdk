@@ -1,14 +1,14 @@
 //
-//  NSObject+TDUtils.m
+//  NSObject+TDUtil.m
 //  ThinkingSDK
 //
 //  Created by wwango on 2021/10/18.
 //  Copyright © 2021 thinkingdata. All rights reserved.
 //
 
-#import "NSObject+TDUtils.h"
+#import "NSObject+TDUtil.h"
 
-@implementation NSObject (TDUtils)
+@implementation NSObject (TDUtil)
 
 + (NSValue *)valueForPrimitivePointer:(void *)pointer objCType:(const char *)type
 {

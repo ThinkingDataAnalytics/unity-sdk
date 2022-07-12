@@ -125,17 +125,21 @@ static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *cont
         [properties setValue:crashStr forKey:TD_CRASH_REASON];
 
         NSDate *trackDate = [NSDate date];
+        
+        // 多实例 触发end事件和Crash事件
         for (ThinkingAnalyticsSDK *instance in self.thinkingAnalyticsSDKInstances) {
             [instance autotrack:TD_APP_CRASH_EVENT properties:properties withTime:trackDate];
             if (![instance isAutoTrackEventTypeIgnored:ThinkingAnalyticsEventTypeAppEnd]) {
                 [instance autotrack:TD_APP_END_EVENT properties:nil withTime:trackDate];
             }
         }
+        
+        // 阻塞当前线程，完成 serialQueue 中数据相关的任务
+        dispatch_sync([ThinkingAnalyticsSDK serialQueue], ^{});
+        
     } @catch(NSException *exception) {
         TDLogError(@"%@ error: %@", self, exception);
     }
-    
-    dispatch_sync([ThinkingAnalyticsSDK serialQueue], ^{});
     
     NSSetUncaughtExceptionHandler(NULL);
     for (int i = 0; i < sizeof(signals) / sizeof(int); i++) {

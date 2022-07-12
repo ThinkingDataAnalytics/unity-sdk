@@ -5,10 +5,12 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ThinkingAnalytics.Utils;
 using UnityEngine;
+#if  (!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR)
 using ThinkingSDK.PC.Main;
 using ThinkingSDK.PC.Utils;
 using ThinkingSDK.PC.DataModel;
 using ThinkingSDK.PC.Config;
+#endif
 
 namespace ThinkingAnalytics.Wrapper
 {
@@ -90,7 +92,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private void flush()
         {
-           
+           ThinkingPCSDK.Flush();
         }
 
         private static void setVersionInfo(string lib_name, string lib_version) {

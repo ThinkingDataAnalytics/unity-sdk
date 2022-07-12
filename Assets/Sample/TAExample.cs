@@ -1,9 +1,11 @@
 using UnityEngine;
 using ThinkingAnalytics;
 using System.Collections.Generic;
-using UnityEngine.SceneManagement;
 using System;
 using System.Threading;
+using ThinkingSDK.PC.Storage;
+using ThinkingAnalytics.Utils;
+using ThinkingSDK.PC.Utils;
 
 public class TAExample : MonoBehaviour, IDynamicSuperProperties
 {
@@ -14,8 +16,8 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
     //private static Color MainColor = new Color(0, 0,0);
     private static Color MainColor = new Color(84f / 255, 116f / 255, 241f / 255);
     private static Color TextColor = new Color(153f / 255, 153f / 255, 153f / 255);
-    static int Margin = 40;
-    static int Height = 80;
+    static int Margin = 20;
+    static int Height = 60;
     static float ContainerWidth = Screen.width - 2 * Margin;
     // 动态公共属性接口
     public Dictionary<string, object> GetDynamicSuperProperties()
@@ -54,6 +56,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
 
             // 2. 手动初始化（动态挂载 ThinkingAnalyticsAPI 脚本）
             // gameObject.AddComponent(typeof(ThinkingAnalyticsAPI));
+            // new GameObject("ThinkingAnalytics", typeof(ThinkingAnalyticsAPI));
 
             // 2.1 设置实例参数
             // string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
@@ -86,7 +89,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
 
 
             // 开启自动采集事件
-            // ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
+            ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
             // 开启自动采集事件，并设置自定属性
             // ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL, new Dictionary<string, object>() 
             // {
@@ -178,7 +181,9 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             ThinkingAnalyticsAPI.Track(overWritableEvent);
         }
 
-        GUILayout.Space(20);
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
+        // GUILayout.Space(20);
         if (GUILayout.Button("TrackEventWithTimeTravel", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.TimeEvent("TATimeEvent");
@@ -272,6 +277,11 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
         GUILayout.Space(20);
         GUILayout.Label("OtherSetting", GUI.skin.label);
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
+        if (GUILayout.Button("Flush", GUILayout.Height(Height)))
+        {
+            ThinkingAnalyticsAPI.Flush();
+        }
+        GUILayout.Space(20);
         if (GUILayout.Button("GetDeviceID", GUILayout.Height(Height)))
         {
             Debug.Log("设备ID为:" + ThinkingAnalyticsAPI.GetDeviceId());
@@ -349,7 +359,9 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties
             ThinkingAnalyticsAPI.ClearSuperProperties();
         }
 
-        GUILayout.Space(20);
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
+        // GUILayout.Space(20);
         if (GUILayout.Button("SetDynamicSuperProperties", GUILayout.Height(Height)))
         {
             ThinkingAnalyticsAPI.SetDynamicSuperProperties(this);

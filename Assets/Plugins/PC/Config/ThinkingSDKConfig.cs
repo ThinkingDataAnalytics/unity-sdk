@@ -26,8 +26,8 @@ namespace ThinkingSDK.PC.Config
         private string mConfigUrl;
         private Mode mMode = Mode.NORMAL;
         private TimeZoneInfo mTimeZone;
-        private int mUploadInterval = 60;
-        private int mUploadSize = 100;
+        public int mUploadInterval = 60;
+        public int mUploadSize = 100;
         private List<string> mDisableEvents = new List<string>();
         private static Dictionary<string, ThinkingSDKConfig> sInstances = new Dictionary<string, ThinkingSDKConfig>();
         private ThinkingSDKConfig(string token,string serverUrl)
@@ -114,7 +114,7 @@ namespace ThinkingSDK.PC.Config
                 return this.mDisableEvents.Contains(eventName);
             }
         }
-        public void UpdateConfig(MonoBehaviour mono)
+        public void UpdateConfig(MonoBehaviour mono, ResponseHandle callback = null)
         {
             Dictionary<string, object> dic = new Dictionary<string, object>();
             ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
@@ -148,9 +148,12 @@ namespace ThinkingSDK.PC.Config
                 {
                     ThinkingSDKLogger.Print("Get config failed: " + ex.Message);
                 }
+                if (callback != null)
+                {
+                    callback();
+                }
             };
-            // ThinkingSDKBaseRequest.GetWithFORM(this.mConfigUrl,this.mToken,dic,responseHandle,mono);
-            mono.StartCoroutine(this.GetWithFORM(this.mConfigUrl,this.mToken,dic,responseHandle));
+            mono.StartCoroutine(this.GetWithFORM(this.mConfigUrl,this.mToken,null,responseHandle));
         }
 
         private IEnumerator GetWithFORM (string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle) {

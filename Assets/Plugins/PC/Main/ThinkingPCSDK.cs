@@ -141,6 +141,10 @@ namespace ThinkingSDK.PC.Main
             GetInstance(appid).Track(analyticsEvent);
         }
 
+        public static void Flush (string appid = "")
+        {
+            GetInstance(appid).Flush();
+        }
         public static void SetSuperProperties(Dictionary<string, object> superProperties,string appid = "")
         {
             GetInstance(appid).SetSuperProperties(superProperties);

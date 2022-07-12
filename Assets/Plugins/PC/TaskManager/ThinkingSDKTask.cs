@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using ThinkingSDK.PC.Utils;
+﻿using System.Collections.Generic;
 using ThinkingSDK.PC.Request;
 using ThinkingSDK.PC.Constant;
 using UnityEngine;

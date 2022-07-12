@@ -18,6 +18,7 @@
     zlibStreamStruct.next_in = (Bytef *)[pUncompressedData bytes];
     zlibStreamStruct.avail_in = (uInt)[pUncompressedData length];
     
+//    deflateInit2(&zlibStreamStruct,5,Z_DEFLATED,-15,8,Z_DEFAULT_STRATEGY)
     int initError = deflateInit2(&zlibStreamStruct, Z_DEFAULT_COMPRESSION, Z_DEFLATED, (15+16), 8, Z_DEFAULT_STRATEGY);
     
     if (initError != Z_OK) {
