@@ -64,7 +64,6 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
             }
             ThinkingPCSDK.Flush(this.mAppId);
         }
-        mStarted = true;
     }
 
     void OnApplicationQuit()
@@ -157,6 +156,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
         {
             ThinkingPCSDK.TimeEvent(ThinkingSDKConstant.END_EVENT);
         }
+        mStarted = true;
     }
 
     public void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)

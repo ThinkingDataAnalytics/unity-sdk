@@ -47,8 +47,8 @@ namespace ThinkingAnalytics.Wrapper
             return instance.Call<string>("getTimeString", date);
         }
 
-        private static void enable_log(bool enableLog) {
-            sdkClass.CallStatic("enableTrackLog", enableLog);
+        private static void enableLog(bool enable) {
+            sdkClass.CallStatic("enableTrackLog", enable);
         }
         private static void setVersionInfo(string libName, string version) {
             sdkClass.CallStatic("setCustomerLibInfo", libName, version);

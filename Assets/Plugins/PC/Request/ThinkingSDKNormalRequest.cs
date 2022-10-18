@@ -163,6 +163,10 @@ namespace ThinkingSDK.PC.Request
                 #endif
                 if (responseHandle != null) 
                 {
+                    if (resultDict != null)
+                    {
+                        resultDict.Add("flush_count", data.Count);
+                    }
                     responseHandle(resultDict);
                 }
             }

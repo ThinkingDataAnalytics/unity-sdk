@@ -358,7 +358,12 @@ namespace ThinkingSDK.PC.Main
                     int eventCount = 0;
                     if (result != null)
                     {
-                        eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(batchSize, mAppid);
+                        int flushCount = 0;
+                        if (result.ContainsKey("flush_count"))
+                        {
+                            flushCount = (int)result["flush_count"];
+                        }
+                        eventCount = ThinkingSDKFileJson.DeleteBatchTrackingData(flushCount, mAppid);
                     }
                     mTask.Release();
                     if (eventCount>0)

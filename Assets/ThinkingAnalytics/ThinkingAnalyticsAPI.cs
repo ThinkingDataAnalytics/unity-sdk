@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.4.0
+    SDK VERSION:2.4.1
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -32,6 +32,7 @@ using UnityEditor.iOS.Xcode;
 #endif
 using System.IO;
 using ThinkingAnalytics.TaException;
+using UnityEngine.SceneManagement;
 #if UNITY_IOS && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 #endif
@@ -141,7 +142,7 @@ namespace ThinkingAnalytics
                 if (kv.Value is DateTime) 
                 {
                     DateTime dateTime = (DateTime) kv.Value;
-                    mProperties.Add(kv.Key, dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                    mProperties.Add(kv.Key, dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture));
                 }
                 else 
                 {
@@ -415,6 +416,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).Identify(FIRSTId);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { FIRSTId, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -442,6 +452,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).Login(account);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { account, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -454,6 +473,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).Logout();
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -465,6 +493,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).Flush();
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -494,6 +531,15 @@ namespace ThinkingAnalytics
                     eHandler.RegisterTaExceptionHandler();
                 }
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { events, properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback, string appId = "")
@@ -511,6 +557,16 @@ namespace ThinkingAnalytics
                     eHandler.RegisterTaExceptionHandler();
                 }
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { events, eventCallback, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+
         }
 
         public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId = "")
@@ -526,6 +582,15 @@ namespace ThinkingAnalytics
                         taAPIInstance.autoTrackProperties[item] = properties[item];
                     }
                 }
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { events, properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -561,6 +626,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).Track(eventName, properties);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { eventName, properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -576,26 +650,85 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).Track(eventName, properties, date);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { eventName, properties, date, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
+        /// <summary>
+        /// track 特殊事件，如首次事件、可更新事件、可重写事件
+        /// </summary>
+        /// <param name="analyticsEvent">特殊事件对象</param>
+        /// <param name="appId">项目 ID(可选)</param>
         public static void Track(ThinkingAnalyticsEvent analyticsEvent, string appId = "")
         {
             if (tracking_enabled)
             {
                 getInstance(appId).Track(analyticsEvent);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { analyticsEvent, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
-        
+
+        /// <summary>
+        /// 注册场景加载监听
+        /// </summary>
+        /// <param name="scene">场景对象</param>
+        /// <param name="mode">场景加载模式</param>
+        public static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Dictionary<string, object> properties = new Dictionary<string, object>() {
+                { "#scene_name", scene.name },
+                { "#scene_path", scene.path }
+            };
+            Track("ta_scene_loaded", properties, DateTime.Now);
+        }
+
+        /// <summary>
+        /// 注册场景卸载监听
+        /// </summary>
+        /// <param name="scene">场景对象</param>
+        public static void OnSceneUnloaded(Scene scene)
+        {
+            Dictionary<string, object> properties = new Dictionary<string, object>() {
+                { "#scene_name", scene.name },
+                { "#scene_path", scene.path }
+            };
+            Track("ta_scene_unloaded", properties, DateTime.Now);
+        }
+
         /// <summary>
         /// 设置公共事件属性. 公共事件属性指的就是每个事件都会带有的属性.
         /// </summary>
         /// <param name="superProperties">公共事件属性</param>
-        /// <param name="appId">项目 ID(可选)</param>
+        /// <param name="appId">项目 ID（可选）</param>
         public static void SetSuperProperties(Dictionary<string, object> superProperties, string appId = "")
         {
             if (tracking_enabled)
             {
                 getInstance(appId).SetSuperProperties(superProperties);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { superProperties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -609,6 +742,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).UnsetSuperProperty(property);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { property, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -635,6 +777,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).ClearSuperProperty();
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -665,6 +816,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).TimeEvent(eventName);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { eventName, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -677,6 +837,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).UserSet(properties);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -691,6 +860,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).UserSet(properties, dateTime);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties , dateTime, appId};
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -718,6 +896,16 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserUnset(properties);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+
         }
 
         /// <summary>
@@ -732,6 +920,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserUnset(properties, dateTime);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, dateTime, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -745,6 +942,16 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserSetOnce(properties);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+
         }
 
         /// <summary>
@@ -759,6 +966,16 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserSetOnce(properties, dateTime);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, dateTime,appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+
         }
 
 
@@ -788,6 +1005,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserAdd(properties);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -802,6 +1028,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserAdd(properties, dateTime);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, dateTime, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -814,6 +1049,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).UserAppend(properties);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -829,6 +1073,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserAppend(properties, dateTime);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, dateTime, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -841,6 +1094,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).UserUniqAppend(properties);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -856,6 +1118,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserUniqAppend(properties, dateTime);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, dateTime, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -867,6 +1138,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).UserDelete();
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -880,6 +1160,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).UserDelete(dateTime);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { dateTime, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -892,6 +1181,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).SetNetworkType(networkType);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { networkType, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -920,6 +1218,15 @@ namespace ThinkingAnalytics
                 getInstance(appId).SetDynamicSuperProperties(dynamicSuperProperties);
                 taAPIInstance.dynamicSuperProperties = dynamicSuperProperties;
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { dynamicSuperProperties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -932,6 +1239,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).SetTrackStatus(status);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { status, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -946,6 +1262,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).OptOutTracking();
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
@@ -958,6 +1283,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).OptOutTrackingAndDeleteUser();
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -972,6 +1306,15 @@ namespace ThinkingAnalytics
             {
                 getInstance(appId).OptInTracking();
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
@@ -985,6 +1328,15 @@ namespace ThinkingAnalytics
             if (tracking_enabled)
             {
                 getInstance(appId).EnableTracking(enabled);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { enabled, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
             }
         }
 
@@ -1060,10 +1412,24 @@ namespace ThinkingAnalytics
             {
                 getInstance(default_appid).EnableThirdPartySharing(shareType);
             }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { shareType };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         #region internal
 
+        /// <summary>
+        /// 初始化 Thinking Analytics SDK
+        /// </summary>
+        /// <param name="appId">项目ID</param>
+        /// <param name="serverUrl">项目URL</param>
         public static void StartThinkingAnalytics(string appId, string serverUrl)
         {
             ThinkingAnalyticsAPI.TAMode mode = ThinkingAnalyticsAPI.TAMode.NORMAL;
@@ -1072,6 +1438,10 @@ namespace ThinkingAnalytics
             ThinkingAnalyticsAPI.StartThinkingAnalytics(token);
         }
 
+        /// <summary>
+        /// 初始化 Thinking Analytics SDK
+        /// </summary>
+        /// <param name="token">项目配置，详情参见 ThinkingAnalyticsAPI.Token</param>
         public static void StartThinkingAnalytics(ThinkingAnalyticsAPI.Token token)
         {
             ThinkingAnalyticsAPI.Token[] tokens = new ThinkingAnalyticsAPI.Token[1];
@@ -1079,6 +1449,10 @@ namespace ThinkingAnalytics
             ThinkingAnalyticsAPI.StartThinkingAnalytics(tokens);
         }
 
+        /// <summary>
+        /// 初始化 Thinking Analytics SDK
+        /// </summary>
+        /// <param name="token">多项目配置，详情参见 ThinkingAnalyticsAPI.Token</param>
         public static void StartThinkingAnalytics(Token[] tokens = null) 
         {
             #if DISABLE_TA
@@ -1131,6 +1505,9 @@ namespace ThinkingAnalytics
                 }
             }
 
+            //上报缓存事件
+            FlushEventCaches();
+
             #if UNITY_IOS && !UNITY_EDITOR //iOS动态回调
             //设置回调托管函数指针
             ResultHandler handler = new ResultHandler(resultHandler);
@@ -1138,6 +1515,21 @@ namespace ThinkingAnalytics
             //调用OC的方法，将C#的回调方法函数指针传给OC
             RegisterRecieveGameCallback(handlerPointer);
             #endif //iOS动态回调
+        }
+
+        private static void FlushEventCaches()
+        {
+            List<Dictionary<string, object>> tmpEventCaches = new List<Dictionary<string, object>>(eventCaches);
+            eventCaches.Clear();
+            foreach (Dictionary<string, object> eventCache in tmpEventCaches)
+            {
+                if (eventCache.ContainsKey("method") && eventCache.ContainsKey("parameters"))
+                {
+                    System.Reflection.MethodBase method = (System.Reflection.MethodBase)eventCache["method"];
+                    object[] parameters = (object[])eventCache["parameters"];
+                    method.Invoke(null, parameters);
+                }
+            }
         }
 
         void Awake()
@@ -1161,10 +1553,11 @@ namespace ThinkingAnalytics
             }
         }
 
-        private void Start() {
+        private void Start()
+        {
         }
 
-        #if UNITY_IOS && !UNITY_EDITOR //iOS动态回调
+#if UNITY_IOS && !UNITY_EDITOR //iOS动态回调
         //声明一个OC的注册回调方法函数指针的函数方法，每一个参数都是函数指针
         [DllImport("__Internal")]
         public static extern void RegisterRecieveGameCallback
@@ -1201,8 +1594,9 @@ namespace ThinkingAnalytics
             }
             return "{}";
         }
-        #endif //iOS动态回调
+#endif //iOS动态回调
 
+        private static List<Dictionary<string, object>> eventCaches = new List<Dictionary<string, object>>();
         private IDynamicSuperProperties dynamicSuperProperties;
         private IAutoTrackEventCallback autoTrackEventCallback;
         private Dictionary<string, object> autoTrackProperties = new Dictionary<string, object>();

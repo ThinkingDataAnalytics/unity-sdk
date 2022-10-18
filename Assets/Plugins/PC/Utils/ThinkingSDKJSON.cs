@@ -591,7 +591,7 @@ namespace ThinkingSDK.PC.Utils
                     }
                     else
                     {
-                        builder.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                        builder.Append(dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture));
                     }
                     builder.Append('\"');
                 }

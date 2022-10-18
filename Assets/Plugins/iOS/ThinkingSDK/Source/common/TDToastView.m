@@ -35,7 +35,11 @@
     return toast;
 }
 
+
 - (void)showInWindow:(UIWindow *)window duration:(NSTimeInterval)duration {
+    if (window == nil) {
+        return;
+    }
     CGRect windowBounds = CGRectInset(window.bounds, 20.0, 20.0);
     CGRect toastBounds = CGRectZero;
     toastBounds.size = [self sizeThatFits:windowBounds.size];

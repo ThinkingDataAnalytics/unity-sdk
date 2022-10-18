@@ -392,9 +392,9 @@ namespace ThinkingAnalytics.Wrapper
             }
         }
 
-        private static void enable_log(bool enableLog)
+        private static void enableLog(bool enable)
         {
-            ThinkingPCSDK.EnableLog(enableLog);
+            ThinkingPCSDK.EnableLog(enable);
         }
         private static void calibrateTime(long timestamp)
         {

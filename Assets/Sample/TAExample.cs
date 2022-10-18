@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using ThinkingAnalytics;
 using System.Collections.Generic;
 using System;
@@ -101,7 +102,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEvent
 
 
             // 开启自动采集事件
-            ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
+            //ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
             // 开启自动采集事件，并设置自定属性
             // ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL, new Dictionary<string, object>() 
             // {
@@ -316,7 +317,6 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEvent
         GUILayout.Space(20);
         if (GUILayout.Button("Pause", GUILayout.Height(Height)))
         {
-            ThinkingAnalyticsAPI.EnableTracking(false);
             ThinkingAnalyticsAPI.SetTrackStatus(TA_TRACK_STATUS.PAUSE);
         }
         GUILayout.Space(20);
@@ -410,5 +410,12 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEvent
         GUILayout.EndHorizontal();
         GUILayout.EndScrollView();
         GUILayout.EndArea();
+    }
+    
+    private void OnEnable()
+    {
+        // 监听场景加载、卸载事件
+        SceneManager.sceneLoaded += ThinkingAnalyticsAPI.OnSceneLoaded;
+        SceneManager.sceneUnloaded += ThinkingAnalyticsAPI.OnSceneUnloaded;
     }
 }

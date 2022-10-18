@@ -7,6 +7,7 @@
 #import "UIApplication+AutoTrack.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
 #import "TDPublicConfig.h"
+#import "TDAppState.h"
 
 #ifndef TD_LOCK
 #define TD_LOCK(lock) dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
@@ -488,9 +489,9 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
 }
 
 + (UIWindow *)findWindow {
-    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    UIWindow *window = [TDAppState sharedApplication].keyWindow;
     if (window == nil || window.windowLevel != UIWindowLevelNormal) {
-        for (window in [UIApplication sharedApplication].windows) {
+        for (window in [TDAppState sharedApplication].windows) {
             if (window.windowLevel == UIWindowLevelNormal) {
                 break;
             }
@@ -499,7 +500,7 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     
 #ifdef __IPHONE_13_0
     if (@available(iOS 13.0, tvOS 13, *)) {
-        NSSet *scenes = [[UIApplication sharedApplication] valueForKey:@"connectedScenes"];
+        NSSet *scenes = [[TDAppState sharedApplication] valueForKey:@"connectedScenes"];
         for (id scene in scenes) {
             if (window) {
                 break;

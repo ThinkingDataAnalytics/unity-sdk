@@ -32,8 +32,16 @@ NSString *_td_lastKnownState;
 
 + (BOOL)runningInAppExtension
 {
-  return [[[[NSBundle mainBundle] bundlePath] pathExtension] isEqualToString:@"appex"];
+    static BOOL isAppExtension = NO;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        Class cls = NSClassFromString(@"UIApplication");
+        if(!cls || ![cls respondsToSelector:@selector(sharedApplication)]) isAppExtension = YES;
+        if ([[[NSBundle mainBundle] bundlePath] hasSuffix:@".appex"]) isAppExtension = YES;
+    });
+    return isAppExtension;
 }
+
 
 + (NSString *)currentAppState
 {
@@ -64,7 +72,6 @@ NSString *_td_lastKnownState;
 + (void)load {
     for (NSString *name in @[UIApplicationDidBecomeActiveNotification,
                              UIApplicationDidEnterBackgroundNotification,
-                             UIApplicationDidFinishLaunchingNotification,
                              UIApplicationWillResignActiveNotification,
                              UIApplicationWillEnterForegroundNotification,
                              UIApplicationDidFinishLaunchingNotification]) {

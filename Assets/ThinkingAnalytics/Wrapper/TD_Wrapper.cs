@@ -25,9 +25,9 @@ namespace ThinkingAnalytics.Wrapper
             if (initRequired) init();
         }
 
-        public static void EnableLog(bool enableLog)
+        public static void EnableLog(bool enable)
         {
-            enable_log(enableLog);
+            enableLog(enable);
         }
 
         public static void SetVersionInfo(string version)

@@ -7,7 +7,7 @@
 
 @protocol TDThirdPartyProtocol <NSObject>
 
-- (void)enableThirdPartySharing:(TDThirdPartyShareType)type instance:(id)instance;
-- (void)enableThirdPartySharing:(TDThirdPartyShareType)type instance:(id)instance property:(NSDictionary *)property;
+- (void)enableThirdPartySharing:(TAThirdPartyShareType)type instance:(id)instance;
+- (void)enableThirdPartySharing:(TAThirdPartyShareType)type instance:(id)instance property:(NSDictionary *)property;
 
 @end

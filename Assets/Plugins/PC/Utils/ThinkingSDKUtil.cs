@@ -171,7 +171,7 @@ namespace ThinkingSDK.PC.Utils
                 timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
             }
             DateTime dateNew = univDateTime + timeSpan;
-            return string.Format(ThinkingSDKConstant.TIME_PATTERN, dateNew);
+            return dateNew.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
         }
         //向Dictionary添加Dictionary
         public static void AddDictionary(Dictionary<string, object> originalDic, Dictionary<string, object> subDic)

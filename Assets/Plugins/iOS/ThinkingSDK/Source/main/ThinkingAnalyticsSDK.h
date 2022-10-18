@@ -31,7 +31,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- SDK VERSION = 2.8.0.2
+ SDK VERSION = 2.8.1.4
  ThinkingData API
  
  ## 初始化API
@@ -142,6 +142,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time timeZone:(NSTimeZone *)timeZone;
 
 - (void)trackWithEventModel:(TDEventModel *)eventModel;
+
+/// 获取在App Extension 中采集的事件，并上报
+/// @param appGroupId 数据共享所需要的 app group id
+- (void)trackFromAppExtensionWithAppGroupId:(NSString *)appGroupId;
 
 #pragma mark -
 
@@ -479,9 +483,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)getTimeString:(NSDate *)date;
 
-- (void)enableThirdPartySharing:(TDThirdPartyShareType)type;
+- (void)enableThirdPartySharing:(TAThirdPartyShareType)type;
 
-- (void)enableThirdPartySharing:(TDThirdPartyShareType)type customMap:(NSDictionary<NSString *, NSObject *> *)customMap;
+- (void)enableThirdPartySharing:(TAThirdPartyShareType)type customMap:(NSDictionary<NSString *, NSObject *> *)customMap;
 
 @end
 
