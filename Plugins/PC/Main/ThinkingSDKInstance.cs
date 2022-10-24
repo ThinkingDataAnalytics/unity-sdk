@@ -85,12 +85,12 @@ namespace ThinkingSDK.PC.Main
             SuperProperties();
             DefaultTrackState();
         }
-        public ThinkingSDKInstance(string appid,string server):this(appid,server,null)
+        public ThinkingSDKInstance(string appId,string server):this(appId,server,null)
         {
          
             
         }
-        public ThinkingSDKInstance(string appid, string server, ThinkingSDKConfig config, MonoBehaviour mono = null)
+        public ThinkingSDKInstance(string appId, string server, ThinkingSDKConfig config, MonoBehaviour mono = null)
         {
             this.mMono = mono;
             sMono = mono;
@@ -99,7 +99,7 @@ namespace ThinkingSDK.PC.Main
             };
             if (config == null)
             {
-                this.mConfig = ThinkingSDKConfig.GetInstance(appid, server);
+                this.mConfig = ThinkingSDKConfig.GetInstance(appId, server);
             }
             else
             {
@@ -111,15 +111,15 @@ namespace ThinkingSDK.PC.Main
                     sMono.StartCoroutine(WaitAndFlush());
                 }
             });
-            this.mAppid = appid;
+            this.mAppid = appId;
             this.mServer = server;
             if (this.mConfig.GetMode() == Mode.NORMAL)
             {
-                this.mRequest = new ThinkingSDKNormalRequest(appid, this.mConfig.NormalURL());
+                this.mRequest = new ThinkingSDKNormalRequest(appId, this.mConfig.NormalURL());
             }
             else
             {
-                this.mRequest = new ThinkingSDKDebugRequest(appid,this.mConfig.DebugURL());
+                this.mRequest = new ThinkingSDKDebugRequest(appId,this.mConfig.DebugURL());
                 if (this.mConfig.GetMode() == Mode.DEBUG_ONLY)
                 {
                     ((ThinkingSDKDebugRequest)this.mRequest).SetDryRun(1);

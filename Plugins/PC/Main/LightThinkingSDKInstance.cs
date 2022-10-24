@@ -9,7 +9,7 @@ namespace ThinkingSDK.PC.Main
 {
     public class LightThinkingSDKInstance : ThinkingSDKInstance
     {
-        public LightThinkingSDKInstance(string appid, string server, ThinkingSDKConfig config, MonoBehaviour mono = null) : base(appid, server, config, mono)
+        public LightThinkingSDKInstance(string appId, string server, ThinkingSDKConfig config, MonoBehaviour mono = null) : base(appId, server, config, mono)
         {
         }
         public override void Identifiy(string distinctID)

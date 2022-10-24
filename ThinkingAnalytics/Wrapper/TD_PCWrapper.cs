@@ -1,10 +1,7 @@
 ﻿#if  (!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR)
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using ThinkingAnalytics.Utils;
-using UnityEngine;
 using ThinkingSDK.PC.Main;
 using ThinkingSDK.PC.Utils;
 using ThinkingSDK.PC.DataModel;
@@ -14,58 +11,34 @@ namespace ThinkingAnalytics.Wrapper
 {
     public partial class ThinkingAnalyticsWrapper: IDynamicSuperProperties_PC, IAutoTrackEventCallback_PC
     {
-        IAutoTrackEventCallback mEventCallback;
+        static IAutoTrackEventCallback mEventCallback;
         public Dictionary<string, object> GetDynamicSuperProperties_PC()
         {
-            if (this.dynamicSuperProperties != null) {
-                return this.dynamicSuperProperties.GetDynamicSuperProperties();
-            } 
-            else {
+            if (mDynamicSuperProperties != null)
+            {
+                return mDynamicSuperProperties.GetDynamicSuperProperties();
+            }
+            else
+            {
                 return new Dictionary<string, object>();
             }
         }
 
         public Dictionary<string, object> AutoTrackEventCallback_PC(int type, Dictionary<string, object>properties)
         {
-            if (this.mEventCallback != null) {
-                return this.mEventCallback.AutoTrackEventCallback(type, properties);
-            } 
-            else {
+            if (mEventCallback != null)
+            {
+                return mEventCallback.AutoTrackEventCallback(type, properties);
+            }
+            else
+            {
                 return new Dictionary<string, object>();
             }
         }
 
-        private void init()
+        private static void init(ThinkingAnalyticsAPI.Token token)
         {
-        //     public enum TATimeZone
-        //{
-        //    Local,
-        //    UTC,
-        //    Asia_Shanghai,
-        //    Asia_Tokyo,
-        //    America_Los_Angeles,
-        //    America_New_York,
-        //    Other = 100
-        //}
-            //switch (token.timeZone)
-            //{
-            //    case ThinkingAnalyticsAPI.TATimeZone.Local:
-            //        break;
-            //    case ThinkingAnalyticsAPI.TATimeZone.UTC:
-            //        break;
-            //    case ThinkingAnalyticsAPI.TATimeZone.Asia_Shanghai:
-            //        break;
-            //    case ThinkingAnalyticsAPI.TATimeZone.Asia_Tokyo:
-            //        break;
-            //    case ThinkingAnalyticsAPI.TATimeZone.America_Los_Angeles:
-            //        break;
-            //    case ThinkingAnalyticsAPI.TATimeZone.America_New_York:
-            //        break;
-            //    case ThinkingAnalyticsAPI.TATimeZone.Other:
-            //        break;
-
-            //}
-            ThinkingSDKConfig config = ThinkingSDKConfig.GetInstance(token.appid,token.serverUrl);
+            ThinkingSDKConfig config = ThinkingSDKConfig.GetInstance(token.appid, token.serverUrl);
             if (!string.IsNullOrEmpty(token.getTimeZoneId()))
             {
                 try
@@ -85,32 +58,32 @@ namespace ThinkingAnalytics.Wrapper
             {
                 config.SetMode(Mode.DEBUG_ONLY);
             }
-            ThinkingPCSDK.Init(token.appid,token.serverUrl,config, this.taMono);
+            ThinkingPCSDK.Init(token.appid, token.serverUrl, config, sMono);
         }
 
-        private void identify(string uniqueId)
+        private static void identify(string uniqueId, string appId)
         {
-            ThinkingPCSDK.Identifiy(uniqueId,token.appid);
+            ThinkingPCSDK.Identifiy(uniqueId, appId);
         }
 
-        private string getDistinctId()
+        private static string getDistinctId(string appId)
         {
-            return ThinkingPCSDK.DistinctId(token.appid);
+            return ThinkingPCSDK.DistinctId(appId);
         }
 
-        private void login(string accountId)
+        private static void login(string accountId, string appId)
         {
-            ThinkingPCSDK.Login(accountId,token.appid);
+            ThinkingPCSDK.Login(accountId, appId);
         }
 
-        private void logout()
+        private static void logout(string appId)
         {
-            ThinkingPCSDK.Logout(token.appid);
+            ThinkingPCSDK.Logout(appId);
         }
 
-        private void flush()
+        private static void flush(string appId)
         {
-           ThinkingPCSDK.Flush(token.appid);
+           ThinkingPCSDK.Flush(appId);
         }
 
         private static void setVersionInfo(string lib_name, string lib_version) {
@@ -118,7 +91,7 @@ namespace ThinkingAnalytics.Wrapper
             ThinkingPCSDK.SetLibVersion(lib_version);
         }
 
-        private void track(ThinkingAnalyticsEvent taEvent)
+        private static void track(ThinkingAnalyticsEvent taEvent, string appId)
         {
             ThinkingSDKEventData eventData = null ;
             switch (taEvent.EventType)
@@ -139,9 +112,9 @@ namespace ThinkingAnalytics.Wrapper
                     eventData = new ThinkingSDKOverWritableEvent(taEvent.EventName, taEvent.ExtraId);
                     break;
             }
-            if (dynamicSuperProperties != null)
+            if (mDynamicSuperProperties != null)
             {
-                eventData.SetProperties(dynamicSuperProperties.GetDynamicSuperProperties());
+                eventData.SetProperties(mDynamicSuperProperties.GetDynamicSuperProperties());
             }
             if (taEvent.Properties != null)
             {
@@ -151,185 +124,183 @@ namespace ThinkingAnalytics.Wrapper
             {
                 eventData.SetEventTime(taEvent.EventTime);
             }
-            ThinkingPCSDK.Track(eventData, token.appid);
+            ThinkingPCSDK.Track(eventData, appId);
         }
 
-        private void track(string eventName, string properties)
+        private static void track(string eventName, string properties, string appId)
         {  
             Dictionary<string,object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.Track(eventName,propertiesDic,token.appid);
+            ThinkingPCSDK.Track(eventName,propertiesDic,appId);
         }
 
-        private void track(string eventName, string properties, DateTime dateTime)
+        private static void track(string eventName, string properties, DateTime dateTime, string appId)
         {
             Dictionary<string,object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.Track(eventName,propertiesDic,dateTime,token.appid);
+            ThinkingPCSDK.Track(eventName,propertiesDic,dateTime,appId);
         }
 
-        private void setSuperProperties(string superProperties)
+        private static void setSuperProperties(string superProperties, string appId)
         {
             Dictionary<string, object> superPropertiesDic = TD_MiniJSON.Deserialize(superProperties);
-            ThinkingPCSDK.SetSuperProperties(superPropertiesDic,token.appid);
+            ThinkingPCSDK.SetSuperProperties(superPropertiesDic,appId);
         }
 
-        private void unsetSuperProperty(string superPropertyName)
+        private static void unsetSuperProperty(string superPropertyName, string appId)
         {
-            ThinkingPCSDK.UnsetSuperProperty(superPropertyName,token.appid);
+            ThinkingPCSDK.UnsetSuperProperty(superPropertyName,appId);
         }
 
-        private void clearSuperProperty()
+        private static void clearSuperProperty(string appId)
         {
-            ThinkingPCSDK.ClearSuperProperties(token.appid);
+            ThinkingPCSDK.ClearSuperProperties(appId);
         }
 
-        private Dictionary<string, object> getSuperProperties()
+        private static Dictionary<string, object> getSuperProperties(string appId)
         {
-            return ThinkingPCSDK.SuperProperties(token.appid);
+            return ThinkingPCSDK.SuperProperties(appId);
         }
 
-        private Dictionary<string, object> getPresetProperties()
+        private static Dictionary<string, object> getPresetProperties(string appId)
         {
-            return ThinkingPCSDK.PresetProperties(token.appid);
+            return ThinkingPCSDK.PresetProperties(appId);
         }
-        private void timeEvent(string eventName)
+        private static void timeEvent(string eventName, string appId)
         {
-            ThinkingPCSDK.TimeEvent(eventName,token.appid);
-        }
-
-        private void userSet(string properties)
-        {
-            Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserSet(propertiesDic,token.appid);
+            ThinkingPCSDK.TimeEvent(eventName,appId);
         }
 
-        private void userSet(string properties, DateTime dateTime)
+        private static void userSet(string properties, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserSet(propertiesDic,dateTime,token.appid);
+            ThinkingPCSDK.UserSet(propertiesDic,appId);
         }
 
-        private void userUnset(List<string> properties)
-        {
-            ThinkingPCSDK.UserUnset(properties,token.appid);
-        }
-
-        private void userUnset(List<string> properties, DateTime dateTime)
-        {
-            ThinkingPCSDK.UserUnset(properties,dateTime,token.appid);
-        }
-
-        private void userSetOnce(string properties)
+        private static void userSet(string properties, DateTime dateTime, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserSetOnce(propertiesDic, token.appid);
+            ThinkingPCSDK.UserSet(propertiesDic,dateTime,appId);
         }
 
-        private void userSetOnce(string properties, DateTime dateTime)
+        private static void userUnset(List<string> properties, string appId)
+        {
+            ThinkingPCSDK.UserUnset(properties,appId);
+        }
+
+        private static void userUnset(List<string> properties, DateTime dateTime, string appId)
+        {
+            ThinkingPCSDK.UserUnset(properties,dateTime,appId);
+        }
+
+        private static void userSetOnce(string properties, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserSetOnce(propertiesDic,dateTime,token.appid);
+            ThinkingPCSDK.UserSetOnce(propertiesDic, appId);
         }
 
-        private void userAdd(string properties)
+        private static void userSetOnce(string properties, DateTime dateTime, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserAdd(propertiesDic,token.appid);
+            ThinkingPCSDK.UserSetOnce(propertiesDic,dateTime,appId);
         }
 
-        private void userAdd(string properties, DateTime dateTime)
+        private static void userAdd(string properties, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserAdd(propertiesDic,dateTime,token.appid);
+            ThinkingPCSDK.UserAdd(propertiesDic,appId);
         }
 
-        private void userDelete()
-        {
-            ThinkingPCSDK.UserDelete(token.appid);
-        }
-
-        private void userDelete(DateTime dateTime)
-        {
-            ThinkingPCSDK.UserDelete(dateTime,token.appid);
-        }
-
-        private void userAppend(string properties)
+        private static void userAdd(string properties, DateTime dateTime, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserAppend(propertiesDic,token.appid);
+            ThinkingPCSDK.UserAdd(propertiesDic,dateTime,appId);
         }
 
-        private void userAppend(string properties, DateTime dateTime)
+        private static void userDelete(string appId)
+        {
+            ThinkingPCSDK.UserDelete(appId);
+        }
+
+        private static void userDelete(DateTime dateTime, string appId)
+        {
+            ThinkingPCSDK.UserDelete(dateTime,appId);
+        }
+
+        private static void userAppend(string properties, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserAppend(propertiesDic,dateTime,token.appid);
+            ThinkingPCSDK.UserAppend(propertiesDic,appId);
         }
 
-        private void userUniqAppend(string properties)
+        private static void userAppend(string properties, DateTime dateTime, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserUniqAppend(propertiesDic,token.appid);
+            ThinkingPCSDK.UserAppend(propertiesDic,dateTime,appId);
         }
 
-        private void userUniqAppend(string properties, DateTime dateTime)
+        private static void userUniqAppend(string properties, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-            ThinkingPCSDK.UserUniqAppend(propertiesDic,dateTime,token.appid);
+            ThinkingPCSDK.UserUniqAppend(propertiesDic,appId);
         }
 
-        private void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
+        private static void userUniqAppend(string properties, DateTime dateTime, string appId)
+        {
+            Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
+            ThinkingPCSDK.UserUniqAppend(propertiesDic,dateTime,appId);
+        }
+
+        private static void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
         {
             
         }
 
-        private string getDeviceId() 
+        private static string getDeviceId() 
         {
             return ThinkingPCSDK.GetDeviceId();
         }
 
-        private void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        private static void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appId)
         {
-            ThinkingPCSDK.SetDynamicSuperProperties(this);
+            ThinkingPCSDK.SetDynamicSuperProperties(new ThinkingAnalyticsWrapper());
         }
 
-        private void setTrackStatus(TA_TRACK_STATUS status)
+        private static void setTrackStatus(TA_TRACK_STATUS status, string appId)
         {
-            ThinkingPCSDK.SetTrackStatus((ThinkingSDK.PC.Main.TA_TRACK_STATUS)status, token.appid);
+            ThinkingPCSDK.SetTrackStatus((ThinkingSDK.PC.Main.TA_TRACK_STATUS)status, appId);
         }
 
-        private void optOutTracking()
+        private static void optOutTracking(string appId)
         {
-            ThinkingPCSDK.OptTracking(false, token.appid);
+            ThinkingPCSDK.OptTracking(false, appId);
         }
 
-        private void optOutTrackingAndDeleteUser()
+        private static void optOutTrackingAndDeleteUser(string appId)
         {
-            ThinkingPCSDK.OptTrackingAndDeleteUser(token.appid);
+            ThinkingPCSDK.OptTrackingAndDeleteUser(appId);
         }
 
-        private void optInTracking()
+        private static void optInTracking(string appId)
         {
-            ThinkingPCSDK.OptTracking(true, token.appid);
+            ThinkingPCSDK.OptTracking(true, appId);
         }
 
-        private void enableTracking(bool enabled)
+        private static void enableTracking(bool enabled, string appId)
         {
             ThinkingPCSDK.EnableTracking(enabled);
         }
 
-        private ThinkingAnalyticsWrapper createLightInstance(ThinkingAnalyticsAPI.Token delegateToken)
+        private static string createLightInstance()
         {
-            ThinkingAnalyticsWrapper result = new ThinkingAnalyticsWrapper(delegateToken, this.taMono, false);
-            ThinkingPCSDK.CreateLightInstance(delegateToken.appid);
-            return result;
+            return ThinkingPCSDK.CreateLightInstance();
         }
 
-        private string getTimeString(DateTime dateTime)
+        private static string getTimeString(DateTime dateTime)
         {
        
-            return ThinkingPCSDK.TimeString(dateTime,token.appid);
+            return ThinkingPCSDK.TimeString(dateTime);
         }
 
-        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
+        private static void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, string properties, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
             ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS pcAutoTrackEvents = ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.NONE;
@@ -349,10 +320,10 @@ namespace ThinkingAnalytics.Wrapper
             {
                 pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH;
             }
-            ThinkingPCSDK.EnableAutoTrack(pcAutoTrackEvents, propertiesDic, token.appid);
+            ThinkingPCSDK.EnableAutoTrack(pcAutoTrackEvents, propertiesDic, appId);
         }
 
-        private void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, IAutoTrackEventCallback eventCallback)
+        private static void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, IAutoTrackEventCallback eventCallback, string appId)
         {
             ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS pcAutoTrackEvents = ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.NONE;
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
@@ -371,24 +342,28 @@ namespace ThinkingAnalytics.Wrapper
             {
                 pcAutoTrackEvents = pcAutoTrackEvents | ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH;
             }
-            this.mEventCallback = eventCallback;
-            ThinkingPCSDK.EnableAutoTrack(pcAutoTrackEvents, this);
+            mEventCallback = eventCallback;
+            ThinkingPCSDK.EnableAutoTrack(pcAutoTrackEvents, new ThinkingAnalyticsWrapper());
         }
 
-        private void setAutoTrackProperties(AUTO_TRACK_EVENTS autoTrackEvents, string properties)
+        private static void setAutoTrackProperties(AUTO_TRACK_EVENTS autoTrackEvents, string properties, string appId)
         {
             Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_INSTALL) != 0)
             {
-                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL, propertiesDic, token.appid);
+                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_INSTALL, propertiesDic, appId);
             }
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_START) != 0)
             {
-                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START, propertiesDic, token.appid);
+                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_START, propertiesDic, appId);
+            }
+            if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_END) != 0)
+            {
+                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_END, propertiesDic, appId);
             }
             if ((autoTrackEvents & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
             {
-                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH, propertiesDic, token.appid);
+                ThinkingPCSDK.SetAutoTrackProperties(ThinkingSDK.PC.Main.AUTO_TRACK_EVENTS.APP_CRASH, propertiesDic, appId);
             }
         }
 
@@ -406,7 +381,7 @@ namespace ThinkingAnalytics.Wrapper
             ThinkingPCSDK.CalibrateTimeWithNtp(ntpServer);
         }
 
-        private void enableThirdPartySharing(TAThirdPartyShareType shareType)
+        private static void enableThirdPartySharing(TAThirdPartyShareType shareType)
         {
             ThinkingSDKLogger.Print("Third Party Sharing is not support on PC");
         }

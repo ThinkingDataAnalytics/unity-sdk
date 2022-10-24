@@ -156,7 +156,7 @@ namespace ThinkingSDK.PC.Config
             mono.StartCoroutine(this.GetWithFORM(this.mConfigUrl,this.mToken,null,responseHandle));
         }
 
-        private IEnumerator GetWithFORM (string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle) {
+        private IEnumerator GetWithFORM (string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle) {
             yield return ThinkingSDKBaseRequest.GetWithFORM_2(this.mConfigUrl,this.mToken,param,responseHandle);
         }
     }

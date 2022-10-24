@@ -27,6 +27,10 @@ static pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
 ThinkingAnalyticsSDK* ta_getInstance(NSString *app_id) {
     ThinkingAnalyticsSDK *result = nil;
     
+    if (app_id == nil || [app_id isEqualToString:@""]) {
+        return [ThinkingAnalyticsSDK sharedInstance];
+    }
+
     pthread_rwlock_rdlock(&rwlock);
     if (light_instances[app_id] != nil) {
         result = light_instances[app_id];
@@ -94,13 +98,13 @@ void ta_enable_log(BOOL enable_log) {
 void ta_set_network_type(int type) {
     switch (type) {
         case NETWORK_TYPE_DEFAULT:
-            [[ThinkingAnalyticsSDK sharedInstance] setNetworkType:TDNetworkTypeDefault];
+            [ta_getInstance(nil) setNetworkType:TDNetworkTypeDefault];
             break;
         case NETWORK_TYPE_WIFI:
-            [[ThinkingAnalyticsSDK sharedInstance] setNetworkType:TDNetworkTypeOnlyWIFI];
+            [ta_getInstance(nil) setNetworkType:TDNetworkTypeOnlyWIFI];
             break;
         case NETWORK_TYPE_ALL:
-            [[ThinkingAnalyticsSDK sharedInstance] setNetworkType:TDNetworkTypeALL];
+            [ta_getInstance(nil) setNetworkType:TDNetworkTypeALL];
             break;
     }
 }
@@ -373,7 +377,7 @@ void ta_user_uniq_append_with_time(const char *app_id, const char *properties, l
 }
 
 const char *ta_get_device_id() {
-    NSString *distinct_id = [[ThinkingAnalyticsSDK sharedInstance] getDeviceId];
+    NSString *distinct_id = [ta_getInstance(nil) getDeviceId];
     return ta_strdup([distinct_id UTF8String]);
 }
 
@@ -426,10 +430,9 @@ void ta_opt_in_tracking(const char *app_id) {
     [ta_getInstance(app_id_string)  optInTracking];
 }
 
-void ta_create_light_instance(const char *app_id, const char *delegate_app_id) {
-    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+void ta_create_light_instance(const char *delegate_app_id) {
     NSString *delegate_app_id_string = delegate_app_id != NULL ? [NSString stringWithUTF8String:delegate_app_id] : nil;
-    ThinkingAnalyticsSDK *light = [ta_getInstance(app_id_string) createLightInstance];
+    ThinkingAnalyticsSDK *light = [ta_getInstance(nil) createLightInstance];
     
     pthread_rwlock_wrlock(&rwlock);
     if (light_instances == nil) {
@@ -444,12 +447,12 @@ void ta_enable_autoTrack(const char *app_id, int autoTrackEvents, const char *pr
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *properties_dict = nil;
     ta_convertToDictionary(properties, &properties_dict);
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents properties:properties_dict];
+    [ta_getInstance(app_id_string) enableAutoTrack: autoTrackEvents properties:properties_dict];
 }
 
 void ta_enable_autoTrack_with_callback(const char *app_id, int autoTrackEvents) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] enableAutoTrack: autoTrackEvents callback:^NSDictionary * _Nonnull(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
+    [ta_getInstance(app_id_string) enableAutoTrack: autoTrackEvents callback:^NSDictionary * _Nonnull(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
         NSMutableDictionary *callbackProperties = [NSMutableDictionary dictionaryWithDictionary:properties];
         [callbackProperties setObject:@(eventType) forKey:@"EventType"];
         NSData *jsonData = [NSJSONSerialization dataWithJSONObject:callbackProperties options:NSJSONWritingPrettyPrinted error:nil];
@@ -464,13 +467,12 @@ void ta_set_autoTrack_properties(const char *app_id, int autoTrackEvents, const 
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *properties_dict = nil;
     ta_convertToDictionary(properties, &properties_dict);
-    [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] setAutoTrackProperties: autoTrackEvents properties:properties_dict];
+    [ta_getInstance(app_id_string) setAutoTrackProperties: autoTrackEvents properties:properties_dict];
 }
 
-const char *ta_get_time_string(const char *app_id, long long time_stamp_millis) {
-    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+const char *ta_get_time_string(long long time_stamp_millis) {
     NSDate *time = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis / 1000.0];
-    NSString *time_string = [[ThinkingAnalyticsSDK sharedInstanceWithAppid:app_id_string] getTimeString:time];
+    NSString *time_string = [ta_getInstance(nil) getTimeString:time];
     return ta_strdup([time_string UTF8String]);
 }
 
@@ -484,5 +486,5 @@ void ta_calibrate_time_with_ntp(const char *ntp_server) {
 }
 
 void ta_enable_third_party_sharing(int share_type) {
-    [[ThinkingAnalyticsSDK sharedInstance] enableThirdPartySharing:share_type];
+    [ta_getInstance(nil) enableThirdPartySharing:share_type];
 }

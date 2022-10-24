@@ -1,98 +1,123 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Text;
-using System.Diagnostics;
-using System.Reflection;
 
-namespace ThinkingAnalytics.TaException
+namespace ThinkingAnalytics.TAException
 {
-    public interface TaExceptionHandler
-    {
-        void InvokeTaExceptionHandler(string eventName, Dictionary<string, object> properties);
-    }
-
     public class ThinkingSDKExceptionHandler
     {
 
-        public void SetTaExceptionHandler(TaExceptionHandler handler)
-        {
-            this.taExceptionHandler = handler;
-        }
-
-        private TaExceptionHandler taExceptionHandler;
-
         //是否退出程序当异常发生时
-        public bool IsQuitWhenException = false;
-    
-        public void RegisterTaExceptionHandler ()
-        {     
-            //注册异常处理委托
-            try {
-                #if UNITY_5
-                Application.logMessageReceived += _LogHandler;
-                #else
-                Application.RegisterLogCallback (_LogHandler);
-                #endif
-                AppDomain.CurrentDomain.UnhandledException += _UncaughtExceptionHandler;                
+        public static bool IsQuitWhenException = false;
+
+        //是否已注册异常捕获
+        public static bool IsRegistered = false;
+        private static IAutoTrackEventCallback mEventCallback;
+        private static Dictionary<string, object> mProperties;
+
+
+        public static void SetAutoTrackProperties(Dictionary<string, object> properties)
+        {
+            if (!(mProperties is Dictionary<string, object>))
+            {
+                mProperties = new Dictionary<string, object>();
             }
-            catch {
-                
+
+            foreach (var item in properties)
+            {
+                if (!mProperties.ContainsKey(item.Key))
+                {
+                    mProperties.Add(item.Key, item.Value);
+                }
             }
-            
         }
-    
-        public void UnregisterTaExceptionHandler ()
+
+        public static void RegisterTAExceptionHandler(IAutoTrackEventCallback eventCallback)
+        {
+            mEventCallback = eventCallback;
+            //注册异常处理委托
+            try
+            {
+                if (!IsRegistered)
+                {
+                    Application.logMessageReceived += _LogHandler;
+                    AppDomain.CurrentDomain.UnhandledException += _UncaughtExceptionHandler;
+                    IsRegistered = true;
+                }
+            }
+            catch
+            {
+            }            
+        }
+
+        public static void RegisterTAExceptionHandler(Dictionary<string, object> properties)
+        {
+            SetAutoTrackProperties(properties);
+            //注册异常处理委托
+            try
+            {
+                if (!IsRegistered)
+                {
+                    Application.logMessageReceived += _LogHandler;
+                    AppDomain.CurrentDomain.UnhandledException += _UncaughtExceptionHandler;
+                    IsRegistered = true;
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        public static void UnregisterTAExceptionHandler ()
         {
             //清除异常处理委托
-            try {
-                #if UNITY_5
+            try
+            {
                 Application.logMessageReceived -= _LogHandler;
-                #else
-                Application.RegisterLogCallback (null);
-                #endif
                 System.AppDomain.CurrentDomain.UnhandledException -= _UncaughtExceptionHandler;
             }
-            catch {
-                
+            catch
+            {
             }
         }
     
     
-        private void _LogHandler( string logString, string stackTrace, LogType type )
+        private static void _LogHandler( string logString, string stackTrace, LogType type )
         {
             if( type == LogType.Error || type == LogType.Exception || type == LogType.Assert )
             {
                 //发送异常日志
                 string reasonStr = "exception_type: " + type.ToString() + " <br> " + "exception_message: " + logString + " <br> " + "stack_trace: " + stackTrace + " <br> " ; 
                 Dictionary<string, object> properties = new Dictionary<string, object>(){
-                    // {ThinkingSDKConstant.CRASH_REASON, reasonStr}
                     {"#app_crashed_reason", reasonStr}
                 };
-
-                taExceptionHandler.InvokeTaExceptionHandler("ta_app_crash",properties);
+                properties = MergeProperties(properties);
+                ThinkingAnalyticsAPI.Track("ta_app_crash", properties);
 
                 //退出程序，bug反馈程序重启主程序
-                if( IsQuitWhenException )
+                if ( IsQuitWhenException )
                 {
                     Application.Quit();
                 }
             }
         }
 
-        private void _UncaughtExceptionHandler (object sender, System.UnhandledExceptionEventArgs args)
+        private static void _UncaughtExceptionHandler (object sender, System.UnhandledExceptionEventArgs args)
         {
-            if (args == null || args.ExceptionObject == null) {
+            if (args == null || args.ExceptionObject == null)
+            {
                 return;
             }
             
-            try {
-                if (args.ExceptionObject.GetType () != typeof(System.Exception)) {
+            try
+            {
+                if (args.ExceptionObject.GetType () != typeof(System.Exception))
+                {
                     return;
                 }
             }
-            catch {
+            catch
+            {
                 return;
             }
 
@@ -101,17 +126,45 @@ namespace ThinkingAnalytics.TaException
             //发送异常日志
             string reasonStr = "exception_type: " + e.GetType().Name + " <br> " + "exception_message: " + e.Message + " <br> " + "stack_trace: " + e.StackTrace + " <br> " ; 
             Dictionary<string, object> properties = new Dictionary<string, object>(){
-                // {ThinkingSDKConstant.CRASH_REASON, reasonStr}
                 {"#app_crashed_reason", reasonStr}
             };
-
-            taExceptionHandler.InvokeTaExceptionHandler("ta_app_crash",properties);
+            properties = MergeProperties(properties);
+            ThinkingAnalyticsAPI.Track("ta_app_crash", properties);
 
             //退出程序，bug反馈程序重启主程序
-            if( IsQuitWhenException )
+            if ( IsQuitWhenException )
             {
                 Application.Quit();
             }
+        }
+
+        private static Dictionary<string, object> MergeProperties(Dictionary<string, object> properties)
+        {
+
+            if (mEventCallback is IAutoTrackEventCallback)
+            {
+                Dictionary<string, object> callbackProperties = mEventCallback.AutoTrackEventCallback((int)AUTO_TRACK_EVENTS.APP_CRASH, properties);
+                foreach (var item in callbackProperties)
+                {
+                    if (!properties.ContainsKey(item.Key))
+                    {
+                        properties.Add(item.Key, item.Value);
+                    }
+                }
+            }
+
+            if (mProperties is Dictionary<string, object>)
+            {
+                foreach (var item in mProperties)
+                {
+                    if (!properties.ContainsKey(item.Key))
+                    {
+                        properties.Add(item.Key, item.Value);
+                    }
+                }
+            }
+
+            return properties;
         }
     }
 }

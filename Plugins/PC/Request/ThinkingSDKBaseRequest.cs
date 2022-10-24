@@ -24,15 +24,15 @@ namespace ThinkingSDK.PC.Request
         private string mURL;
         private IList<Dictionary<string, object>> mData;
 
-        public ThinkingSDKBaseRequest(string appid, string url, IList<Dictionary<string, object>> data)
+        public ThinkingSDKBaseRequest(string appId, string url, IList<Dictionary<string, object>> data)
         {
-            mAppid = appid;
+            mAppid = appId;
             mURL = url;
             mData = data;
         }
-        public ThinkingSDKBaseRequest(string appid, string url)
+        public ThinkingSDKBaseRequest(string appId, string url)
         {
-            mAppid = appid;
+            mAppid = appId;
             mURL = url;
         }
         public void SetData(IList<Dictionary<string, object>> data)
@@ -96,14 +96,14 @@ namespace ThinkingSDK.PC.Request
 
         abstract public IEnumerator SendData_2(ResponseHandle responseHandle, IList<Dictionary<string, object>> data);
 
-        //public static void postWithFORM(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle)
+        //public static void postWithFORM(string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle)
         //{
         //    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
         //    request.Method = "POST";
         //    request.ContentType = "application/x-www-form-urlencoded";
         //    request.ReadWriteTimeout = 30 * 1000;
         //    request.Timeout = 30 * 1000;
-        //    var postData = "appid=" + appid + "&source=server&dryRun=" + 0 + "&data=" + ThinkingSDKJSON.Serialize(param);
+        //    var postData = "appid=" + appId + "&source=server&dryRun=" + 0 + "&data=" + ThinkingSDKJSON.Serialize(param);
         //    ThinkingSDKLogger.Print(postData);
         //    byte[] data = Encoding.UTF8.GetBytes(postData);
         //    request.ContentLength = data.Length;
@@ -121,9 +121,9 @@ namespace ThinkingSDK.PC.Request
         //    }
         //}
 
-        // public static void GetWithFORM(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle, MonoBehaviour mono)
+        // public static void GetWithFORM(string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle, MonoBehaviour mono)
         // {
-        //     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "?appid=" + appid + "&data=" + ThinkingSDKJSON.Serialize(param));
+        //     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "?appid=" + appId + "&data=" + ThinkingSDKJSON.Serialize(param));
         //     request.Method = "GET";
         //     request.ContentType = "application/x-www-form-urlencoded";
         //     request.ReadWriteTimeout = 30 * 1000;
@@ -169,9 +169,9 @@ namespace ThinkingSDK.PC.Request
         //         }
         //     }  
         // }
-        public static IEnumerator GetWithFORM_2(string url, string appid, Dictionary<string, object> param, ResponseHandle responseHandle)
+        public static IEnumerator GetWithFORM_2(string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle)
         {
-            string uri = url + "?appid=" + appid;
+            string uri = url + "?appid=" + appId;
             if (param != null)
             {
                 uri = uri + "&data=" + ThinkingSDKJSON.Serialize(param);

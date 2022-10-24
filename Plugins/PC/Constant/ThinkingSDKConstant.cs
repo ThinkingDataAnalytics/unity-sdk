@@ -58,7 +58,7 @@ namespace ThinkingSDK.PC.Constant
         public static readonly string APP_BUNDLEID = "#bundle_id";
         //时区偏移
         public static readonly string ZONE_OFFSET = "#zone_offset";
-        //appid
+        //appId
         public static readonly string APPID = "#app_id";
         //单条数据唯一标识
         public static readonly string UUID = "#uuid";

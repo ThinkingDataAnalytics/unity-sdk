@@ -7,7 +7,7 @@
         "type": "git",
         "url": "https://github.com/ThinkingDataAnalytics/unity-sdk"
     },
-    "version": "2.4.1",
+    "version": "2.5.0",
     "unity": "2018.3",
     "license": "Apache V2",
     "author": "ThinkingData",

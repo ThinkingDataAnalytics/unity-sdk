@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.4.1
+    SDK VERSION:2.5.0
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -21,21 +21,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using ThinkingAnalytics.Utils;
 using ThinkingAnalytics.Wrapper;
 using UnityEngine;
-#if UNITY_EDITOR && UNITY_IOS
-using UnityEditor;
-using UnityEditor.Callbacks;
-using UnityEditor.iOS.Xcode;
-#endif
-using System.IO;
-using ThinkingAnalytics.TaException;
+using ThinkingAnalytics.TAException;
 using UnityEngine.SceneManagement;
-#if UNITY_IOS && !UNITY_EDITOR
-using System.Runtime.InteropServices;
-#endif
 
 namespace ThinkingAnalytics
 {
@@ -90,10 +80,7 @@ namespace ThinkingAnalytics
             EventType = Type.FIRST;
         }
         
-        /// <summary>
-        /// 设置用于检测是否首次的 ID，默认情况下会使用设备 ID
-        /// </summary>
-        /// <param name="firstCheckId">用于首次事件检测的 ID</param>
+        // 设置用于检测是否首次的 ID，默认情况下会使用设备 ID
         public void SetFirstCheckId(string firstCheckId)
         {
             ExtraId = firstCheckId;
@@ -130,88 +117,87 @@ namespace ThinkingAnalytics
     public class TDPresetProperties 
     {
         
-        public TDPresetProperties(Dictionary<string, object> properties) {
-            properties = TDEncodeDate(properties);
-            PresetProperties = properties;
-        }
-        private Dictionary<string, object> TDEncodeDate(Dictionary<string, object> properties) 
+        public TDPresetProperties(Dictionary<string, object> properties)
         {
-            Dictionary<string, object> mProperties  = new Dictionary<string, object>(); 
+            properties = TDEncodeDate(properties);
+            mPresetProperties = properties;
+        }
+        // 返回事件预置属性的Key以"#"开头，不建议直接作为用户属性使用
+        public Dictionary<string, object> ToEventPresetProperties()
+        {
+            return mPresetProperties;
+        }
+        public string AppVersion 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#app_version") ? mPresetProperties["#app_version"] : "");}
+        }
+		public string BundleId 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#bundle_id") ? mPresetProperties["#bundle_id"] : "");}
+        }
+		public string Carrier 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#carrier") ? mPresetProperties["#carrier"] : "");}
+        }
+		public string DeviceId
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#device_id") ? mPresetProperties["#device_id"] : "");}
+        }
+		public string DeviceModel 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#device_model") ? mPresetProperties["#device_model"] : "");}
+        }
+		public string Manufacturer 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#manufacturer") ? mPresetProperties["#manufacturer"] : "");}
+        }
+		public string NetworkType 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#network_type") ? mPresetProperties["#network_type"] : "");}
+        }
+		public string OS 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#os") ? mPresetProperties["#os"] : "");}
+        }
+		public string OSVersion 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#os_version") ? mPresetProperties["#os_version"] : "");}
+        }
+		public double ScreenHeight 
+        { 
+            get {return Convert.ToDouble(mPresetProperties.ContainsKey("#screen_height") ? mPresetProperties["#screen_height"] : 0);}
+        }
+		public double ScreenWidth 
+        { 
+            get {return Convert.ToDouble(mPresetProperties.ContainsKey("#screen_width") ? mPresetProperties["#screen_width"] : 0);}
+        }
+		public string SystemLanguage 
+        { 
+            get {return (string)(mPresetProperties.ContainsKey("#system_language") ? mPresetProperties["#system_language"] : "");}
+        }
+		public double ZoneOffset 
+        { 
+            get {return Convert.ToDouble(mPresetProperties.ContainsKey("#zone_offset") ? mPresetProperties["#zone_offset"] : 0);}
+        }
+
+		private Dictionary<string, object> mPresetProperties { get; set; }
+        private Dictionary<string, object> TDEncodeDate(Dictionary<string, object> properties)
+        {
+            Dictionary<string, object> mProperties = new Dictionary<string, object>();
             foreach (KeyValuePair<string, object> kv in properties)
             {
-                if (kv.Value is DateTime) 
+                if (kv.Value is DateTime)
                 {
-                    DateTime dateTime = (DateTime) kv.Value;
+                    DateTime dateTime = (DateTime)kv.Value;
                     mProperties.Add(kv.Key, dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture));
                 }
-                else 
+                else
                 {
                     mProperties.Add(kv.Key, kv.Value);
                 }
             }
             return mProperties;
-        }
-
-		public string AppVersion 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#app_version") ? PresetProperties["#app_version"] : "");}
-        }
-		public string BundleId 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#bundle_id") ? PresetProperties["#bundle_id"] : "");}
-        }
-		public string Carrier 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#carrier") ? PresetProperties["#carrier"] : "");}
-        }
-		public string DeviceId
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#device_id") ? PresetProperties["#device_id"] : "");}
-        }
-		public string DeviceModel 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#device_model") ? PresetProperties["#device_model"] : "");}
-        }
-		public string Manufacturer 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#manufacturer") ? PresetProperties["#manufacturer"] : "");}
-        }
-		public string NetworkType 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#network_type") ? PresetProperties["#network_type"] : "");}
-        }
-		public string OS 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#os") ? PresetProperties["#os"] : "");}
-        }
-		public string OSVersion 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#os_version") ? PresetProperties["#os_version"] : "");}
-        }
-		public double ScreenHeight 
-        { 
-            get {return Convert.ToDouble(PresetProperties.ContainsKey("#screen_height") ? PresetProperties["#screen_height"] : 0);}
-        }
-		public double ScreenWidth 
-        { 
-            get {return Convert.ToDouble(PresetProperties.ContainsKey("#screen_width") ? PresetProperties["#screen_width"] : 0);}
-        }
-		public string SystemLanguage 
-        { 
-            get {return (string)(PresetProperties.ContainsKey("#system_language") ? PresetProperties["#system_language"] : "");}
-        }
-		public double ZoneOffset 
-        { 
-            get {return Convert.ToDouble(PresetProperties.ContainsKey("#zone_offset") ? PresetProperties["#zone_offset"] : 0);}
-        }
-		private Dictionary<string, object> PresetProperties { get; set; }
-
-        // 返回事件预置属性的Key以"#"开头，不建议直接作为用户属性使用
-        public Dictionary<string, object> ToEventPresetProperties()
-        {
-            return PresetProperties;
-        }
-         
+        }         
     }
 
     // 自动采集事件类型
@@ -236,7 +222,7 @@ namespace ThinkingAnalytics
     }
 
     [DisallowMultipleComponent]
-    public class ThinkingAnalyticsAPI : MonoBehaviour, TaExceptionHandler
+    public class ThinkingAnalyticsAPI : MonoBehaviour
     {
         #region settings
         [System.Serializable]
@@ -334,92 +320,34 @@ namespace ThinkingAnalytics
 
         #endregion
 
-        private static ThinkingAnalyticsAPI taAPIInstance;
-
-        //配置Xcode选项
-        #if UNITY_EDITOR && UNITY_IOS
-        //[PostProcessBuild]
-        [PostProcessBuildAttribute(88)]
-        public static void onPostProcessBuild(BuildTarget target, string targetPath)
-        {            
-            if (target != BuildTarget.iOS)
-            {
-                Debug.LogWarning("Target is not iPhone. XCodePostProcess will not run");
-                return;
-            }
-        
-            string projPath = Path.GetFullPath(targetPath) + "/Unity-iPhone.xcodeproj/project.pbxproj";
-
-            UnityEditor.iOS.Xcode.PBXProject proj = new UnityEditor.iOS.Xcode.PBXProject();
-            proj.ReadFromFile(projPath);
-            #if UNITY_2019_3_OR_NEWER
-            string targetGuid = proj.GetUnityFrameworkTargetGuid();
-            #else
-            string targetGuid = proj.TargetGuidByName(PBXProject.GetUnityTargetName());
-            #endif
-
-            //Build Property
-            proj.SetBuildProperty(targetGuid, "ENABLE_BITCODE", "NO");//BitCode  NO
-            proj.SetBuildProperty(targetGuid, "GCC_ENABLE_OBJC_EXCEPTIONS", "YES");//Enable Objective-C Exceptions
-
-            string[] headerSearchPathsToAdd = { "$(SRCROOT)/Libraries/Plugins/iOS/ThinkingSDK/Source/main", "$(SRCROOT)/Libraries/Plugins/iOS/ThinkingSDK/Source/common" };
-            proj.UpdateBuildProperty(targetGuid, "HEADER_SEARCH_PATHS", headerSearchPathsToAdd, null);// Header Search Paths
-
-            //Add Frameworks
-            proj.AddFrameworkToProject(targetGuid,"WebKit.framework", true);
-            proj.AddFrameworkToProject(targetGuid,"CoreTelephony.framework", true);
-            proj.AddFrameworkToProject(targetGuid,"SystemConfiguration.framework", true);
-            proj.AddFrameworkToProject(targetGuid,"Security.framework", true);
-            proj.AddFrameworkToProject(targetGuid,"UserNotifications.framework", true);
-
-            //Add Lib
-            proj.AddFileToBuild(targetGuid, proj.AddFile("usr/lib/libsqlite3.tbd", "libsqlite3.tbd", PBXSourceTree.Sdk));
-            proj.AddFileToBuild(targetGuid, proj.AddFile("usr/lib/libz.tbd", "libz.tbd", PBXSourceTree.Sdk));
-
-            proj.WriteToFile (projPath);
-
-            //Info.plist
-            //禁用预置属性
-            string plistPath = Path.Combine(targetPath, "Info.plist");
-            PlistDocument plist = new PlistDocument();
-            plist.ReadFromFile(plistPath);
-            plist.root.CreateArray("TDDisPresetProperties");
-            foreach (string item in TD_PublicConfig.DisPresetProperties)
-            {
-                plist.root["TDDisPresetProperties"].AsArray().AddString(item);
-            }
-            plist.WriteToFile(plistPath);            
-        }        
-        #endif
-
         /// <summary>
         /// 是否打开日志log
         /// </summary>
         /// <param name="enable">允许打印日志</param>
         public static void EnableLog(bool enable, string appId = "")
         {
-            if (tracking_enabled)
+            if (sThinkingAnalyticsAPI != null)
             {
-                taAPIInstance.enableLog = enable;
-                TD_Log.EnableLog(taAPIInstance.enableLog);
-                ThinkingAnalyticsWrapper.EnableLog(taAPIInstance.enableLog);
+                sThinkingAnalyticsAPI.enableLog = enable;
+                TD_Log.EnableLog(enable);
+                ThinkingAnalyticsWrapper.EnableLog(enable);
             }
         }
         /// <summary>
         /// 设置自定义访客 ID，用于替换系统生成的访客 ID
         /// </summary>
-        /// <param name="FIRSTId">访客 ID</param>
+        /// <param name="firstId">访客 ID</param>
         /// <param name="appId">项目 ID(可选)</param>
-        public static void Identify(string FIRSTId, string appId = "")
+        public static void Identify(string firstId, string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Identify(FIRSTId);
+                ThinkingAnalyticsWrapper.Identify(firstId, appId);
             }
             else
             {
                 System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
-                object[] parameters = new object[] { FIRSTId, appId };
+                object[] parameters = new object[] { firstId, appId };
                 eventCaches.Add(new Dictionary<string, object>() {
                     { "method", method},
                     { "parameters", parameters}
@@ -436,7 +364,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                return getInstance(appId).GetDistinctId();
+                return ThinkingAnalyticsWrapper.GetDistinctId(appId);
             }
             return null;
         }
@@ -450,7 +378,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Login(account);
+                ThinkingAnalyticsWrapper.Login(account, appId);
             }
             else
             {
@@ -471,28 +399,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Logout();
-            }
-            else
-            {
-                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
-                object[] parameters = new object[] { appId };
-                eventCaches.Add(new Dictionary<string, object>() {
-                    { "method", method},
-                    { "parameters", parameters}
-                });
-            }
-        }
-
-        /// <summary>
-        /// 主动触发上报缓存事件到服务器. 
-        /// </summary>
-        /// <param name="appId">项目 ID(可选)</param>
-        public static void Flush(string appId = "")
-        {
-            if (tracking_enabled)
-            {
-                getInstance(appId).Flush();
+                ThinkingAnalyticsWrapper.Logout(appId);
             }
             else
             {
@@ -508,6 +415,8 @@ namespace ThinkingAnalytics
         /// <summary>
         /// 开启自动采集功能.
         /// </summary>
+        /// <param name="events">自动采集事件</param>
+        /// <param name="properties">自动采集事件扩展属性(可选)</param>
         /// <param name="appId">项目 ID(可选)</param>
         public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties = null, string appId = "")
         {
@@ -517,18 +426,11 @@ namespace ThinkingAnalytics
                 {
                     properties = new Dictionary<string, object>();
                 }
-                getInstance(appId).EnableAutoTrack(events, properties);
-
-                //C#异常捕获提前，包含所有端
+                ThinkingAnalyticsWrapper.EnableAutoTrack(events, properties, appId);
+                // C#异常捕获提前，包含所有端
                 if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && !TD_PublicConfig.DisableCSharpException)
                 {
-                    foreach (var item in properties.Keys)
-                    {
-                        taAPIInstance.autoTrackProperties[item] = properties[item];
-                    }
-                    ThinkingSDKExceptionHandler eHandler = new ThinkingSDKExceptionHandler();
-                    eHandler.SetTaExceptionHandler(taAPIInstance);
-                    eHandler.RegisterTaExceptionHandler();
+                    ThinkingSDKExceptionHandler.RegisterTAExceptionHandler(properties);
                 }
             }
             else
@@ -542,19 +444,21 @@ namespace ThinkingAnalytics
             }
         }
 
+        /// <summary>
+        /// 开启自动采集功能.
+        /// </summary>
+        /// <param name="events">自动采集事件</param>
+        /// <param name="eventCallback">自动采集事件回调，可动态设置扩展属性(可选)</param>
+        /// <param name="appId">项目 ID(可选)</param>
         public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback, string appId = "")
         {
             if (tracking_enabled)
             {
-                taAPIInstance.autoTrackEventCallback = eventCallback;
-                getInstance(appId).EnableAutoTrack(events, eventCallback);
-
-                //C#异常捕获提前，包含所有端
+                ThinkingAnalyticsWrapper.EnableAutoTrack(events, eventCallback, appId);
+                // C#异常捕获提前，包含所有端
                 if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && !TD_PublicConfig.DisableCSharpException)
                 {
-                    ThinkingSDKExceptionHandler eHandler = new ThinkingSDKExceptionHandler();
-                    eHandler.SetTaExceptionHandler(taAPIInstance);
-                    eHandler.RegisterTaExceptionHandler();
+                    ThinkingSDKExceptionHandler.RegisterTAExceptionHandler(eventCallback);
                 }
             }
             else
@@ -569,18 +473,21 @@ namespace ThinkingAnalytics
 
         }
 
+        /// <summary>
+        /// 设置自动采集扩展属性.
+        /// </summary>
+        /// <param name="events">自动采集事件</param>
+        /// <param name="properties">自动采集事件扩展属性</param>
+        /// <param name="appId">项目 ID(可选)</param>
         public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).SetAutoTrackProperties(events, properties);
-                //C#异常捕获提前，包含所有端
+                ThinkingAnalyticsWrapper.SetAutoTrackProperties(events, properties, appId);
+                // C#异常捕获提前，包含所有端
                 if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0 && !TD_PublicConfig.DisableCSharpException)
                 {
-                    foreach (var item in properties.Keys)
-                    {
-                        taAPIInstance.autoTrackProperties[item] = properties[item];
-                    }
+                    ThinkingSDKExceptionHandler.SetAutoTrackProperties(properties);
                 }
             }
             else
@@ -592,16 +499,6 @@ namespace ThinkingAnalytics
                     { "parameters", parameters}
                 });
             }
-        }
-
-        /// 异常捕获回调
-        public void InvokeTaExceptionHandler(string eventName, Dictionary<string, object> properties)
-        {
-            foreach (var item in autoTrackProperties.Keys)
-            {
-                properties[item] = autoTrackProperties[item];
-            }
-            Track(eventName, properties);
         }
 
         /// <summary>
@@ -624,7 +521,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Track(eventName, properties);
+                ThinkingAnalyticsWrapper.Track(eventName, properties, appId);
             }
             else
             {
@@ -638,7 +535,8 @@ namespace ThinkingAnalytics
         }
 
         /// <summary>
-        /// track 事件及事件属性，并指定 #event_time 属性. 该事件会先缓存在本地，达到触发上报条件或者主动调用 Flush 时会上报到服务器. 从 v1.3.0 开始，会考虑 date 的时区信息。支持 UTC 和 local 时区.
+        /// track 事件及事件属性，并指定 #event_time 属性. 该事件会先缓存在本地，达到触发上报条件或者主动调用 Flush 时会上报到服务器.
+        /// 从 v1.3.0 开始，会考虑 date 的时区信息。支持 UTC 和 local 时区.
         /// </summary>
         /// <param name="eventName">事件名称</param>
         /// <param name="properties">事件属性</param>
@@ -648,7 +546,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Track(eventName, properties, date);
+                ThinkingAnalyticsWrapper.Track(eventName, properties, date, appId);
             }
             else
             {
@@ -670,12 +568,33 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).Track(analyticsEvent);
+                ThinkingAnalyticsWrapper.Track(analyticsEvent, appId);
             }
             else
             {
                 System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
                 object[] parameters = new object[] { analyticsEvent, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
+        /// <summary>
+        /// 主动触发上报缓存事件到服务器. 
+        /// </summary>
+        /// <param name="appId">项目 ID(可选)</param>
+        public static void Flush(string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                ThinkingAnalyticsWrapper.Flush(appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { appId };
                 eventCaches.Add(new Dictionary<string, object>() {
                     { "method", method},
                     { "parameters", parameters}
@@ -719,7 +638,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).SetSuperProperties(superProperties);
+                ThinkingAnalyticsWrapper.SetSuperProperties(superProperties, appId);
             }
             else
             {
@@ -741,7 +660,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UnsetSuperProperty(property);
+                ThinkingAnalyticsWrapper.UnsetSuperProperty(property, appId);
             }
             else
             {
@@ -763,7 +682,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                return getInstance(appId).GetSuperProperties();
+                return ThinkingAnalyticsWrapper.GetSuperProperties(appId);
             }
             return null;
         }
@@ -776,7 +695,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).ClearSuperProperty();
+                ThinkingAnalyticsWrapper.ClearSuperProperty(appId);
             }
             else
             {
@@ -798,11 +717,33 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                Dictionary<string, object> properties = getInstance(appId).GetPresetProperties();
+                Dictionary<string, object> properties = ThinkingAnalyticsWrapper.GetPresetProperties(appId);
                 TDPresetProperties presetProperties = new TDPresetProperties(properties);
                 return presetProperties;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Sets the dynamic super properties.
+        /// </summary>
+        /// <param name="dynamicSuperProperties">Dynamic super properties interface.</param>
+        /// <param name="appId">App ID (optional).</param>
+        public static void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                ThinkingAnalyticsWrapper.SetDynamicSuperProperties(dynamicSuperProperties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { dynamicSuperProperties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
         }
 
         /// <summary>
@@ -814,7 +755,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).TimeEvent(eventName);
+                ThinkingAnalyticsWrapper.TimeEvent(eventName, appId);
             }
             else
             {
@@ -836,7 +777,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserSet(properties);
+                ThinkingAnalyticsWrapper.UserSet(properties, appId);
             }
             else
             {
@@ -859,7 +800,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserSet(properties, dateTime);
+                ThinkingAnalyticsWrapper.UserSet(properties, dateTime, appId);
             }
             else
             {
@@ -894,7 +835,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserUnset(properties);
+                ThinkingAnalyticsWrapper.UserUnset(properties, appId);
             }
             else
             {
@@ -918,7 +859,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserUnset(properties, dateTime);
+                ThinkingAnalyticsWrapper.UserUnset(properties, dateTime, appId);
             }
             else
             {
@@ -940,7 +881,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserSetOnce(properties);
+                ThinkingAnalyticsWrapper.UserSetOnce(properties, appId);
             }
             else
             {
@@ -964,7 +905,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserSetOnce(properties, dateTime);
+                ThinkingAnalyticsWrapper.UserSetOnce(properties, dateTime, appId);
             }
             else
             {
@@ -978,7 +919,6 @@ namespace ThinkingAnalytics
 
         }
 
-
         /// <summary>
         /// 对数值类用户属性进行累加. 如果该属性还未被设置，则会赋值 0 后再进行计算.
         /// </summary>
@@ -988,9 +928,9 @@ namespace ThinkingAnalytics
         public static void UserAdd(string property, object value, string appId = "")
         {
             Dictionary<string, object> properties = new Dictionary<string, object>()
-                {
-                    { property, value }
-                };
+            {
+                { property, value }
+            };
             UserAdd(properties, appId);
         }
 
@@ -1003,7 +943,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserAdd(properties);
+                ThinkingAnalyticsWrapper.UserAdd(properties, appId);
             }
             else
             {
@@ -1026,7 +966,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserAdd(properties, dateTime);
+                ThinkingAnalyticsWrapper.UserAdd(properties, dateTime, appId);
             }
             else
             {
@@ -1048,7 +988,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserAppend(properties);
+                ThinkingAnalyticsWrapper.UserAppend(properties, appId);
             }
             else
             {
@@ -1071,7 +1011,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserAppend(properties, dateTime);
+                ThinkingAnalyticsWrapper.UserAppend(properties, dateTime, appId);
             }
             else
             {
@@ -1093,7 +1033,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserUniqAppend(properties);
+                ThinkingAnalyticsWrapper.UserUniqAppend(properties, appId);
             }
             else
             {
@@ -1116,7 +1056,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserUniqAppend(properties, dateTime);
+                ThinkingAnalyticsWrapper.UserUniqAppend(properties, dateTime, appId);
             }
             else
             {
@@ -1137,7 +1077,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserDelete();
+                ThinkingAnalyticsWrapper.UserDelete(appId);
             }
             else
             {
@@ -1158,7 +1098,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).UserDelete(dateTime);
+                ThinkingAnalyticsWrapper.UserDelete(dateTime, appId);
             }
             else
             {
@@ -1180,7 +1120,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).SetNetworkType(networkType);
+                ThinkingAnalyticsWrapper.SetNetworkType(networkType);
             }
             else
             {
@@ -1201,32 +1141,9 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                return getInstance("").GetDeviceId();
+                return ThinkingAnalyticsWrapper.GetDeviceId();
             } 
             return null;
-        }
-
-        /// <summary>
-        /// Sets the dynamic super properties.
-        /// </summary>
-        /// <param name="dynamicSuperProperties">Dynamic super properties interface.</param>
-        /// <param name="appId">App ID (optional).</param>
-        public static void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appId = "")
-        {
-            if (tracking_enabled)
-            {
-                getInstance(appId).SetDynamicSuperProperties(dynamicSuperProperties);
-                taAPIInstance.dynamicSuperProperties = dynamicSuperProperties;
-            }
-            else
-            {
-                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
-                object[] parameters = new object[] { dynamicSuperProperties, appId };
-                eventCaches.Add(new Dictionary<string, object>() {
-                    { "method", method},
-                    { "parameters", parameters}
-                });
-            }
         }
 
         /// <summary>
@@ -1238,7 +1155,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(appId).SetTrackStatus(status);
+                ThinkingAnalyticsWrapper.SetTrackStatus(status, appId);
             }
             else
             {
@@ -1251,16 +1168,16 @@ namespace ThinkingAnalytics
             }
         }
 
-        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         /// <summary>
         /// 停止上报数据，并且清空本地缓存数据(未上报的数据、已设置的访客ID、账号ID、公共属性)
         /// </summary>
         /// <param name="appId">项目ID</param>
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         public static void OptOutTracking(string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).OptOutTracking();
+                ThinkingAnalyticsWrapper.OptOutTracking(appId);
             }
             else
             {
@@ -1273,16 +1190,16 @@ namespace ThinkingAnalytics
             }
         }
 
-        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         /// <summary>
         /// 停止上报数据，清空本地缓存数据，并且发送 user_del 到服务端.
         /// </summary>
         /// <param name="appId">项目ID</param>
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         public static void OptOutTrackingAndDeleteUser(string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).OptOutTrackingAndDeleteUser();
+                ThinkingAnalyticsWrapper.OptOutTrackingAndDeleteUser(appId);
             }
             else
             {
@@ -1295,16 +1212,16 @@ namespace ThinkingAnalytics
             }
         }
 
-        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         /// <summary>
         /// 恢复上报数据
         /// </summary>
         /// <param name="appId">项目ID</param>
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         public static void OptInTracking(string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).OptInTracking();
+                ThinkingAnalyticsWrapper.OptInTracking(appId);
             }
             else
             {
@@ -1317,17 +1234,17 @@ namespace ThinkingAnalytics
             }
         }
 
-        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         /// <summary>
         /// 暂停/恢复上报数据，本地缓存不会被清空
         /// </summary>
         /// <param name="enabled">是否打开上报数据</param>
         /// <param name="appId">项目ID</param>
+        [Obsolete("Method is deprecated, please use SetTrackStatus() instead.")]
         public static void EnableTracking(bool enabled, string appId = "")
         {
             if (tracking_enabled)
             {
-                getInstance(appId).EnableTracking(enabled);
+                ThinkingAnalyticsWrapper.EnableTracking(enabled, appId);
             }
             else
             {
@@ -1348,24 +1265,9 @@ namespace ThinkingAnalytics
         public static string CreateLightInstance(string appId = "") {
             if (tracking_enabled)
             {
-                if (string.IsNullOrEmpty(appId)) {
-                    appId = default_appid;
-                }
-                ThinkingAnalyticsWrapper lightInstance = getInstance(appId).CreateLightInstance();
-                instance_lock.EnterWriteLock();
-                try
-                {
-                    sInstances.Add(lightInstance.GetAppId(), lightInstance);
-                } finally
-                {
-                    instance_lock.ExitWriteLock();
-                }
-                return lightInstance.GetAppId();
+                return ThinkingAnalyticsWrapper.CreateLightInstance();
             }
-            else
-            {
-                return null;
-            }
+            return null;
         }
 
         /// <summary>
@@ -1379,7 +1281,6 @@ namespace ThinkingAnalytics
 
         /// <summary>
         /// 传入 NTP Server 地址校准 SDK 时间.
-        ///
         /// 您可以根据您用户所在地传入访问速度较快的 NTP Server 地址, 例如 time.asia.apple.com
         /// SDK 默认情况下会等待 3 秒，去获取时间偏移数据，并用该偏移校准之后的数据.
         /// 如果在 3 秒内未因网络原因未获得正确的时间偏移，本次应用运行期间将不会再校准时间.
@@ -1390,18 +1291,8 @@ namespace ThinkingAnalytics
             ThinkingAnalyticsWrapper.CalibrateTimeWithNtp(ntpServer);
         }
 
-        //多实例场景,设置默认的appid
-        public static void setDefaultAppid(string appId)
-        {
-            if (sInstances.Count > 0 && sInstances.ContainsKey(appId))
-            {
-                default_appid = appId;
-            }
-        }
-
         /// <summary>
         /// 三方数据共享
-        /// 
         /// 通过与三方系统共享TA账号体系，打通三方数据
         /// </summary>
         /// <param name="shareType">三方系统类型</param>
@@ -1410,7 +1301,7 @@ namespace ThinkingAnalytics
         {
             if (tracking_enabled)
             {
-                getInstance(default_appid).EnableThirdPartySharing(shareType);
+                ThinkingAnalyticsWrapper.EnableThirdPartySharing(shareType);
             }
             else
             {
@@ -1422,8 +1313,6 @@ namespace ThinkingAnalytics
                 });
             }
         }
-
-        #region internal
 
         /// <summary>
         /// 初始化 Thinking Analytics SDK
@@ -1453,70 +1342,48 @@ namespace ThinkingAnalytics
         /// 初始化 Thinking Analytics SDK
         /// </summary>
         /// <param name="token">多项目配置，详情参见 ThinkingAnalyticsAPI.Token</param>
-        public static void StartThinkingAnalytics(Token[] tokens = null) 
+        public static void StartThinkingAnalytics(Token[] tokens = null)
         {
             #if DISABLE_TA
             tracking_enabled = false;
             #else
             tracking_enabled = true;
             #endif
-            TD_Log.EnableLog(taAPIInstance.enableLog);
-            ThinkingAnalyticsWrapper.SetVersionInfo(TD_PublicConfig.LIB_VERSION);
 
             if (tracking_enabled)
             {
                 TD_PublicConfig.GetPublicConfig();
+                TD_Log.EnableLog(sThinkingAnalyticsAPI.enableLog);
+                ThinkingAnalyticsWrapper.EnableLog(sThinkingAnalyticsAPI.enableLog);
+                ThinkingAnalyticsWrapper.SetVersionInfo(TD_PublicConfig.LIB_VERSION);
                 if (tokens == null)
                 {
-                    tokens = taAPIInstance.tokens;
+                    tokens = sThinkingAnalyticsAPI.tokens;
                 }
-                default_appid = tokens[0].appid.Replace(" ", "");
-                instance_lock.EnterWriteLock();
                 try
                 {
-                    ThinkingAnalyticsWrapper.EnableLog(taAPIInstance.enableLog);
-                    for (int i=0; i<tokens.Length; i++)
+                    for (int i = 0; i < tokens.Length; i++)
                     {
                         Token token = tokens[i];
                         if (!string.IsNullOrEmpty(token.appid))
                         {
-                            if (sInstances.ContainsKey(token.appid))
-                            {
-                                TD_Log.d("ThinkingAnalytics is repeated start with appId: "+token.appid);
-                            }
-                            else 
-                            {
-                                token.appid = token.appid.Replace(" ", "");
-                                TD_Log.d("ThinkingAnalytics start with appId: " + token.appid + ", serverUrl: " + token.serverUrl + ", mode: " + token.mode);
-                                ThinkingAnalyticsWrapper wrapper = new ThinkingAnalyticsWrapper(token, taAPIInstance);
-                                wrapper.SetNetworkType(taAPIInstance.networkType);
-                                sInstances.Add(token.appid, wrapper);
-                            }
+                            token.appid = token.appid.Replace(" ", "");
+                            TD_Log.d("ThinkingAnalytics start with APPID: " + token.appid + ", SERVERURL: " + token.serverUrl + ", MODE: " + token.mode);
+                            ThinkingAnalyticsWrapper.ShareInstance(token, sThinkingAnalyticsAPI);
+                            ThinkingAnalyticsWrapper.SetNetworkType(sThinkingAnalyticsAPI.networkType);
                         }
                     }
                 }
-                finally
+                catch
                 {
-                    instance_lock.ExitWriteLock();
-                }
-                if (sInstances.Count == 0)
-                {
-                    tracking_enabled = false;
                 }
             }
 
             //上报缓存事件
             FlushEventCaches();
-
-            #if UNITY_IOS && !UNITY_EDITOR //iOS动态回调
-            //设置回调托管函数指针
-            ResultHandler handler = new ResultHandler(resultHandler);
-            IntPtr handlerPointer = Marshal.GetFunctionPointerForDelegate(handler);
-            //调用OC的方法，将C#的回调方法函数指针传给OC
-            RegisterRecieveGameCallback(handlerPointer);
-            #endif //iOS动态回调
         }
 
+        #region internal
         private static void FlushEventCaches()
         {
             List<Dictionary<string, object>> tmpEventCaches = new List<Dictionary<string, object>>(eventCaches);
@@ -1532,22 +1399,20 @@ namespace ThinkingAnalytics
             }
         }
 
-        void Awake()
+        private void Awake()
         {
-            taAPIInstance = this;
-
-            if (TA_instance == null)
+            if (sThinkingAnalyticsAPI == null)
             {
-                DontDestroyOnLoad(taAPIInstance.gameObject);
-                TA_instance = taAPIInstance;
+                sThinkingAnalyticsAPI = this;
+                DontDestroyOnLoad(gameObject);
             } 
             else
             {
-                Destroy(taAPIInstance.gameObject);
+                Destroy(gameObject);
                 return;
             }
 
-            if (startManually == false) 
+            if (this.startManually == false) 
             {
                 ThinkingAnalyticsAPI.StartThinkingAnalytics();
             }
@@ -1557,79 +1422,9 @@ namespace ThinkingAnalytics
         {
         }
 
-#if UNITY_IOS && !UNITY_EDITOR //iOS动态回调
-        //声明一个OC的注册回调方法函数指针的函数方法，每一个参数都是函数指针
-        [DllImport("__Internal")]
-        public static extern void RegisterRecieveGameCallback
-        (
-            IntPtr handlerPointer
-        );    
-
-        //先声明方法、delegate修饰标记是回调方法
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate string ResultHandler(string type, string jsonData);
-
-        //实现回调方法 MonoPInvokeCallback修饰会让OC通过函数指针回调此方法
-        [AOT.MonoPInvokeCallback(typeof(ResultHandler))]
-        static string resultHandler(string type, string jsonData) 
-        {
-            if (type == "AutoTrackProperties")
-            {
-                if (taAPIInstance.autoTrackEventCallback != null)
-                {
-                    Dictionary<string, object>properties = TD_MiniJSON.Deserialize(jsonData);
-                    int eventType = Convert.ToInt32(properties["EventType"]);
-                    properties.Remove("EventType");
-                    Dictionary<string, object>autoTrackProperties = taAPIInstance.autoTrackEventCallback.AutoTrackEventCallback(eventType, properties);
-                    return TD_MiniJSON.Serialize(autoTrackProperties);
-                }
-            } 
-            else if (type == "DynamicSuperProperties")
-            {
-                if (taAPIInstance.dynamicSuperProperties != null)
-                {
-                    Dictionary<string, object>dynamicSuperProperties = taAPIInstance.dynamicSuperProperties.GetDynamicSuperProperties();
-                    return TD_MiniJSON.Serialize(dynamicSuperProperties);
-                }
-            }
-            return "{}";
-        }
-#endif //iOS动态回调
-
-        private static List<Dictionary<string, object>> eventCaches = new List<Dictionary<string, object>>();
-        private IDynamicSuperProperties dynamicSuperProperties;
-        private IAutoTrackEventCallback autoTrackEventCallback;
-        private Dictionary<string, object> autoTrackProperties = new Dictionary<string, object>();
-        private static ThinkingAnalyticsAPI TA_instance;
-        private static string default_appid; // 如果用户调用接口时不指定项目 ID，默认使用第一个项目 ID
+        private static ThinkingAnalyticsAPI sThinkingAnalyticsAPI;
         private static bool tracking_enabled = false;
-        private static ReaderWriterLockSlim instance_lock = new ReaderWriterLockSlim();
-        private static readonly Dictionary<string, ThinkingAnalyticsWrapper> sInstances = 
-            new Dictionary<string, ThinkingAnalyticsWrapper>();
-
-        private static ThinkingAnalyticsWrapper getInstance(string appid)
-        {
-            instance_lock.EnterReadLock();
-            try
-            {
-                if (sInstances.Count > 0)
-                {
-                    if (sInstances.ContainsKey(appid)) 
-                    {
-                        return sInstances[appid];
-                    } 
-                    return sInstances[default_appid];
-                } 
-                else 
-                {
-                    TD_Log.d("Please initialize ThinkingAnalytics SDK");
-                    return null;
-                }
-            } finally
-            {
-                instance_lock.ExitReadLock();
-            }
-        }
+        private static List<Dictionary<string, object>> eventCaches = new List<Dictionary<string, object>>();
         #endregion
     }
 }

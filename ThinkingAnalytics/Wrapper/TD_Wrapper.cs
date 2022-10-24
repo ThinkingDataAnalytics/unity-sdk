@@ -7,22 +7,20 @@ namespace ThinkingAnalytics.Wrapper
 {
     public partial class ThinkingAnalyticsWrapper
     {
-        public MonoBehaviour taMono;
-        public readonly ThinkingAnalyticsAPI.Token token;
-        private IDynamicSuperProperties dynamicSuperProperties;
-        private IAutoTrackEventCallback autoTrackEventCallback;
+        public static MonoBehaviour sMono;
+        private static IDynamicSuperProperties mDynamicSuperProperties;
+        private static IAutoTrackEventCallback mAutoTrackEventCallback;
 
         private static System.Random rnd = new System.Random();
 
-        private string serilize<T>(Dictionary<string, T> data) {
+        private static string serilize<T>(Dictionary<string, T> data) {
             return TD_MiniJSON.Serialize(data, getTimeString);
         }
 
-        public ThinkingAnalyticsWrapper(ThinkingAnalyticsAPI.Token token, MonoBehaviour mono, bool initRequired = true)
+        public static void ShareInstance(ThinkingAnalyticsAPI.Token token, MonoBehaviour mono, bool initRequired = true)
         {
-            this.taMono = mono;
-            this.token = token;
-            if (initRequired) init();
+            sMono = mono;
+            if (initRequired) init(token);
         }
 
         public static void EnableLog(bool enable)
@@ -35,50 +33,50 @@ namespace ThinkingAnalytics.Wrapper
             setVersionInfo("Unity", version);
         }
 
-        public void Identify(string uniqueId)
+        public static void Identify(string uniqueId, string appId)
         {
-            identify(uniqueId);
+            identify(uniqueId, appId);
         }
 
-        public string GetDistinctId()
+        public static string GetDistinctId(string appId)
         {
-            return getDistinctId();
+            return getDistinctId(appId);
         }
 
-        public void Login(string accountId)
+        public static void Login(string accountId, string appId)
         {
-            login(accountId);
+            login(accountId, appId);
         }
 
-        public void Logout()
+        public static void Logout(string appId)
         {
-            logout();
+            logout(appId);
         }
 
-        public void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
         {
-            enableAutoTrack(events, serilize(properties));
+            enableAutoTrack(events, serilize(properties), appId);
         }
 
-        public void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback)
+        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback, string appId)
         {
-            this.autoTrackEventCallback = eventCallback;
-            enableAutoTrack(events, eventCallback);
+            mAutoTrackEventCallback = eventCallback;
+            enableAutoTrack(events, eventCallback, appId);
         }
 
-        public void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
         {
-            setAutoTrackProperties(events, serilize(properties));
+            setAutoTrackProperties(events, serilize(properties), appId);
         }
 
-        private string getFinalEventProperties(Dictionary<string, object> properties)
+        private static string getFinalEventProperties(Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckProperties(properties);
 
-            if (null != dynamicSuperProperties)
+            if (null != mDynamicSuperProperties)
             {
                 Dictionary<string, object> finalProperties = new Dictionary<string, object>();
-                TD_PropertiesChecker.MergeProperties(dynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
+                TD_PropertiesChecker.MergeProperties(mDynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
                 TD_PropertiesChecker.MergeProperties(properties, finalProperties);
                 return serilize(finalProperties);
             }
@@ -88,19 +86,19 @@ namespace ThinkingAnalytics.Wrapper
             }
 
         }
-        public void Track(string eventName, Dictionary<string, object> properties)
+        public static void Track(string eventName, Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckString(eventName);
-            track(eventName, getFinalEventProperties(properties));
+            track(eventName, getFinalEventProperties(properties), appId);
         }
 
-        public void Track(string eventName, Dictionary<string, object> properties, DateTime datetime)
+        public static void Track(string eventName, Dictionary<string, object> properties, DateTime datetime, string appId)
         {
             TD_PropertiesChecker.CheckString(eventName);
-            track(eventName, getFinalEventProperties(properties), datetime);
+            track(eventName, getFinalEventProperties(properties), datetime, appId);
         }
 
-        public void Track(ThinkingAnalyticsEvent taEvent)
+        public static void Track(ThinkingAnalyticsEvent taEvent, string appId)
         {
             if (null == taEvent || null == taEvent.EventType)
             {
@@ -114,183 +112,178 @@ namespace ThinkingAnalytics.Wrapper
             }
             TD_PropertiesChecker.CheckString(taEvent.EventName);
             TD_PropertiesChecker.CheckProperties(taEvent.Properties);
-            track(taEvent);
+            track(taEvent, appId);
         }
 
-        public void SetSuperProperties(Dictionary<string, object> superProperties)
+        public static void SetSuperProperties(Dictionary<string, object> superProperties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(superProperties);
-            setSuperProperties(serilize(superProperties));
+            setSuperProperties(serilize(superProperties), appId);
         }
 
-        public void UnsetSuperProperty(string superPropertyName)
+        public static void UnsetSuperProperty(string superPropertyName, string appId)
         {
             TD_PropertiesChecker.CheckString(superPropertyName);
-            unsetSuperProperty(superPropertyName);
+            unsetSuperProperty(superPropertyName, appId);
         }
 
-        public void ClearSuperProperty()
+        public static void ClearSuperProperty(string appId)
         {
-            clearSuperProperty();
+            clearSuperProperty(appId);
         }
 
 
-        public void TimeEvent(string eventName)
+        public static void TimeEvent(string eventName, string appId)
         {
             TD_PropertiesChecker.CheckString(eventName);
-            timeEvent(eventName);
+            timeEvent(eventName, appId);
         }
 
-        public Dictionary<string, object> GetSuperProperties()
+        public static Dictionary<string, object> GetSuperProperties(string appId)
         {
-            return getSuperProperties();
+            return getSuperProperties(appId);
         }
 
-        public Dictionary<string, object> GetPresetProperties()
+        public static Dictionary<string, object> GetPresetProperties(string appId)
         {
-            return getPresetProperties();
+            return getPresetProperties(appId);
         }
 
-        public void UserSet(Dictionary<string, object> properties)
-        {
-            TD_PropertiesChecker.CheckProperties(properties);
-            userSet(serilize(properties));
-        }
-
-        public void UserSet(Dictionary<string, object> properties, DateTime dateTime)
+        public static void UserSet(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSet(serilize(properties), dateTime);
+            userSet(serilize(properties), appId);
         }
 
-        public void UserSetOnce(Dictionary<string, object> properties)
+        public static void UserSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSetOnce(serilize(properties));
+            userSet(serilize(properties), dateTime, appId);
         }
 
-        public void UserSetOnce(Dictionary<string, object> properties, DateTime dateTime)
+        public static void UserSetOnce(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSetOnce(serilize(properties), dateTime);
+            userSetOnce(serilize(properties), appId);
         }
 
-        public void UserUnset(List<string> properties)
+        public static void UserSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userUnset(properties);
+            userSetOnce(serilize(properties), dateTime, appId);
         }
 
-        public void UserUnset(List<string> properties, DateTime dateTime)
+        public static void UserUnset(List<string> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userUnset(properties, dateTime);
+            userUnset(properties, appId);
         }
 
-        public void UserAdd(Dictionary<string, object> properties)
+        public static void UserUnset(List<string> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAdd(serilize(properties));
+            userUnset(properties, dateTime, appId);
         }
 
-        public void UserAdd(Dictionary<string, object> properties, DateTime dateTime)
+        public static void UserAdd(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAdd(serilize(properties), dateTime);
+            userAdd(serilize(properties), appId);
         }
 
-        public void UserAppend(Dictionary<string, object> properties)
+        public static void UserAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAppend(serilize(properties));
+            userAdd(serilize(properties), dateTime, appId);
         }
 
-        public void UserAppend(Dictionary<string, object> properties, DateTime dateTime)
+        public static void UserAppend(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAppend(serilize(properties), dateTime);
+            userAppend(serilize(properties), appId);
         }
 
-        public void UserUniqAppend(Dictionary<string, object> properties) 
+        public static void UserAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userUniqAppend(serilize(properties));
+            userAppend(serilize(properties), dateTime, appId);
         }
 
-        public void UserUniqAppend(Dictionary<string, object> properties, DateTime dateTime) 
+        public static void UserUniqAppend(Dictionary<string, object> properties, string appId) 
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userUniqAppend(serilize(properties), dateTime);
+            userUniqAppend(serilize(properties), appId);
         }
 
-        public void UserDelete()
+        public static void UserUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId) 
         {
-            userDelete();
+            TD_PropertiesChecker.CheckProperties(properties);
+            userUniqAppend(serilize(properties), dateTime, appId);
         }
 
-        public void UserDelete(DateTime dateTime)
+        public static void UserDelete(string appId)
         {
-            userDelete(dateTime);
+            userDelete(appId);
         }
 
-        public void Flush()
+        public static void UserDelete(DateTime dateTime, string appId)
         {
-            flush();
+            userDelete(dateTime, appId);
         }
 
-        public void SetNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
+        public static void Flush(string appId)
+        {
+            flush(appId);
+        }
+
+        public static void SetNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
         {
             setNetworkType(networkType);
         }
 
-        public string GetDeviceId()
+        public static string GetDeviceId()
         {
             return getDeviceId();
         }
 
-        public void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties)
+        public static void SetDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appId)
         {
             if (!TD_PropertiesChecker.CheckProperties(dynamicSuperProperties.GetDynamicSuperProperties()))
             {
-                TD_Log.d("TA.Wrapper(" + token.appid + ") - Cannot set dynamic super properties due to invalid properties.");
+                TD_Log.d("TA.Wrapper(" + appId + ") - Cannot set dynamic super properties due to invalid properties.");
             }
-            this.dynamicSuperProperties = dynamicSuperProperties;
-            setDynamicSuperProperties(dynamicSuperProperties);
+            mDynamicSuperProperties = dynamicSuperProperties;
+            setDynamicSuperProperties(dynamicSuperProperties, appId);
         }
 
-        public void SetTrackStatus(TA_TRACK_STATUS status)
+        public static void SetTrackStatus(TA_TRACK_STATUS status, string appId)
         {
-            setTrackStatus(status);
+            setTrackStatus(status, appId);
         }
 
-        public void OptOutTracking()
+        public static void OptOutTracking(string appId)
         {
-            optOutTracking();
+            optOutTracking(appId);
         }
 
-        public void OptOutTrackingAndDeleteUser()
+        public static void OptOutTrackingAndDeleteUser(string appId)
         {
-            optOutTrackingAndDeleteUser();
+            optOutTrackingAndDeleteUser(appId);
         }
 
-        public void OptInTracking()
+        public static void OptInTracking(string appId)
         {
-            optInTracking();
+            optInTracking(appId);
         }
 
-        public void EnableTracking(bool enabled)
+        public static void EnableTracking(bool enabled, string appId)
         {
-            enableTracking(enabled);
+            enableTracking(enabled, appId);
         }
 
-        public ThinkingAnalyticsWrapper CreateLightInstance()
+        public static string CreateLightInstance()
         {
-            return createLightInstance(new ThinkingAnalyticsAPI.Token(rnd.Next().ToString(), token.serverUrl, token.mode, token.timeZone, token.timeZoneId));
-        }
-
-        internal string GetAppId()
-        {
-            return token.appid;
+            return createLightInstance();
         }
 
         public static void CalibrateTime(long timestamp)
@@ -303,7 +296,7 @@ namespace ThinkingAnalytics.Wrapper
             calibrateTimeWithNtp(ntpServer);
         }
 
-        public void EnableThirdPartySharing(TAThirdPartyShareType shareType)
+        public static void EnableThirdPartySharing(TAThirdPartyShareType shareType)
         {
             enableThirdPartySharing(shareType);
         }

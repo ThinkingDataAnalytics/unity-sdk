@@ -13,10 +13,10 @@ namespace ThinkingSDK.PC.Request
 {
     public class ThinkingSDKNormalRequest:ThinkingSDKBaseRequest
     {
-        public ThinkingSDKNormalRequest(string appid, string url, IList<Dictionary<string, object>> data) :base(appid,url,data)
+        public ThinkingSDKNormalRequest(string appId, string url, IList<Dictionary<string, object>> data) :base(appId, url,data)
         {
         }
-        public ThinkingSDKNormalRequest(string appid, string url) : base(appid, url)
+        public ThinkingSDKNormalRequest(string appId, string url) : base(appId, url)
         {
         }
 

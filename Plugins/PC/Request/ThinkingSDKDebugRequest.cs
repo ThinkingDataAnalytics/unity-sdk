@@ -20,11 +20,11 @@ namespace ThinkingSDK.PC.Request
         {
             mDryRun = dryRun;
         }
-        public ThinkingSDKDebugRequest(string appid, string url, IList<Dictionary<string, object>> data):base(appid,url,data)
+        public ThinkingSDKDebugRequest(string appId, string url, IList<Dictionary<string, object>> data):base(appId,url,data)
         {
             
         }
-        public ThinkingSDKDebugRequest(string appid, string url) : base(appid, url)
+        public ThinkingSDKDebugRequest(string appId, string url) : base(appId, url)
         {
         }
 
