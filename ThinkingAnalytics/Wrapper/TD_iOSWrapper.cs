@@ -104,7 +104,7 @@ namespace ThinkingAnalytics.Wrapper
         private static void init(ThinkingAnalyticsAPI.Token token)
         {
             registerRecieveGameCallback();
-            ta_start(token.appid, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.instanceName);
+            ta_start(token.appid, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.GetInstanceName());
         }
 
         private static void identify(string uniqueId, string appId)

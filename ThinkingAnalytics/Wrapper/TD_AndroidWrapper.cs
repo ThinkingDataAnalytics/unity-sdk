@@ -90,9 +90,9 @@ namespace ThinkingAnalytics.Wrapper
             }
             AndroidJavaObject context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"); //获得Context
             AndroidJavaObject config = null;
-            if (!string.IsNullOrEmpty(token.instanceName))
+            if (!string.IsNullOrEmpty(token.GetInstanceName()))
             {
-                config = configClass.CallStatic<AndroidJavaObject>("getInstance", context, token.appid, token.serverUrl, token.instanceName);
+                config = configClass.CallStatic<AndroidJavaObject>("getInstance", context, token.appid, token.serverUrl, token.GetInstanceName());
             }
             else
             {
