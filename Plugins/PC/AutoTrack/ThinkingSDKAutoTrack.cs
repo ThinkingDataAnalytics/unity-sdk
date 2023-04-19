@@ -116,6 +116,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
         {
             ThinkingPCSDK.TimeEvent(ThinkingSDKConstant.END_EVENT, this.mAppId);
         }
+
         mStarted = true;
     }
 
@@ -168,6 +169,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
         {
             ThinkingPCSDK.TimeEvent(ThinkingSDKConstant.END_EVENT, this.mAppId);
         }
+
         mStarted = true;
     }
 
@@ -180,7 +182,8 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
             {
                 ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()], properties);
             }
-            mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()] = properties;
+            else
+                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_INSTALL.ToString()] = properties;
         }
         if ((events & AUTO_TRACK_EVENTS.APP_START) != 0)
         {
@@ -188,7 +191,8 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
             {
                 ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()], properties);
             }
-            mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()] = properties;
+            else
+                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_START.ToString()] = properties;
         }
         if ((events & AUTO_TRACK_EVENTS.APP_END) != 0)
         {
@@ -196,7 +200,8 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
             {
                 ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_END.ToString()], properties);
             }
-            mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_END.ToString()] = properties;
+            else
+                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_END.ToString()] = properties;
         }
         if ((events & AUTO_TRACK_EVENTS.APP_CRASH) != 0)
         {
@@ -204,7 +209,8 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
             {
                 ThinkingSDKUtil.AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_CRASH.ToString()], properties);
             }
-            mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_CRASH.ToString()] = properties;
+            else
+                mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_CRASH.ToString()] = properties;
         }
     }
 

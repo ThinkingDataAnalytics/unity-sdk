@@ -454,54 +454,60 @@ for (TAAspectIdentifier *aspect in aspects) {\
 
 // This is the swizzled forwardInvocation: method.
 static void __TA_ASPECTS_ARE_BEING_CALLED__(__unsafe_unretained NSObject *self, SEL selector, NSInvocation *invocation) {
-    NSCParameterAssert(self);
-    NSCParameterAssert(invocation);
-    SEL originalSelector = invocation.selector;
-	SEL aliasSelector = ta_aspect_aliasForSelector(invocation.selector);
-    invocation.selector = aliasSelector;
-    TAAspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
-    TAAspectsContainer *classContainer = ta_aspect_getContainerForClass(object_getClass(self), aliasSelector);
-    TAAspectInfo *info = [[TAAspectInfo alloc] initWithInstance:self invocation:invocation];
-    NSArray *aspectsToRemove = nil;
+    @try {
+        NSCParameterAssert(self);
+        NSCParameterAssert(invocation);
+        SEL originalSelector = invocation.selector;
+        SEL aliasSelector = ta_aspect_aliasForSelector(invocation.selector);
+        invocation.selector = aliasSelector;
+        TAAspectsContainer *objectContainer = objc_getAssociatedObject(self, aliasSelector);
+        TAAspectsContainer *classContainer = ta_aspect_getContainerForClass(object_getClass(self), aliasSelector);
+        TAAspectInfo *info = [[TAAspectInfo alloc] initWithInstance:self invocation:invocation];
+        NSArray *aspectsToRemove = nil;
 
-    // Before hooks.
-    ta_aspect_invoke(classContainer.beforeAspects, info);
-    ta_aspect_invoke(objectContainer.beforeAspects, info);
+        // Before hooks.
+        ta_aspect_invoke(classContainer.beforeAspects, info);
+        ta_aspect_invoke(objectContainer.beforeAspects, info);
 
-    // Instead hooks.
-    BOOL respondsToAlias = YES;
-    if (objectContainer.insteadAspects.count || classContainer.insteadAspects.count) {
-        ta_aspect_invoke(classContainer.insteadAspects, info);
-        ta_aspect_invoke(objectContainer.insteadAspects, info);
-    }else {
-        Class klass = object_getClass(invocation.target);
-        do {
-            if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
-                @try {
-                    [invocation invoke];
-                } @catch (NSException *exception) {}
-                break;
-            }
-        }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
-    }
-
-    // After hooks.
-    ta_aspect_invoke(classContainer.afterAspects, info);
-    ta_aspect_invoke(objectContainer.afterAspects, info);
-
-    // If no hooks are installed, call original implementation (usually to throw an exception)
-    if (!respondsToAlias) {
-        invocation.selector = originalSelector;
-        SEL originalForwardInvocationSEL = NSSelectorFromString(TAAspectsForwardInvocationSelectorName);
-        if ([self respondsToSelector:originalForwardInvocationSEL]) {
-            ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
+        // Instead hooks.
+        BOOL respondsToAlias = YES;
+        if (objectContainer.insteadAspects.count || classContainer.insteadAspects.count) {
+            ta_aspect_invoke(classContainer.insteadAspects, info);
+            ta_aspect_invoke(objectContainer.insteadAspects, info);
         }else {
-            [self doesNotRecognizeSelector:invocation.selector];
+            Class klass = object_getClass(invocation.target);
+            do {
+                if ((respondsToAlias = [klass instancesRespondToSelector:aliasSelector])) {
+                    @try {
+                        [invocation invoke];
+                    } @catch (NSException *exception) {
+                        NSLog(@" [THINKING] %@", exception);
+                    }
+                    break;
+                }
+            }while (!respondsToAlias && (klass = class_getSuperclass(klass)));
         }
-    }
 
-    // Remove any hooks that are queued for deregistration.
-    [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
+        // After hooks.
+        ta_aspect_invoke(classContainer.afterAspects, info);
+        ta_aspect_invoke(objectContainer.afterAspects, info);
+
+        // If no hooks are installed, call original implementation (usually to throw an exception)
+        if (!respondsToAlias) {
+            invocation.selector = originalSelector;
+            SEL originalForwardInvocationSEL = NSSelectorFromString(TAAspectsForwardInvocationSelectorName);
+            if ([self respondsToSelector:originalForwardInvocationSEL]) {
+                ((void( *)(id, SEL, NSInvocation *))objc_msgSend)(self, originalForwardInvocationSEL, invocation);
+            }else {
+                [self doesNotRecognizeSelector:invocation.selector];
+            }
+        }
+
+        // Remove any hooks that are queued for deregistration.
+        [aspectsToRemove makeObjectsPerformSelector:@selector(remove)];
+    } @catch (NSException *exception) {
+        
+    }
 }
 #undef aspect_invoke
 
@@ -812,6 +818,7 @@ static void ta_aspect_deregisterTrackedSelector(id self, SEL selector) {
 }
 
 - (BOOL)invokeWithInfo:(id<TAAspectInfo>)info {
+
     NSInvocation *blockInvocation = [NSInvocation invocationWithMethodSignature:self.blockSignature];
     NSInvocation *originalInvocation = info.originalInvocation;
     NSUInteger numberOfArguments = self.blockSignature.numberOfArguments;
@@ -823,9 +830,14 @@ static void ta_aspect_deregisterTrackedSelector(id self, SEL selector) {
     }
 
     // The `self` of the block will be the TAAspectInfo. Optional.
-    if (numberOfArguments > 1) {
-        [blockInvocation setArgument:&info atIndex:1];
+    @try {
+        if (numberOfArguments > 1) {
+            [blockInvocation setArgument:&info atIndex:1];
+        }
+    } @catch (NSException *exception) {
+        
     }
+    
     
 	void *argBuf = NULL;
     for (NSUInteger idx = 2; idx < numberOfArguments; idx++) {
@@ -838,11 +850,19 @@ static void ta_aspect_deregisterTrackedSelector(id self, SEL selector) {
 			return NO;
 		}
         
-		[originalInvocation getArgument:argBuf atIndex:idx];
-		[blockInvocation setArgument:argBuf atIndex:idx];
+        @try {
+            [originalInvocation getArgument:argBuf atIndex:idx];
+            [blockInvocation setArgument:argBuf atIndex:idx];
+        } @catch (NSException *exception) {
+            
+        }
     }
     
-    [blockInvocation invokeWithTarget:self.block];
+    @try {
+        [blockInvocation invokeWithTarget:self.block];
+    } @catch (NSException *exception) {
+        
+    }
     
     if (argBuf != NULL) {
         free(argBuf);

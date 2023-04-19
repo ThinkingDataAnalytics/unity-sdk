@@ -39,12 +39,12 @@
 - (void)updateConfig:(TDConfig *)config {
     self.config = config;
     
-    /// 加载所有加密插件
+    
     NSMutableArray *encryptors = [NSMutableArray array];
     [encryptors addObject:[TDRSAEncryptorPlugin new]];
     self.encryptors = encryptors;
     
-    /// 获取当前加密插件
+    
     [self updateEncryptor:[self loadCurrentSecretKey]];
 }
 
@@ -64,52 +64,48 @@
                                              asymmetricEncryption:encryptConfig[@"asymmetric"]
                                               symmetricEncryption:encryptConfig[@"symmetric"]];
     
-    // 插件不可用
+    
     if (![secretKey isValid]) {
         return;
     }
     
-    // 没有加密插件
+    
     if (![self encryptorWithSecretKey:secretKey]) {
         return;
     }
     
-    // 更新加密构造器
+    
     [self updateEncryptor:secretKey];
 }
 
-// 根据密钥 -> 筛选出合适的加密组件 -> 更新内存中加密插件
 - (void)updateEncryptor:(TDSecretKey *)obj {
     @try {
-        // 加载密钥
+
         TDSecretKey *secretKey = obj;
         if (!secretKey.publicKey.length) {
             return;
         }
 
-        // 是否需要更新密钥信息
         if ([self needUpdateSecretKey:self.secretKey newSecretKey:secretKey]) {
             return;
         }
 
-        // 筛选出合适的加密组件
         id<TDEncryptProtocol> encryptor = [self filterEncrptor:secretKey];
         if (!encryptor) {
             return;
         }
 
-        // 保存加密后的对称密钥数据
         NSString *encryptedSymmetricKey = [encryptor encryptSymmetricKeyWithPublicKey:secretKey.publicKey];
         
         if (encryptedSymmetricKey.length) {
-            // 更新密钥
+
             self.secretKey = secretKey;
-            // 更新加密插件
+
             self.encryptor = encryptor;
-            // 重新生成加密插件的对称密钥
+
             self.encryptedSymmetricKey = encryptedSymmetricKey;
             
-            TDLogDebug(@"\n****************secretKey****************\n公钥: %@ \n加密的对称密钥: %@\n****************secretKey****************", secretKey.publicKey, encryptedSymmetricKey);
+            TDLogDebug(@"\n****************secretKey****************\n public key: %@ \n encrypted symmetric key: %@\n****************secretKey****************", secretKey.publicKey, encryptedSymmetricKey);
         }
     } @catch (NSException *exception) {
         TDLogError(@"%@ error: %@", self, exception);
@@ -140,7 +136,7 @@
 - (id<TDEncryptProtocol>)filterEncrptor:(TDSecretKey *)secretKey {
     id<TDEncryptProtocol> encryptor = [self encryptorWithSecretKey:secretKey];
     if (!encryptor) {
-        NSString *format = @"\n您使用了 [%@]  密钥，但是并没有注册对应加密插件。\n • 若您使用的是 EC+AES 或 SM2+SM4 加密方式，请检查是否正确集成 'SensorsAnalyticsEncrypt' 模块，且已注册对应加密插件。\n";
+        NSString *format = @"\n You have used the [%@] key, but the corresponding encryption plugin has not been registered. \n";
         NSString *type = [NSString stringWithFormat:@"%@+%@", secretKey.asymmetricEncryption, secretKey.symmetricEncryption];
         NSString *message = [NSString stringWithFormat:format, type];
         NSAssert(NO, message);
@@ -182,17 +178,17 @@
             return nil;
         }
 
-        // JSON字符串
+        
         NSData *jsonData = [TDJSONUtil JSONSerializeForObject:obj];
 
-        // 加密数据
+        
         NSString *encryptedString =  [self.encryptor encryptEvent:jsonData];
         if (!encryptedString) {
             TDLogDebug(@"Enable encryption but encrypted input obj is invalid!");
             return nil;
         }
 
-        // 封装加密的数据结构
+        
         NSMutableDictionary *secretObj = [NSMutableDictionary dictionary];
         secretObj[@"pkv"] = @(self.secretKey.version);
         secretObj[@"ekey"] = self.encryptedSymmetricKey;

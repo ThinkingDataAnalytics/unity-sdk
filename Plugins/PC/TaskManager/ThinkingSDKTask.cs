@@ -45,14 +45,14 @@ namespace ThinkingSDK.PC.TaskManager
         }
 
         /// <summary>
-        /// 持有信号
+        /// hold signal
         /// </summary>
         public void WaitOne()
         {
             isWaiting = true;
         }
         /// <summary>
-        /// 释放信号
+        /// release signal
         /// </summary>
         public void Release()
         {

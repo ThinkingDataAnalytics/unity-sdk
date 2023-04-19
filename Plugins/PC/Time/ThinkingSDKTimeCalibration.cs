@@ -9,11 +9,11 @@ namespace ThinkingSDK.PC.Time
     public class ThinkingSDKTimeCalibration
     {
         /// <summary>
-        ///校准时间时的时间戳
+        /// Timestamp when time was calibrated
         /// </summary>
         public long mStartTime;
         /// <summary>
-        /// 校准时间时的系统开机时间
+        /// System boot time when calibrating time
         /// </summary>
         public long mSystemElapsedRealtime;
         public DateTime NowDate()

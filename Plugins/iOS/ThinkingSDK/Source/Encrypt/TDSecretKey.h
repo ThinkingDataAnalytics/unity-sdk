@@ -11,17 +11,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface TDSecretKey : NSObject<NSCopying>
 
-/// 初始化密钥信息
-/// @param version 密钥版本号
-/// @param publicKey 公钥
-///  默认采用RSA+AES加密方式
+/// Initialize key information
 - (instancetype)initWithVersion:(NSUInteger)version publicKey:(NSString *)publicKey;
 
-/// 初始化密钥信息
-/// @param version 密钥版本号
-/// @param publicKey 公钥
-/// @param asymmetricEncryption 非对称加密类型
-/// @param symmetricEncryption 对称加密类型
+/// Initialize key information
+/// @param version key version number
+/// @param publicKey public key
+/// @param asymmetricEncryption asymmetric encryption type
+/// @param symmetricEncryption Symmetric encryption type
 - (instancetype)initWithVersion:(NSUInteger)version
                       publicKey:(NSString *)publicKey
            asymmetricEncryption:(NSString *)asymmetricEncryption
@@ -32,7 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSString *symmetricEncryption;
 @property (nonatomic, copy, readonly) NSString *asymmetricEncryption;
 
-/// 该密钥信息是否可用
+/// Whether the key information is available
 @property (nonatomic, assign, readonly) BOOL isValid;
 
 @end

@@ -12,26 +12,26 @@ using System.Globalization;
 
 namespace ThinkingAnalytics.Utils
 {
-	/* Based on the JSON parser from 
+    /* Based on the JSON parser from 
 	 * http://techblog.procurios.nl/k/618/news/view/14605/14863/How-do-I-write-my-own-parser-for-JSON.html
 	 * 
 	 * I simplified it so that it doesn't throw exceptions
 	 * and can be used in Unity iPhone with maximum code stripping.
 	 */
-	/// <summary>
-	/// This class encodes and decodes JSON strings.
-	/// Spec. details, see http://www.json.org/
-	/// 
-	/// JSON uses Arrays and Objects. These correspond here to the datatypes ArrayList and Hashtable.
-	/// All numbers are parsed to floats.
-	/// </summary>
-	public class TD_MiniJSON
+    /// <summary>
+    /// This class encodes and decodes JSON strings.
+    /// Spec. details, see http://www.json.org/
+    /// 
+    /// JSON uses Arrays and Objects. These correspond here to the datatypes ArrayList and Hashtable.
+    /// All numbers are parsed to floats.
+    /// </summary>
+    public class TD_MiniJSON
 	{
         /// <summary>
         /// Parses the string json into a value
         /// </summary>
         /// <param name="json">A JSON string.</param>
-        /// <returns>An List&lt;object&gt;, a Dictionary&lt;string, object&gt;, a double, an integer,a string, null, true, or false</returns>
+        /// <returns>An List<object>, a Dictionary<string, object>, a double, an integer, a string, null, true, or false</returns>
         public static Dictionary<string, object> Deserialize(string json)
         {
             // save the string for debug information
@@ -277,15 +277,18 @@ namespace ThinkingAnalytics.Utils
             {
                 string number = NextWord;
 
-                if (number.IndexOf('.') == -1)
+                if (number.IndexOf('.') == -1 && number.IndexOf('E') == -1 && number.IndexOf('e') == -1)
                 {
                     long parsedInt;
-                    Int64.TryParse(number, out parsedInt);
+                    Int64.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out parsedInt);
                     return parsedInt;
                 }
 
                 double parsedDouble;
-                Double.TryParse(number, out parsedDouble);
+                if (!Double.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble))
+                {
+                    Double.TryParse(number, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.CreateSpecificCulture("es-ES"), out parsedDouble);
+                }
                 return parsedDouble;
             }
 
@@ -400,7 +403,7 @@ namespace ThinkingAnalytics.Utils
         /// <summary>
         /// Converts a IDictionary / IList object or a simple type (string, int, etc.) into a JSON string
         /// </summary>
-        /// <param name="json">A Dictionary&lt;string, object&gt; / List&lt;object&gt;</param>
+        /// <param name="json">A Dictionary<string, object> / List<object></param>
         /// <returns>A JSON encoded string, or null if object 'json' is not serializable</returns>
         public static string Serialize(object obj, Func<DateTime, string> func = null)
         {

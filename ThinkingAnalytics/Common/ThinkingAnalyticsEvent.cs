@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace ThinkingAnalytics
 {
     /// <summary>
-    /// 内部使用的特殊事件类， 不要直接使用此类。
+    /// Special event class for internal use, do not use this class directly.
     /// </summary>
     public class ThinkingAnalyticsEvent
     {
@@ -31,7 +31,7 @@ namespace ThinkingAnalytics
     }
 
     /// <summary>
-    /// 首次（唯一）事件。默认情况下采集设备首次事件。请咨询数数客户成功获取支持。
+    /// First Events
     /// </summary>
     public class TDFirstEvent : ThinkingAnalyticsEvent
     {
@@ -40,7 +40,7 @@ namespace ThinkingAnalytics
             EventType = Type.FIRST;
         }
 
-        // 设置用于检测是否首次的 ID，默认情况下会使用设备 ID
+        // First Event Check ID. By default, first events ID are device ID.
         public void SetFirstCheckId(string firstCheckId)
         {
             ExtraId = firstCheckId;
@@ -48,7 +48,7 @@ namespace ThinkingAnalytics
     }
 
     /// <summary>
-    /// 可被更新的事件。请咨询数数客户成功获取支持。
+    /// Updatable Events
     /// </summary>
     public class TDUpdatableEvent : ThinkingAnalyticsEvent
     {
@@ -60,7 +60,7 @@ namespace ThinkingAnalytics
     }
 
     /// <summary>
-    /// 可被重写的事件。请咨询数数客户成功获取支持。
+    /// Overwritable Events
     /// </summary>
     public class TDOverWritableEvent : ThinkingAnalyticsEvent
     {

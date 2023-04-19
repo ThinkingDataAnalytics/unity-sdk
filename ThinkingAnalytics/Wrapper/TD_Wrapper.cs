@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using ThinkingAnalytics.Utils;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace ThinkingAnalytics.Wrapper
 {
@@ -9,9 +10,21 @@ namespace ThinkingAnalytics.Wrapper
     {
         public static MonoBehaviour sMono;
         private static IDynamicSuperProperties mDynamicSuperProperties;
-        private static IAutoTrackEventCallback mAutoTrackEventCallback;
-
+        private static Dictionary<string, IAutoTrackEventCallback> mAutoTrackEventCallbacks = new Dictionary<string, IAutoTrackEventCallback>();
+        private static Dictionary<string, Dictionary<string, object>> mAutoTrackProperties = new Dictionary<string, Dictionary<string, object>>();
+        private static Dictionary<string, AUTO_TRACK_EVENTS> mAutoTrackEventInfos = new Dictionary<string, AUTO_TRACK_EVENTS>();
         private static System.Random rnd = new System.Random();
+
+        private static string default_appId = null;
+
+        // add Dictionary to Dictionary
+        public static void AddDictionary(Dictionary<string, object> originalDic, Dictionary<string, object> subDic)
+        {
+            foreach (KeyValuePair<string, object> kv in subDic)
+            {
+                originalDic[kv.Key] = kv.Value;
+            }
+        }
 
         private static string serilize<T>(Dictionary<string, T> data) {
             return TD_MiniJSON.Serialize(data, getTimeString);
@@ -20,6 +33,7 @@ namespace ThinkingAnalytics.Wrapper
         public static void ShareInstance(ThinkingAnalyticsAPI.Token token, MonoBehaviour mono, bool initRequired = true)
         {
             sMono = mono;
+            if (string.IsNullOrEmpty(default_appId)) default_appId = token.appid;
             if (initRequired) init(token);
         }
 
@@ -55,18 +69,116 @@ namespace ThinkingAnalytics.Wrapper
 
         public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
         {
+            UpdateAutoTrackSceneInfos(events, appId);
+            SetAutoTrackProperties(events, properties, appId);
             enableAutoTrack(events, serilize(properties), appId);
+            if ((events & AUTO_TRACK_EVENTS.APP_SCENE_LOAD) != 0)
+            {
+                TrackSceneLoad(SceneManager.GetActiveScene(), appId);
+            }
         }
 
         public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback, string appId)
         {
-            mAutoTrackEventCallback = eventCallback;
+            UpdateAutoTrackSceneInfos(events, appId);
+            mAutoTrackEventCallbacks[appId] = eventCallback;
+            //mAutoTrackEventCallback = eventCallback;
             enableAutoTrack(events, eventCallback, appId);
+            if ((events & AUTO_TRACK_EVENTS.APP_SCENE_LOAD) != 0)
+            {
+                TrackSceneLoad(SceneManager.GetActiveScene(), appId);
+            }
         }
 
         public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
         {
+            if ((events & AUTO_TRACK_EVENTS.APP_SCENE_LOAD) != 0)
+            {
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()))
+                {
+                    AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()], properties);
+                }
+                else
+                    mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()] = properties;
+            }
+            if ((events & AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD) != 0)
+            {
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()))
+                {
+                    AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()], properties);
+                }
+                else
+                    mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()] = properties;
+            }
             setAutoTrackProperties(events, serilize(properties), appId);
+        }
+
+        public static void TrackSceneLoad(Scene scene, string appId = "")
+        {
+            Dictionary<string, object> properties = new Dictionary<string, object>() {
+                { "#scene_name", scene.name },
+                { "#scene_path", scene.path }
+            };
+            if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()))
+            {
+                AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()]);
+            }
+            if (string.IsNullOrEmpty(appId))
+            {
+                foreach (var kv in mAutoTrackEventInfos)
+                {
+                    if (mAutoTrackEventCallbacks.ContainsKey(kv.Key))
+                    {
+                        AddDictionary(properties, mAutoTrackEventCallbacks[kv.Key].AutoTrackEventCallback((int)AUTO_TRACK_EVENTS.APP_SCENE_LOAD, properties));
+                    }
+                    if ((kv.Value & AUTO_TRACK_EVENTS.APP_SCENE_LOAD) != 0)
+                    {
+                        Track("ta_scene_loaded", properties, kv.Key);
+                    }
+                    if ((kv.Value & AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD) != 0)
+                    {
+                        TimeEvent("ta_scene_unloaded", kv.Key);
+                    }
+                }
+            }
+            else
+            {
+                if (mAutoTrackEventCallbacks.ContainsKey(appId))
+                {
+                    AddDictionary(properties, mAutoTrackEventCallbacks[appId].AutoTrackEventCallback((int)AUTO_TRACK_EVENTS.APP_SCENE_LOAD, properties));
+                }
+                Track("ta_scene_loaded", properties, appId);
+                TimeEvent("ta_scene_unloaded", appId);
+            }
+        }
+
+        public static void TrackSceneUnload(Scene scene, string appId = "")
+        {
+            Dictionary<string, object> properties = new Dictionary<string, object>() {
+                { "#scene_name", scene.name },
+                { "#scene_path", scene.path }
+            };
+            if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()))
+            {
+                AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()]);
+            }
+            foreach (var kv in mAutoTrackEventInfos)
+            {
+                if (mAutoTrackEventCallbacks.ContainsKey(kv.Key))
+                {
+                    AddDictionary(properties, mAutoTrackEventCallbacks[kv.Key].AutoTrackEventCallback((int)AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD, properties));
+                }
+                if ((kv.Value & AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD) != 0)
+                {
+                    Track("ta_scene_unloaded", properties, kv.Key);
+                }
+            }
+        }
+
+        private static void UpdateAutoTrackSceneInfos(AUTO_TRACK_EVENTS events, string appId = "")
+        {
+            if (string.IsNullOrEmpty(appId)) appId = default_appId;
+            mAutoTrackEventInfos[appId] = events;
         }
 
         private static string getFinalEventProperties(Dictionary<string, object> properties)
@@ -104,10 +216,10 @@ namespace ThinkingAnalytics.Wrapper
             track(eventName, getFinalEventProperties(properties), datetime, timeZone, appId);
         }
 
-        public static void TrackForAll(string eventName, Dictionary<string, object> properties, DateTime datetime, TimeZoneInfo timeZone)
+        public static void TrackForAll(string eventName, Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckString(eventName);
-            trackForAll(eventName, getFinalEventProperties(properties), datetime, timeZone);
+            trackForAll(eventName, getFinalEventProperties(properties));
         }
 
         public static void Track(ThinkingAnalyticsEvent taEvent, string appId)
@@ -125,6 +237,32 @@ namespace ThinkingAnalytics.Wrapper
             TD_PropertiesChecker.CheckString(taEvent.EventName);
             TD_PropertiesChecker.CheckProperties(taEvent.Properties);
             track(taEvent, appId);
+        }
+
+        public static void QuickTrack(string eventName, Dictionary<string, object> properties, string appId)
+        {
+            if ("SceneView" == eventName)
+            {
+                if (properties == null)
+                {
+                    properties = new Dictionary<string, object>() { };
+                }
+                Scene scene = SceneManager.GetActiveScene();
+                if (scene != null)
+                {
+                    properties.Add("#scene_name", scene.name);
+                    properties.Add("#scene_path", scene.path);
+                }
+                Track("ta_scene_view", properties, appId);
+            }
+            else if ("AppClick" == eventName)
+            {
+                if (properties == null)
+                {
+                    properties = new Dictionary<string, object>() { };
+                }
+                Track("ta_app_click", properties, appId);
+            }
         }
 
         public static void SetSuperProperties(Dictionary<string, object> superProperties, string appId)

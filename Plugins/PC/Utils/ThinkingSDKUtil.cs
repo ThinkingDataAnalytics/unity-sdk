@@ -16,14 +16,14 @@ namespace ThinkingSDK.PC.Utils
         }
         public static List<string> DisPresetProperties = ThinkingSDKUtil.GetDisPresetProperties();
         /*
-         *判断是否为有效URL
+         * Check if the URL is valid
          */
         public static bool IsValiadURL(string url)
         {
             return !(url == null || url.Length == 0 || !url.Contains("http") || !url.Contains("https"));
         }
         /*
-         * 判断字符串是否为空
+         * Check if the string is empty
          */
         public static bool IsEmptyString(string str)
         {
@@ -48,7 +48,7 @@ namespace ThinkingSDK.PC.Utils
             deviceInfo[ThinkingSDKConstant.APP_BUNDLEID] = ThinkingSDKAppInfo.AppIdentifier();
             return deviceInfo;
         }
-        // 禁用的预置属性
+        // Get disabled preset properties
         private static List<string> GetDisPresetProperties()
         {
             List<string> properties = new List<string>();
@@ -60,7 +60,6 @@ namespace ThinkingSDK.PC.Utils
                 // xmlDoc.Load(srcPath);
                 xmlDoc.LoadXml(textAsset.text);
                 XmlNode root = xmlDoc.SelectSingleNode("resources");
-                //遍历节点
                 for (int i=0; i<root.ChildNodes.Count; i++)
                 {
                     XmlNode x1 = root.ChildNodes[i];
@@ -87,7 +86,8 @@ namespace ThinkingSDK.PC.Utils
             }
             return properties;
         }
-        //随机数持久化,作为访客ID的备选
+
+        // A persistent random number, used as an alternative to the distinct ID
         public static string RandomID(bool persistent = true)
         {
             string randomID = null;
@@ -105,7 +105,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return randomID;
         }
-        //获取时区偏移
+        // Get time zone offset
         public static double ZoneOffset(DateTime dateTime, TimeZoneInfo timeZone)
         {
             bool success = true;
@@ -138,7 +138,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return timeSpan.TotalHours;
         }
-        //时间格式化
+        // time formatting
         public static string FormatDate(DateTime dateTime, TimeZoneInfo timeZone)
         {
             bool success = true;
@@ -173,7 +173,7 @@ namespace ThinkingSDK.PC.Utils
             DateTime dateNew = univDateTime + timeSpan;
             return dateNew.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
         }
-        //向Dictionary添加Dictionary
+        // add Dictionary to Dictionary
         public static void AddDictionary(Dictionary<string, object> originalDic, Dictionary<string, object> subDic)
         {
             foreach (KeyValuePair<string, object> kv in subDic)
@@ -181,7 +181,7 @@ namespace ThinkingSDK.PC.Utils
                 originalDic[kv.Key] = kv.Value;
             }
         }
-        //获取时间戳
+        //get timestamp
         public static long GetTimeStamp()
         {
             TimeSpan ts = DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, 0);

@@ -2,7 +2,7 @@
 //  TAAppExtensionAnalytic.m
 //  ThinkingSDK
 //
-//  Created by 杨雄 on 2022/5/25.
+//  Created by Yangxiongon 2022/5/25.
 //  Copyright © 2022 thinking. All rights reserved.
 //
 
@@ -17,8 +17,10 @@
 
 #if __has_include(<ThinkingSDK/TDCalibratedTime.h>)
 #import <ThinkingSDK/TDCalibratedTime.h>
+#import <ThinkingSDK/TDDeviceInfo.h>
 #else
 #import "TDCalibratedTime.h"
+#import "TDDeviceInfo.h"
 #endif
 
 
@@ -32,14 +34,12 @@ NSString * const kTAAppExtensionEventPropertiesSource = @"from_app_extension";
 
 @end
 
-/// 用于标记队列
 void *TAAppExtensionQueueTag = &TAAppExtensionQueueTag;
 
-/// 多实例对象的容器
 static NSMutableDictionary<NSString *, TAAppExtensionAnalytic *> *_instances;
-/// 事件采集队列
+
 static dispatch_queue_t _appExtensionQueue;
-/// 时间校准工具
+
 static TDCalibratedTime *_calibrateTimeManage;
 
 @implementation TAAppExtensionAnalytic
@@ -102,7 +102,6 @@ static TDCalibratedTime *_calibrateTimeManage;
         if (![eventName isKindOfClass:NSString.class] || !eventName.length) {
             return NO;
         }
-        // 如果不为空，但是不是字典类型，就返回NO
         if (properties && ![properties isKindOfClass:NSDictionary.class]) {
             return NO;
         }
@@ -191,7 +190,6 @@ static TDCalibratedTime *_calibrateTimeManage;
 
 //MARK: - Private Methods
 
-/// 返回对应 Extension 的数据缓存路径
 - (NSString *)filePathForApplicationGroup {
     @try {
         __block NSString *filePath = nil;
@@ -211,12 +209,9 @@ static TDCalibratedTime *_calibrateTimeManage;
     }
 }
 
-/// 校准时间
-/// @param date 目标时间
-/// @return 校准后的时间
 - (NSDate *)calibrateDate:(NSDate *)date {
     if (_calibrateTimeManage && !_calibrateTimeManage.stopCalibrate) {
-        NSTimeInterval systemUptime = [[NSProcessInfo processInfo] systemUptime];
+        NSTimeInterval systemUptime = [TDDeviceInfo uptime];
         NSTimeInterval outTime = systemUptime - _calibrateTimeManage.systemUptime;
         NSDate *serverDate = [NSDate dateWithTimeIntervalSince1970:(_calibrateTimeManage.serverTime + outTime)];
         return serverDate;

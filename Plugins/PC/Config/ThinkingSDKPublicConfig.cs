@@ -3,13 +3,11 @@ namespace ThinkingSDK.PC.Config
 {
     public class ThinkingSDKPublicConfig
     {
-        /*
-         * 设置默认是否输出日志
-         **/
+        // Whether to print log
         bool isPrintLog;
-        //库版本号
+        // sdk version
         string version = "1.0";
-        //库名称
+        // sdk name
         string name = "Unity";
         private  static readonly ThinkingSDKPublicConfig config = null;
 

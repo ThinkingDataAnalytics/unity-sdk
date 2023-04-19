@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace ThinkingAnalytics.Utils
 {
-    // 三方数据共享类型
+    // Crosss Platform
     public enum TAThirdPartyShareType
     {
         NONE = 0,
@@ -15,16 +15,16 @@ namespace ThinkingAnalytics.Utils
         ADJUST = 1 << 2, // Adjust
         BRANCH = 1 << 3, // Branch
         TOPON = 1 << 4, // TopOn
-        TRACKING = 1 << 5, // 热云
+        TRACKING = 1 << 5, // ReYun
         TRADPLUS = 1 << 6, // TradPlus
     };
 
-    // SSL认证方式类型
+    // SSL
     public enum SSLPinningMode
     {
-        NONE = 0, // 默认认证方式，只会在系统的信任的证书列表中对服务端返回的证书进行验证
-        PUBLIC_KEY = 1 << 0, // 校验证书的公钥
-        CERTIFICATE = 1 << 1 // 校验证书的所有内容
+        NONE = 0, // Only allow certificates trusted by the system
+        PUBLIC_KEY = 1 << 0, // Verify public key
+        CERTIFICATE = 1 << 1 // Verify all contents
     }
 
     public class TD_PublicConfig
@@ -32,7 +32,7 @@ namespace ThinkingAnalytics.Utils
         public static bool DisableCSharpException = false;
         public static List<string> DisPresetProperties = new List<string>();
 
-        public static readonly string LIB_VERSION = "2.5.1";
+        public static readonly string LIB_VERSION = "2.6.0-beta.1";
 
         public static void GetPublicConfig()
         {
@@ -42,7 +42,6 @@ namespace ThinkingAnalytics.Utils
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.LoadXml(textAsset.text);
                 XmlNode root = xmlDoc.SelectSingleNode("resources");
-                //遍历节点
                 for (int i=0; i<root.ChildNodes.Count; i++)
                 {
                     XmlNode x1 = root.ChildNodes[i];

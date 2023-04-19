@@ -8,7 +8,7 @@ namespace ThinkingSDK.PC.Storage
 {
     public class ThinkingSDKFileJson
     {
-        // 保存事件，返回缓存事件数量
+        // Save the event, return the number of cached events
         internal static int EnqueueTrackingData(Dictionary<string, object> data, string prefix)
         {
             int eventId = EventAutoIncrementingID(prefix);
@@ -20,14 +20,14 @@ namespace ThinkingSDK.PC.Storage
             return eventCount;
         }
 
-        // 获取事件结束ID
+        // Get event end ID
         internal static int EventAutoIncrementingID(string prefix)
         {
             string mEventAutoIncrementingID = prefix + "EventAutoIncrementingID";
             return PlayerPrefs.HasKey(mEventAutoIncrementingID) ? PlayerPrefs.GetInt(mEventAutoIncrementingID) : 0;
         }
 
-        // 自动增加事件结束ID
+        // Auto increment event end ID
         private static void IncreaseTrackingDataID(string prefix)
         {
             int id = EventAutoIncrementingID(prefix);
@@ -36,21 +36,29 @@ namespace ThinkingSDK.PC.Storage
             PlayerPrefs.SetInt(trackingIdKey, id);
         }
 
-        // 获取事件起始ID
+        // Reset event end ID
+        private static void ResetTrackingDataID(string prefix)
+        {
+            int id = 0;
+            String trackingIdKey = prefix + "EventAutoIncrementingID";
+            PlayerPrefs.SetInt(trackingIdKey, id);
+        }
+
+        // Get event start ID
         internal static int EventIndexID(string prefix)
         {
             string mEventIndexID = prefix + "EventIndexID";
             return PlayerPrefs.HasKey(mEventIndexID) ? PlayerPrefs.GetInt(mEventIndexID) : 0;
         }
-        
-        // 保存时间起始ID
+
+        // Save time start ID
         private static void SaveEventIndexID(int indexID, string prefix)
         {
             String trackingIdKey = prefix + "EventIndexID";
             PlayerPrefs.SetInt(trackingIdKey, indexID);
         }
 
-        // 批量取出指定数量的事件
+        // Fetch a specified number of events in batches
         internal static List<Dictionary<string, object>> DequeueBatchTrackingData(int batchSize, string prefix)
         {
             List<Dictionary<string, object>> batch = new List<Dictionary<string, object>>();
@@ -75,7 +83,7 @@ namespace ThinkingSDK.PC.Storage
             return batch;
         }
 
-        // 批量删除指定数量的事件，返回剩余事件数量
+        // Batch delete the specified number of events and return the remaining number of events
         internal static int DeleteBatchTrackingData(int batchSize, string prefix)
         {
             int deletedCount = 0;
@@ -95,7 +103,7 @@ namespace ThinkingSDK.PC.Storage
             return eventCount;
         }
 
-        // 批量删除指定事件
+        // Batch delete specified events
         // internal static void DeleteBatchTrackingData(List<Dictionary<string, object>> batch, string prefix) {
         //     foreach(Dictionary<string, object> data in batch) {
         //         String id = data["id"].ToString();
@@ -105,11 +113,12 @@ namespace ThinkingSDK.PC.Storage
         //     }
         // }
 
-        // 批量删除全部事件
+        // Batch delete all events
         internal static int DeleteAllTrackingData(string prefix)
         {
             DeleteBatchTrackingData(int.MaxValue, prefix);
             SaveEventIndexID(0, prefix);
+            ResetTrackingDataID(prefix);
             return 0;
         }
     }

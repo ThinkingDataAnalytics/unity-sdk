@@ -12,12 +12,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface TDFile : NSObject
 
-// 此处的appid已经不是当初的appid了，do you kown instanceName?
-// TDFile中的唯一标识是实例名字或appid
-// 实例名字存在的情况下，优先使用实例名字来作为文件的唯一标识
 @property(strong,nonatomic) NSString* appid;
 
 - (instancetype)initWithAppid:(NSString*)appid;
+
+- (void)archiveSessionID:(long long)sessionid;
+- (long long)unarchiveSessionID ;
 
 - (void)archiveIdentifyId:(nullable NSString *)identifyId;
 - (NSString*)unarchiveIdentifyID ;
@@ -53,9 +53,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)archiveObject:(id)object withFilePath:(NSString *)filePath;
 
 - (BOOL)addSkipBackupAttributeToItemAtPath:(NSString *)filePathString;
-// 兼容老版本
+// Compatible with old versions
 - (NSString*)unarchiveOldLoginId;
-// 兼容老版本
+// Compatible with old versions
 - (void)deleteOldLoginId;
 
 @end;

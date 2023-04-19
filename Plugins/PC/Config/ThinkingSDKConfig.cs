@@ -10,11 +10,11 @@ namespace ThinkingSDK.PC.Config
 {
     public enum Mode
     {
-        /* 正常模式，数据会存入缓存，并依据一定的缓存策略上报 */
+        /* normal mode, the data will be stored in the cache and reported in batches */
         NORMAL,
-        /* Debug 模式，数据逐条上报。当出现问题时会以日志和异常的方式提示用户 */
+        /* debug mode, the data will be reported one by one */
         DEBUG,
-        /* Debug Only 模式，只对数据做校验，不会入库 */
+        /* debug only mode, only verify the data, and will not store it */
         DEBUG_ONLY
     }
     public class ThinkingSDKConfig
@@ -33,7 +33,7 @@ namespace ThinkingSDK.PC.Config
         private static Dictionary<string, ThinkingSDKConfig> sInstances = new Dictionary<string, ThinkingSDKConfig>();
         private ThinkingSDKConfig(string token,string serverUrl, string instanceName)
         {
-            //校验 server url
+            //verify server url
             serverUrl = this.VerifyUrl(serverUrl);
             this.mServerUrl = serverUrl;
             this.mNormalUrl = serverUrl + "/sync";

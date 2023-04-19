@@ -3,6 +3,7 @@
 #include <libkern/OSAtomic.h>
 #include <stdatomic.h>
 #import "TDLogging.h"
+#import "TDPresetProperties+TDDisProperties.h"
 
 static NSString * const TDUncaughtExceptionHandlerSignalExceptionName = @"UncaughtExceptionHandlerSignalExceptionName";
 static NSString * const TDUncaughtExceptionHandlerSignalKey = @"UncaughtExceptionHandlerSignalKey";
@@ -93,26 +94,37 @@ static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *cont
 
 
 - (void)td_handleUncaughtException:(NSException *)exception {
-
     NSDate *trackDate = [NSDate date];
     NSDictionary *dic = [self td_getCrashInfo:exception];
     for (ThinkingAnalyticsSDK *instance in self.thinkingAnalyticsSDKInstances) {
-        [instance autotrack:TD_APP_CRASH_EVENT properties:dic withTime:trackDate];
+        TAAutoTrackEvent *crashEvent = [[TAAutoTrackEvent alloc] initWithName:TD_APP_CRASH_EVENT];
+        crashEvent.time = trackDate;
+        [instance autoTrackWithEvent:crashEvent properties:dic];
+        
         if (![instance isAutoTrackEventTypeIgnored:ThinkingAnalyticsEventTypeAppEnd]) {
-            [instance autotrack:TD_APP_END_EVENT properties:nil withTime:trackDate];
+            TAAutoTrackEvent *appEndEvent = [[TAAutoTrackEvent alloc] initWithName:TD_APP_END_EVENT];
+            appEndEvent.time = trackDate;
+            [instance autoTrackWithEvent:appEndEvent properties:nil];
         }
     }
     
     dispatch_sync([ThinkingAnalyticsSDK td_trackQueue], ^{});
+    dispatch_sync([ThinkingAnalyticsSDK td_networkQueue], ^{});
+
     NSSetUncaughtExceptionHandler(NULL);
     for (int i = 0; i < sizeof(TDSignals) / sizeof(int); i++) {
         signal(TDSignals[i], SIG_DFL);
     }
 }
 
-// 解析crash信息
 - (NSMutableDictionary *)td_getCrashInfo:(NSException *)exception {
     NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
+    
+    
+    if ([TDPresetProperties disableAppCrashedReason]) {
+        return properties;
+    }
+    
     NSString *crashStr;
     @try {
         if ([exception callStackSymbols]) {
@@ -135,53 +147,6 @@ static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *cont
     }
     return properties;
 }
-
-
-//- (void)td_handleUncaughtException:(NSException *)exception {
-//    NSMutableDictionary *dic = [[NSMutableDictionary alloc] init];
-//    NSMutableString *crashStr = [NSMutableString string];
-//    @try {
-//        if ([exception callStackSymbols]) {
-//            [crashStr appendFormat:@"Exception Reason:%@", [exception reason]];
-//            [crashStr appendString:@"\n"];
-//            [crashStr appendFormat:@"Exception Stack:%@", [exception callStackSymbols]];
-//        } else {
-//            NSString *exceptionStack = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
-//            if ([exception reason] && [[exception reason] isKindOfClass:[NSString class]] && [exception reason].length) {
-//                [crashStr appendString:[exception reason]];
-//            }
-//            [crashStr appendFormat:@" %@", exceptionStack];
-//        }
-//        NSString *crashInfo = [crashStr stringByReplacingOccurrencesOfString:@"\n" withString:@"<br>"];
-//
-//        NSUInteger strLength = [((NSString *)crashInfo) lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-//        NSUInteger strMaxLength = TA_PROPERTY_CRASH_LENGTH_LIMIT;
-//        if (strLength > strMaxLength) {
-//            crashInfo = [NSMutableString stringWithString:[self limitString:crashInfo withLength:strMaxLength - 1]];
-//        }
-//        [dic setValue:crashInfo forKey:TD_CRASH_REASON];
-//        NSDate *trackDate = [NSDate date];
-//
-//        // 多实例 触发end事件和Crash事件
-//        for (ThinkingAnalyticsSDK *instance in self.thinkingAnalyticsSDKInstances) {
-//            [instance autotrack:TD_APP_CRASH_EVENT properties:dic withTime:trackDate];
-//            if (![instance isAutoTrackEventTypeIgnored:ThinkingAnalyticsEventTypeAppEnd]) {
-//                [instance autotrack:TD_APP_END_EVENT properties:nil withTime:trackDate];
-//            }
-//        }
-//    } @catch(NSException *exception) {
-//        TDLogError(@"Exception Error: %@", exception);
-//    }
-//
-//    dispatch_sync([ThinkingAnalyticsSDK td_trackQueue], ^{});
-//    NSSetUncaughtExceptionHandler(NULL);
-//    for (int i = 0; i < sizeof(TDSignals) / sizeof(int); i++) {
-//        signal(TDSignals[i], SIG_DFL);
-//    }
-//}
-
-
-
 
 - (NSString *)limitString:(NSString *)originalString withLength:(NSInteger)length {
     NSStringEncoding encoding = CFStringConvertEncodingToNSStringEncoding(kCFStringEncodingUTF8);

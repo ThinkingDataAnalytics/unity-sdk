@@ -9,18 +9,18 @@ namespace ThinkingSDK.PC.DataModel
 {
     public abstract class ThinkingSDKBaseData
     {
-        //事件类型
+        // event type
         private string mType;
-        //事件发生时间
+        // event time
         private ThinkingSDKTimeInter mTime;
-        //访客ID
+        // distinct ID
         private string mDistinctID;
-        //事件名称
+        // event name
         private string mEventName;
-        //账号ID
+        // account ID
         private string mAccountID;
-      
-        //该条数据唯一标识
+
+        // unique ID for the event
         private string mUUID;
         private Dictionary<string, object> mProperties = new  Dictionary<string, object>();
         public Dictionary<string, object> Properties()

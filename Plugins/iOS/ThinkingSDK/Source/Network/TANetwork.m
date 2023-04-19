@@ -4,8 +4,11 @@
 #import "TDJSONUtil.h"
 #import "TDLogging.h"
 #import "TDSecurityPolicy.h"
-#import "TDToastView.h"
 #import "TDAppState.h"
+
+#if TARGET_OS_IOS
+#import "TDToastView.h"
+#endif
 
 static NSString *kTAIntegrationType = @"TA-Integration-Type";
 static NSString *kTAIntegrationVersion = @"TA-Integration-Version";
@@ -27,7 +30,14 @@ static NSString *kTADatasType = @"TA-Datas-Type";
 }
 
 - (NSString *)URLEncode:(NSString *)string {
-    return [string stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    
+    NSString *encodedString = (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                                                                    (CFStringRef)string,
+                                                                                                    NULL,
+                                                                                                    (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                                                                    kCFStringEncodingUTF8 ));
+
+    return encodedString;
 }
 
 - (int)flushDebugEvents:(NSDictionary *)record withAppid:(NSString *)appid {
@@ -46,16 +56,21 @@ static NSString *kTADatasType = @"TA-Datas-Type";
     dispatch_semaphore_t flushSem = dispatch_semaphore_create(0);
 
     void (^block)(NSData *, NSURLResponse *, NSError *) = ^(NSData *data, NSURLResponse *response, NSError *error) {
+        
         if (error || ![response isKindOfClass:[NSHTTPURLResponse class]]) {
             debugResult = -2;
             TDLogError(@"Debug Networking error:%@", error);
             dispatch_semaphore_signal(flushSem);
             return;
         }
-
         NSHTTPURLResponse *urlResponse = (NSHTTPURLResponse *)response;
         if ([urlResponse statusCode] == 200) {
             NSError *err;
+            
+            if (!data) {
+                return;
+            }
+            
             NSDictionary *retDic = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&err];
             if (err) {
                 TDLogError(@"Debug data json error:%@", err);
@@ -86,10 +101,16 @@ static NSString *kTADatasType = @"TA-Datas-Type";
             static dispatch_once_t onceToken;
             dispatch_once(&onceToken, ^{
                 if (debugResult == 0 || debugResult == 1 || debugResult == 2) {
+#if TARGET_OS_IOS
                     dispatch_async(dispatch_get_main_queue(), ^{
-                        UIWindow *window = [TDAppState sharedApplication].keyWindow;
-                        [TDToastView showInWindow:window text:[NSString stringWithFormat:@"当前模式为:%@", self.debugMode == ThinkingAnalyticsDebugOnly ? @"DebugOnly(数据不入库)\n测试联调阶段开启\n正式上线前请关闭Debug功能" : @"Debug"] duration:2.0];
+                        UIApplication *application = [TDAppState sharedApplication];
+                        if (![application isKindOfClass:UIApplication.class]) {
+                            return;
+                        }
+                        UIWindow *window = application.keyWindow;
+                        [TDToastView showInWindow:window text:[NSString stringWithFormat:@"The current mode is:%@", self.debugMode == ThinkingAnalyticsDebugOnly ? @"DebugOnly(Data is not persisted) \n The test joint debugging stage is allowed to open \n Please turn off the Debug function before the official launch" : @"Debug"] duration:2.0];
                     });
+#endif
                 }
             });
         } else {
@@ -133,6 +154,8 @@ static NSString *kTADatasType = @"TA-Datas-Type";
     if (isEncrypt) {
         [request addValue:@"1" forHTTPHeaderField:kTADatasType];
     }
+//    [request addValue:@"Keep-Alive" forHTTPHeaderField:@"Connection"];
+//    [request addValue:@"timeout=15,max=100" forHTTPHeaderField:@"Keep-Alive"];
     
     dispatch_semaphore_t flushSem = dispatch_semaphore_create(0);
 
@@ -148,6 +171,9 @@ static NSString *kTADatasType = @"TA-Datas-Type";
         if ([urlResponse statusCode] == 200) {
             flushSucc = YES;
             TDLogDebug(@"flush success sendContent---->:%@",flushDic);
+            if (!data) {
+                return;
+            }
             id result = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
             TDLogDebug(@"flush success responseData---->%@",result);
         } else {
@@ -180,7 +206,7 @@ static NSString *kTADatasType = @"TA-Datas-Type";
 }
 
 - (NSMutableURLRequest *)buildDebugRequestWithJSONString:(NSString *)jsonString withAppid:(NSString *)appid withDeviceId:(NSString *)deviceId {
-    // dryRun=0，如果校验通过就会入库。 dryRun=1，不会入库
+    // dryRun=0, if the verification is passed, it will be put into storage. dryRun=1, no storage
     int dryRun = _debugMode == ThinkingAnalyticsDebugOnly ? 1 : 0;
     NSString *postData = [NSString stringWithFormat:@"appid=%@&source=client&dryRun=%d&deviceId=%@&data=%@", appid, dryRun, deviceId, [self URLEncode:jsonString]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:self.serverDebugURL];
@@ -196,6 +222,9 @@ static NSString *kTADatasType = @"TA-Datas-Type";
             return;
         }
         NSError *err;
+        if (!data) {
+            return;
+        }
         NSDictionary *ret = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&err];
         if (err) {
             TDLogError(@"Fetch remote config json error:%@", err);

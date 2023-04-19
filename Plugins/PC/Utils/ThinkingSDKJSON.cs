@@ -285,7 +285,10 @@ namespace ThinkingSDK.PC.Utils
                 }
 
                 double parsedDouble;
-                Double.TryParse(number, out parsedDouble);
+                if (!Double.TryParse(number, System.Globalization.NumberStyles.AllowDecimalPoint | System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out parsedDouble))
+                {
+                    Double.TryParse(number, System.Globalization.NumberStyles.AllowDecimalPoint | System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.CreateSpecificCulture("es-ES"), out parsedDouble);
+                }
                 return parsedDouble;
             }
 

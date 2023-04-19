@@ -91,7 +91,7 @@ namespace ThinkingSDK.PC.Main
             return instance;
         }
         /// <summary>
-        /// 设置访客ID
+        /// Sets distinct ID
         /// </summary>
         /// <param name="distinctID"></param>
         /// <param name="appId"></param>
@@ -101,7 +101,7 @@ namespace ThinkingSDK.PC.Main
         }
 
         /// <summary>
-        /// 获取访客ID
+        /// Gets distinct ID
         /// </summary>
         /// <param name="appId"></param>
         /// <returns></returns>
@@ -110,7 +110,7 @@ namespace ThinkingSDK.PC.Main
             return GetInstance(appId).DistinctId();
         }
         /// <summary>
-        /// 设置账号ID
+        /// Sets account ID
         /// </summary>
         /// <param name="accountID"></param>
         /// <param name="appId"></param>
@@ -119,7 +119,7 @@ namespace ThinkingSDK.PC.Main
             GetInstance(appId).Login(accountID);
         }
         /// <summary>
-        /// 获取账号ID
+        /// Gets account ID
         /// </summary>
         /// <param name="appId"></param>
         /// <returns></returns>
@@ -128,7 +128,7 @@ namespace ThinkingSDK.PC.Main
             return GetInstance(appId).AccountID();
         }
         /// <summary>
-        ///清空账号ID
+        /// Clear account ID
         /// </summary>
         public static void Logout(string appId = "")
         {
@@ -136,7 +136,7 @@ namespace ThinkingSDK.PC.Main
         }
 
         /// <summary>
-        /// 设置自动采集事件
+        /// Enable Auto-tracking Events
         /// </summary>
         /// <param name="events"></param>
         /// <param name="appId"></param>
@@ -171,11 +171,11 @@ namespace ThinkingSDK.PC.Main
         {
             GetInstance(appId).Track(eventName, properties, date, timeZone);
         }
-        public static void TrackForAll(string eventName, Dictionary<string, object> properties, DateTime date, TimeZoneInfo timeZone)
+        public static void TrackForAll(string eventName, Dictionary<string, object> properties)
         {
             foreach (string appId in Instances.Keys)
             {
-                GetInstance(appId).Track(eventName, properties, date, timeZone);
+                GetInstance(appId).Track(eventName, properties);
             }
         }
         public static void Track(ThinkingSDKEventData analyticsEvent,string appId = "")
@@ -226,10 +226,10 @@ namespace ThinkingSDK.PC.Main
             }
         }
         /// <summary>
-        /// 暂停事件的计时
+        /// Pause Event timing
         /// </summary>
-        /// <param name="status">暂停状态，ture：暂停计时，false：取消暂停计时</param>
-        /// <param name="eventName">事件名称，有值：暂停指定事件计时，无值：暂停全部事件计时</param>
+        /// <param name="status">ture: puase timing, false: resume timing</param>
+        /// <param name="eventName">event name (null or empty is for all event)</param>
         public static void PauseTimeEvent(bool status, string eventName = "", string appId = "")
         {
             GetInstance(appId).PauseTimeEvent(status, eventName);
@@ -306,28 +306,18 @@ namespace ThinkingSDK.PC.Main
         {
             GetInstance(appId).SetTrackStatus(status);
         }
-        /*
-        停止或开启数据上报,默认是开启状态,设置为停止时还会清空本地的访客ID,账号ID,静态公共属性
-        其中true表示可以上报数据,false表示停止数据上报
-        **/
         public static void OptTracking(bool optTracking,string appId = "")
         {
             GetInstance(appId).OptTracking(optTracking);
         }
-        //是否暂停数据上报,默认是正常上报状态,其中true表示可以上报数据,false表示暂停数据上报
         public static void EnableTracking(bool isEnable, string appId = "")
         {
             GetInstance(appId).EnableTracking(isEnable);
         }
-        //停止数据上报
         public static void OptTrackingAndDeleteUser(string appId = "")
         {
             GetInstance(appId).OptTrackingAndDeleteUser();
         }
-        /// <summary>
-        /// 创建轻实例
-        /// </summary>
-        /// <returns></returns>
         public static string CreateLightInstance()
         {
             string randomID = System.Guid.NewGuid().ToString("N");
@@ -335,10 +325,6 @@ namespace ThinkingSDK.PC.Main
             LightInstances[randomID] = lightInstance;
             return randomID;
         }
-        /// <summary>
-        /// 通过时间戳校准时间
-        /// </summary>
-        /// <param name="timestamp"></param>
         public static void CalibrateTime(long timestamp)
         {
             ThinkingSDKTimestampCalibration timestampCalibration = new ThinkingSDKTimestampCalibration(timestamp);
@@ -347,10 +333,6 @@ namespace ThinkingSDK.PC.Main
                 kv.Value.SetTimeCalibratieton(timestampCalibration);
             }
         }
-        /// <summary>
-        /// 通过NTP服务器校准时间
-        /// </summary>
-        /// <param name="ntpServer"></param>
         public static void CalibrateTimeWithNtp(string ntpServer)
         {
             ThinkingSDKNTPCalibration ntpCalibration = new ThinkingSDKNTPCalibration(ntpServer);
@@ -360,19 +342,10 @@ namespace ThinkingSDK.PC.Main
             }
         }
 
-        /// <summary>
-        /// 获取设备ID
-        /// </summary>
-        /// <returns></returns>
         public static string GetDeviceId()
         {
             return ThinkingSDKDeviceInfo.DeviceID();
         }
-        /// <summary>
-        ///
-        /// 是否打开客户端日志
-        /// </summary>
-        /// <param name="isEnable"></param>
         public static void EnableLog(bool isEnable)
         {
             ThinkingSDKPublicConfig.SetIsPrintLog(isEnable);

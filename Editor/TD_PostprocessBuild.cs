@@ -10,14 +10,14 @@ namespace ThinkingAnalytics.Editors
 {
     public class TD_PostProcessBuild
     {
-        //配置Xcode选项
+        //Xcode Build Settings
         //[PostProcessBuild]
         [PostProcessBuildAttribute(88)]
         public static void OnPostProcessBuild(BuildTarget target, string targetPath)
         {
             if (target != BuildTarget.iOS)
             {
-                Debug.LogWarning("Target is not iOS. XCodePostProcess will not run");
+                Debug.LogWarning("[ThinkingEngine] Target is not iOS. XCodePostProcess will not run");
                 return;
             }
 
@@ -53,11 +53,12 @@ namespace ThinkingAnalytics.Editors
             proj.WriteToFile(projPath);
 
             //Info.plist
-            //禁用预置属性
+            //Disable preset properties
             string plistPath = Path.Combine(targetPath, "Info.plist");
             PlistDocument plist = new PlistDocument();
             plist.ReadFromFile(plistPath);
             plist.root.CreateArray("TDDisPresetProperties");
+            TD_PublicConfig.GetPublicConfig();
             foreach (string item in TD_PublicConfig.DisPresetProperties)
             {
                 plist.root["TDDisPresetProperties"].AsArray().AddString(item);
@@ -82,11 +83,11 @@ namespace ThinkingAnalytics.Editors
 
     class TD_PostProcessBuild : IPostGenerateGradleAndroidProject
     {
-        // 拷贝个性化配置文件 ta_public_config.xml
+        // Copy configuration file ta_public_config.xml
         public int callbackOrder { get { return 0; } }
         public void OnPostGenerateGradleAndroidProject(string path)
         {
-            // 拷贝个性化配置文件 ta_public_config.xml
+            // Copy configuration file ta_public_config.xml
             string desPath = path + "/../launcher/src/main/res/values/ta_public_config.xml";        
             if (File.Exists(desPath))
             {

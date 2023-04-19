@@ -7,10 +7,10 @@ namespace ThinkingAnalytics.TAException
     public class ThinkingSDKExceptionHandler
     {
 
-        //是否退出程序当异常发生时
+        //Whether to exit the program when an exception occurs
         public static bool IsQuitWhenException = false;
 
-        //是否已注册异常捕获
+        //Whether the exception catch has been registered
         public static bool IsRegistered = false;
         private static IAutoTrackEventCallback mEventCallback;
         private static Dictionary<string, object> mProperties;
@@ -35,7 +35,7 @@ namespace ThinkingAnalytics.TAException
         public static void RegisterTAExceptionHandler(IAutoTrackEventCallback eventCallback)
         {
             mEventCallback = eventCallback;
-            //注册异常处理委托
+            //Register exception handling delegate
             try
             {
                 if (!IsRegistered)
@@ -53,7 +53,7 @@ namespace ThinkingAnalytics.TAException
         public static void RegisterTAExceptionHandler(Dictionary<string, object> properties)
         {
             SetAutoTrackProperties(properties);
-            //注册异常处理委托
+            //Register exception handling delegate
             try
             {
                 if (!IsRegistered)
@@ -70,7 +70,7 @@ namespace ThinkingAnalytics.TAException
 
         public static void UnregisterTAExceptionHandler ()
         {
-            //清除异常处理委托
+            //Clear exception handling delegate
             try
             {
                 Application.logMessageReceived -= _LogHandler;
@@ -86,7 +86,7 @@ namespace ThinkingAnalytics.TAException
         {
             if( type == LogType.Error || type == LogType.Exception || type == LogType.Assert )
             {
-                //发送异常日志
+                //Report exception event
                 string reasonStr = "exception_type: " + type.ToString() + " <br> " + "exception_message: " + logString + " <br> " + "stack_trace: " + stackTrace + " <br> " ; 
                 Dictionary<string, object> properties = new Dictionary<string, object>(){
                     {"#app_crashed_reason", reasonStr}
@@ -94,7 +94,6 @@ namespace ThinkingAnalytics.TAException
                 properties = MergeProperties(properties);
                 ThinkingAnalyticsAPI.Track("ta_app_crash", properties);
 
-                //退出程序，bug反馈程序重启主程序
                 if ( IsQuitWhenException )
                 {
                     Application.Quit();
@@ -123,7 +122,7 @@ namespace ThinkingAnalytics.TAException
 
             System.Exception e = (System.Exception)args.ExceptionObject;
 
-            //发送异常日志
+            //Report exception event
             string reasonStr = "exception_type: " + e.GetType().Name + " <br> " + "exception_message: " + e.Message + " <br> " + "stack_trace: " + e.StackTrace + " <br> " ; 
             Dictionary<string, object> properties = new Dictionary<string, object>(){
                 {"#app_crashed_reason", reasonStr}
@@ -131,7 +130,6 @@ namespace ThinkingAnalytics.TAException
             properties = MergeProperties(properties);
             ThinkingAnalyticsAPI.Track("ta_app_crash", properties);
 
-            //退出程序，bug反馈程序重启主程序
             if ( IsQuitWhenException )
             {
                 Application.Quit();

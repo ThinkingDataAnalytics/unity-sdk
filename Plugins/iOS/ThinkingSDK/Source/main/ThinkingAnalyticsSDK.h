@@ -1,5 +1,17 @@
 #import <Foundation/Foundation.h>
+
+#if TARGET_OS_IOS
 #import <UIKit/UIKit.h>
+
+#if __has_include(<ThinkingSDK/TAAutoTrackPublicHeader.h>)
+#import <ThinkingSDK/TAAutoTrackPublicHeader.h>
+#else
+#import "TAAutoTrackPublicHeader.h"
+#endif
+
+#elif TARGET_OS_OSX
+#import <AppKit/AppKit.h>
+#endif
 
 #if __has_include(<ThinkingSDK/TDFirstEventModel.h>)
 #import <ThinkingSDK/TDFirstEventModel.h>
@@ -27,33 +39,32 @@
 #endif
 
 
-
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- SDK VERSION = 2.8.1.7
+ SDK VERSION = 2.8.4-beta.1
  ThinkingData API
  
- ## 初始化API
+ ## Initialization
  
  ```objective-c
  ThinkingAnalyticsSDK *instance = [ThinkingAnalyticsSDK startWithAppId:@"YOUR_APPID" withUrl:@"YOUR_SERVER_URL"];
  ```
  
- ## 事件埋点
+ ## Track Event
  
  ```objective-c
  instance.track("some_event");
  ```
- 或者
+or
  ```objective-c
  [[ThinkingAnalyticsSDK sharedInstanceWithAppid:@"YOUR_APPID"] track:@"some_event"];
  ```
- 如果项目中只有一个实例，也可以使用
+ If you only have one instance in your project, you can also use
  ```objective-c
  [[ThinkingAnalyticsSDK sharedInstance] track:@"some_event"];
  ```
- ## 详细文档
+ ## Detailed Documentation
  http://doc.thinkingdata.cn/tgamanual/installation/ios_sdk_installation.html
 
  */
@@ -62,561 +73,430 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Tracking
 
 /**
- 获取实例
+ Get default instance
 
- @return SDK 实例
+ @return SDK instance
  */
 + (nullable ThinkingAnalyticsSDK *)sharedInstance;
 
 /**
- 根据 APPID 或者 instanceName 获取实例
+  Get one instance according to appid or instanceName
 
- @param appid APP ID 或者 instanceName
- @return SDK 实例
- */
-+ (ThinkingAnalyticsSDK *)sharedInstanceWithAppid:(NSString *)appid;
+  @param appid APP ID or instanceName
+  @return SDK instance
+  */
++ (nullable ThinkingAnalyticsSDK *)sharedInstanceWithAppid:(NSString *)appid;
 
 /**
- 初始化方法
+  Initialization method
+  After the SDK initialization is complete, the saved instance can be obtained through this api
 
- @param appId APP ID
- @param url 接收端地址
- @return SDK 实例
- */
+  @param appId appId
+  @param url server url
+  @return one instance
+  */
 + (ThinkingAnalyticsSDK *)startWithAppId:(NSString *)appId withUrl:(NSString *)url;
 
 /**
- 初始化方法
+  Initialization method
+  After the SDK initialization is complete, the saved instance can be obtained through this api
 
- @param config 初始化配置
- @return SDK实例
- */
+  @param config initialization configuration
+  @return one instance
+  */
 + (ThinkingAnalyticsSDK *)startWithConfig:(nullable TDConfig *)config;
 
 /**
- 初始化方法
+  Initialization method
+  After the SDK initialization is complete, the saved instance can be obtained through this api
 
- @param appId APP ID
- @param url 接收端地址
- @param config 初始化配置
- @return SDK实例
- */
+  @param appId appId
+  @param url server url
+  @param config initialization configuration object
+  @return one instance
+  */
 + (ThinkingAnalyticsSDK *)startWithAppId:(NSString *)appId withUrl:(NSString *)url withConfig:(nullable TDConfig *)config;
 
 
 #pragma mark - Action Track
 
 /**
- 自定义事件埋点
+ Track Events
 
- @param event         事件名称
+ @param event         event name
  */
 - (void)track:(NSString *)event;
 
 
 /**
- 自定义事件埋点
+ Track Events
 
- @param event         事件名称
- @param propertieDict 事件属性
+ @param event         event name
+ @param propertieDict event properties
  */
 - (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict;
 
 /**
- 自定义事件埋点
+ Track Events
 
- @param event         事件名称
- @param propertieDict 事件属性
- @param time          事件触发时间
+ @param event         event name
+ @param propertieDict event properties
+ @param time          event trigger time
  */
-- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time __attribute__((deprecated("使用 track:properties:time:timeZone: 方法传入")));
+- (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time __attribute__((deprecated("please use track:properties:time:timeZone: method")));
 
 /**
- 自定义事件埋点
+ Track Events
  
- @param event         事件名称
- @param propertieDict 事件属性
- @param time          事件触发时间
- @param timeZone      事件触发时间时区
- */
+  @param event event name
+  @param propertieDict event properties
+  @param time event trigger time
+  @param timeZone event trigger time time zone
+  */
 - (void)track:(NSString *)event properties:(nullable NSDictionary *)propertieDict time:(NSDate *)time timeZone:(NSTimeZone *)timeZone;
 
+/**
+ Track Events
+ 
+  @param eventModel event Model
+  */
 - (void)trackWithEventModel:(TDEventModel *)eventModel;
 
-/// 获取在App Extension 中采集的事件，并上报
-/// @param appGroupId 数据共享所需要的 app group id
+/**
+ Get the events collected in the App Extension and report them
+ 
+  @param appGroupId The app group id required for data sharing
+  */
 - (void)trackFromAppExtensionWithAppGroupId:(NSString *)appGroupId;
 
 #pragma mark -
 
 /**
- 记录事件时长
-
- @param event 事件名称
+ Timing Events
+ Record the event duration, call this method to start the timing, stop the timing when the target event is uploaded, and add the attribute #duration to the event properties, in seconds.
  */
 - (void)timeEvent:(NSString *)event;
 
 /**
- 设置访客ID
-
- @param distinctId 访客 ID
+ Identify
+ Set the distinct ID to replace the default UUID distinct ID.
  */
 - (void)identify:(NSString *)distinctId;
 
 /**
- 获取访客ID
-
- @return 获取访客 ID
+ Get Distinctid
+ Get a visitor ID: The #distinct_id value in the reported data.
  */
 - (NSString *)getDistinctId;
 
 /**
- 获取SDK版本号
-
- @return 获取 SDK 版本号
+ Get sdk version
  */
 + (NSString *)getSDKVersion;
 
 /**
- 设置账号 ID
+ Login
+ Set the account ID. Each setting overrides the previous value. Login events will not be uploaded.
 
- @param accountId 账号 ID
+ @param accountId account ID
  */
 - (void)login:(NSString *)accountId;
 
 /**
- 清空账号 ID
+ Logout
+ Clearing the account ID will not upload user logout events.
  */
 - (void)logout;
 
 /**
- 设置用户属性
+ User_Set
+ Sets the user property, replacing the original value with the new value if the property already exists.
 
- @param properties 用户属性
+ @param properties user properties
  */
 - (void)user_set:(NSDictionary *)properties;
 
 /**
- 设置用户属性
+ User_Set
 
- @param properties 用户属性
- @param time 事件触发时间
+ @param properties user properties
+ @param time event trigger time
 */
 - (void)user_set:(NSDictionary *)properties withTime:(NSDate * _Nullable)time;
 
 /**
- 重置用户属性
+ User_Unset
  
- @param propertyName 用户属性
+ @param propertyName user properties
  */
 - (void)user_unset:(NSString *)propertyName;
 
 /**
- 重置用户属性
+ User_Unset
+ Reset user properties.
 
- @param propertyName 用户属性
- @param time 事件触发时间
+ @param propertyName user properties
+ @param time event trigger time
 */
 - (void)user_unset:(NSString *)propertyName withTime:(NSDate * _Nullable)time;
 
 /**
- 设置单次用户属性
+ User_SetOnce
+ Sets a single user attribute, ignoring the new attribute value if the attribute already exists.
 
- @param properties 用户属性
+ @param properties user properties
  */
 - (void)user_setOnce:(NSDictionary *)properties;
 
 /**
- 设置单次用户属性
+ User_SetOnce
 
- @param properties 用户属性
- @param time 事件触发时间
+ @param properties user properties
+ @param time event trigger time
 */
 - (void)user_setOnce:(NSDictionary *)properties withTime:(NSDate * _Nullable)time;
 
 /**
- 对数值类型用户属性进行累加操作
+ User_Add
+ Adds the numeric type user attributes.
 
- @param properties 用户属性
+ @param properties user properties
  */
 - (void)user_add:(NSDictionary *)properties;
 
 /**
- 对数值类型用户属性进行累加操作
+ User_Add
 
- @param properties 用户属性
- @param time 事件触发时间
+ @param properties user properties
+ @param time event trigger time
 */
 - (void)user_add:(NSDictionary *)properties withTime:(NSDate * _Nullable)time;
 
 /**
-  对数值类型用户属性进行累加操作
+ User_Add
 
-  @param propertyName  属性名称
-  @param propertyValue 属性值
+  @param propertyName  propertyName
+  @param propertyValue propertyValue
  */
 - (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue;
 
 /**
- 对数值类型用户属性进行累加操作
+ User_Add
 
- @param propertyName  属性名称
- @param propertyValue 属性值
- @param time 事件触发时间
+ @param propertyName  propertyName
+ @param propertyValue propertyValue
+ @param time event trigger time
 */
 - (void)user_add:(NSString *)propertyName andPropertyValue:(NSNumber *)propertyValue withTime:(NSDate * _Nullable)time;
 
 /**
- 删除用户 该操作不可逆 需慎重使用
+ User_Delete
+ Delete the user attributes,This operation is not reversible and should be performed with caution.
  */
 - (void)user_delete;
 
 /**
- 删除用户 该操作不可逆 需慎重使用
+ User_Delete
  
- @param time 事件触发时间
+ @param time event trigger time
  */
 - (void)user_delete:(NSDate * _Nullable)time;
 
 /**
- 对 Array 类型的用户属性进行追加操作
+ User_Append
+ Append a user attribute of the List type.
  
- @param properties 用户属性
+ @param properties user properties
 */
 - (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties;
 
 /**
- 对 Array 类型的用户属性进行追加操作
+ User_Append
+ The element appended to the library needs to be done to remove the processing,and then import.
  
- @param properties 用户属性
- @param time 事件触发时间
+ @param properties user properties
+ @param time event trigger time
 */
 - (void)user_append:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate * _Nullable)time;
 
-
+/**
+ User_UniqAppend
+ 
+ @param properties user properties
+*/
 - (void)user_uniqAppend:(NSDictionary<NSString *, NSArray *> *)properties;
 
-- (void)user_uniqAppend:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate *)time;
-
 /**
- 谨慎调用此接口, 此接口用于使用第三方框架或者游戏引擎的场景中, 更准确的设置上报方式.
- @param libName     对应事件表中 #lib预制属性, 默认为 "iOS".
- @param libVersion  对应事件表中 #lib_version 预制属性, 默认为当前SDK版本号.
- */
+ User_UniqAppend
+ 
+ @param properties user properties
+ @param time event trigger time
+*/
+- (void)user_uniqAppend:(NSDictionary<NSString *, NSArray *> *)properties withTime:(NSDate * _Nullable)time;
+
 + (void)setCustomerLibInfoWithLibName:(NSString *)libName libVersion:(NSString *)libVersion;
 
 /**
- 设置公共事件属性
-
- @param properties 公共事件属性
+ Static Super Properties
+ Set the public event attribute, which will be included in every event uploaded after that. The public event properties are saved without setting them each time.
+  *
  */
 - (void)setSuperProperties:(NSDictionary *)properties;
 
 /**
- 清除一条公共事件属性
-
- @param property 公共事件属性名称
+ Unset Super Property
+ Clears a public event attribute.
  */
 - (void)unsetSuperProperty:(NSString *)property;
 
 /**
- 清除所有公共事件属性
+ Clear Super Properties
+ Clear all public event attributes.
  */
 - (void)clearSuperProperties;
 
 /**
- 获取公共属性
-
- @return 公共事件属性
+ Get Static Super Properties
+ Gets the public event properties that have been set.
  */
 - (NSDictionary *)currentSuperProperties;
 
 /**
- 设置动态公共属性
-
- @param dynamicSuperProperties 动态公共属性
+ Dynamic super properties
+ Set dynamic public properties. Each event uploaded after that will contain a public event attribute.
  */
 - (void)registerDynamicSuperProperties:(NSDictionary<NSString *, id> *(^)(void))dynamicSuperProperties;
 
 /**
- 获取预置属性
-
- @return  获取预置属性
+ Gets prefabricated properties for all events.
  */
 - (TDPresetProperties *)getPresetProperties;
 
 /**
-  设置上传的网络条件，默认情况下，SDK 将会网络条件为在 3G、4G 及 Wifi 时上传数据
-
- @param type 上传数据的网络类型
+ Set the network conditions for uploading. By default, the SDK will set the network conditions as 3G, 4G and Wifi to upload data
  */
 - (void)setNetworkType:(ThinkingAnalyticsNetworkType)type;
 
-/**
- 开启自动采集事件功能
+#if TARGET_OS_IOS
 
- @param eventType 枚举 ThinkingAnalyticsAutoTrackEventType 的列表，表示需要开启的自动采集事件类型
+/**
+ Enable Auto-Tracking
+
+ @param eventType Auto-Tracking type
  
- 详细文档 http://doc.thinkingdata.cn/tgamanual/installation/ios_sdk_installation/ios_sdk_autotrack.html
+ detailed documentation http://doc.thinkingdata.cn/tgamanual/installation/ios_sdk_installation/ios_sdk_autotrack.html
  */
 - (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType;
 
 /**
- 开启自动采集事件功能
+ Enable the auto tracking function.
 
- @param eventType 枚举 ThinkingAnalyticsAutoTrackEventType 的列表，表示需要开启的自动采集事件类型
- @param properties 自定义属性
+ @param eventType  Auto-Tracking type
+ @param properties properties
  */
 - (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType properties:(NSDictionary *)properties;
 
 /**
- 开启自动采集事件功能
+ Enable the auto tracking function.
 
- @param eventType 枚举 ThinkingAnalyticsAutoTrackEventType 的列表，表示需要开启的自动采集事件类型
- @param callback 事件回调
- 回调中eventType表示自动采集类型，properties表示入库前的事件属性，该block可返回一个字典，用于新增属性
+ @param eventType  Auto-Tracking type
+ @param callback callback
+ In the callback, eventType indicates the type of automatic collection, properties indicates the event properties before storage, and this block can return a dictionary for adding new properties
  */
 - (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType callback:(NSDictionary *(^)(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary *properties))callback;
 
 /**
- 设置和更新自动采集事件的自定义属性的值
+ Set and Update the value of a custom property for Auto-Tracking
  
- @param eventType 枚举 ThinkingAnalyticsAutoTrackEventType 的列表，表示需要开启的自动采集事件类型
- @param properties 自定义属性
+ @param eventType  A list of ThinkingAnalyticsAutoTrackEventType, indicating the types of automatic collection events that need to be enabled
+ @param properties properties
  */
 - (void)setAutoTrackProperties:(ThinkingAnalyticsAutoTrackEventType)eventType properties:(NSDictionary *)properties;
 
 /**
- 获取设备 ID
+ Ignore the Auto-Tracking of a page
 
- @return 设备 ID
- */
-- (NSString *)getDeviceId;
-
-/**
- 忽略某个页面的自动采集事件
-
- @param controllers 忽略 UIViewController 的名称
+ @param controllers Ignore the name of the UIViewController
  */
 - (void)ignoreAutoTrackViewControllers:(NSArray *)controllers;
 
 /**
- 忽略某个类型控件的点击事件
+ Ignore the Auto-Tracking  of click event
 
- @param aClass 忽略的控件 Class
+ @param aClass ignored controls  Class
  */
 - (void)ignoreViewType:(Class)aClass;
 
-/**
- H5 与原生 APP SDK 打通，配合 addWebViewUserAgent 接口使用
+#endif
 
- @param webView 需要打通H5的控件
- @param request NSURLRequest 网络请求
- @return YES：处理此次请求 NO：未处理此次请求
+//MARK: -
+
+/**
+ Get DeviceId
+ */
+- (NSString *)getDeviceId;
+
+/**
+ H5 is connected with the native APP SDK and used in conjunction with the addWebViewUserAgent interface
+
+ @param webView webView
+ @param request NSURLRequest request
+ @return YES：Process this request NO: This request has not been processed
  
- 详细文档 http://doc.thinkingdata.cn/tgamanual/installation/h5_app_integrate.html
+ detailed documentation http://doc.thinkingdata.cn/tgamanual/installation/h5_app_integrate.html
  */
 - (BOOL)showUpWebView:(id)webView WithRequest:(NSURLRequest *)request;
 
 /**
- 与 H5 打通数据时需要调用此接口配置 UserAgent
+ When connecting data with H5, you need to call this interface to configure UserAgent
  */
 - (void)addWebViewUserAgent;
 
 /**
- 开启 Log 功能
+ Set Log level
 
- @param level 打印日志级别
  */
 + (void)setLogLevel:(TDLoggingLevel)level;
 
 /**
- 上报数据
+ Empty the cache queue. When this api is called, the data in the current cache queue will attempt to be reported.
+ If the report succeeds, local cache data will be deleted.
  */
 - (void)flush;
 
-/// 数据上报状态
-/// @param status 数据上报状态
+/**
+ Switch reporting status
+
+ @param status TATrackStatus reporting status
+ */
 - (void)setTrackStatus: (TATrackStatus)status;
 
-/**
- 暂停/开启上报
-
- @param enabled YES：开启上报 NO：暂停上报
- */
 - (void)enableTracking:(BOOL)enabled DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusPause");
 
-/**
- 停止上报，后续的上报和设置都无效，数据将清空
- */
 - (void)optOutTracking DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusStop");
 
-/**
- 停止上报，后续的上报和设置都无效，数据将清空，并且发送 user_del
- */
 - (void)optOutTrackingAndDeleteUser DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusStop");
 
-/**
- 允许上报
- */
 - (void)optInTracking DEPRECATED_MSG_ATTRIBUTE("Please use instance method setTrackStatus: TATrackStatusNormal");
 
 /**
- 创建轻实例
-
- @return SDK 实例
+ Create a light instance
  */
 - (ThinkingAnalyticsSDK *)createLightInstance;
 
-/**
- 使用指定NTP Server 校准时间
- @param ntpServer NTP Server
-*/
 + (void)calibrateTimeWithNtp:(NSString *)ntpServer;
 
-/**
- 校准时间
- 
- @param timestamp 当前时间戳，单位毫秒
-*/
 + (void)calibrateTime:(NSTimeInterval)timestamp;
 
 - (NSString *)getTimeString:(NSDate *)date;
 
+#if TARGET_OS_IOS
 - (void)enableThirdPartySharing:(TAThirdPartyShareType)type;
 
 - (void)enableThirdPartySharing:(TAThirdPartyShareType)type customMap:(NSDictionary<NSString *, NSObject *> *)customMap;
+#endif
 
-@end
-
-#pragma mark - Autotrack View Interface
-
-/**
- APP 控件点击事件
- */
-@interface UIView (ThinkingAnalytics)
-
-/**
-设置控件元素 ID
- */
-@property (copy,nonatomic) NSString *thinkingAnalyticsViewID;
-
-/**
- 配置 APPID 的控件元素 ID
- */
-@property (strong,nonatomic) NSDictionary *thinkingAnalyticsViewIDWithAppid;
-
-/**
- 忽略某个控件的点击事件
- */
-@property (nonatomic,assign) BOOL thinkingAnalyticsIgnoreView;
-
-/**
- 配置 APPID 的忽略某个控件的点击事件
- */
-@property (strong,nonatomic) NSDictionary *thinkingAnalyticsIgnoreViewWithAppid;
-
-/**
- 自定义控件点击事件的属性
- */
-@property (strong,nonatomic) NSDictionary *thinkingAnalyticsViewProperties;
-
-/**
- 配置 APPID 的自定义控件点击事件的属性
- */
-@property (strong,nonatomic) NSDictionary *thinkingAnalyticsViewPropertiesWithAppid;
-
-/**
- thinkingAnalyticsDelegate
- */
-@property (nonatomic, weak, nullable) id thinkingAnalyticsDelegate;
-
-@end
-
-#pragma mark - Autotrack View Protocol
-
-/**
- 自动埋点设置属性
- */
-@protocol TDUIViewAutoTrackDelegate
-
-@optional
-
-/**
- UITableView 事件属性
-
- @return 事件属性
- */
-- (NSDictionary *)thinkingAnalytics_tableView:(UITableView *)tableView autoTrackPropertiesAtIndexPath:(NSIndexPath *)indexPath;
-
-/**
- APPID UITableView 事件属性
- 
- @return 事件属性
- */
-- (NSDictionary *)thinkingAnalyticsWithAppid_tableView:(UITableView *)tableView autoTrackPropertiesAtIndexPath:(NSIndexPath *)indexPath;
-
-@optional
-
-/**
- UICollectionView 事件属性
-
- @return 事件属性
- */
-- (NSDictionary *)thinkingAnalytics_collectionView:(UICollectionView *)collectionView autoTrackPropertiesAtIndexPath:(NSIndexPath *)indexPath;
-
-/**
- APPID UICollectionView 事件属性
-
- @return 事件属性
- */
-- (NSDictionary *)thinkingAnalyticsWithAppid_collectionView:(UICollectionView *)collectionView autoTrackPropertiesAtIndexPath:(NSIndexPath *)indexPath;
-
-@end
-
-/**
- 页面自动埋点
- */
-@protocol TDAutoTracker
-
-@optional
-
-/**
- 自定义页面浏览事件的属性
-
- @return 事件属性
- */
-- (NSDictionary *)getTrackProperties;
-
-/**
- 配置 APPID 自定义页面浏览事件的属性
-
- @return 事件属性
- */
-- (NSDictionary *)getTrackPropertiesWithAppid;
-
-@end
-
-/**
- 页面自动埋点
- */
-@protocol TDScreenAutoTracker <TDAutoTracker>
-
-@optional
-
-/**
- 自定义页面浏览事件的属性
-
- @return 预置属性 #url 的值
- */
-- (NSString *)getScreenUrl;
-
-/**
- 配置 APPID 自定义页面浏览事件的属性
-
- @return 预置属性 #url 的值
- */
-- (NSDictionary *)getScreenUrlWithAppid;
++ (nullable NSString *)getLocalRegion;
 
 @end
 

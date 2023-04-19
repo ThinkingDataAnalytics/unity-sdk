@@ -12,6 +12,7 @@
 #import "TDPresetProperties+TDDisProperties.h"
 #import "TAAspects.h"
 #import "TDAppState.h"
+#import "ThinkingAnalyticsSDKPrivate.h"
 
 #define td_force_inline __inline__ __attribute__((always_inline))
 
@@ -114,8 +115,18 @@ static NSString * __td_get_userNotificationCenterRequestContentBody(id response)
     
     // 是否需要采集启动原因
     [TDPresetProperties disPresetProperties];
-    if ([TDPresetProperties disableStartReason]) return;
+    if ([TDPresetProperties disableStartReason] && [TDPresetProperties disableOpsReceiptProperties]) return;
 
+#if defined(__IPHONE_13_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+    if (@available(iOS 13.0, *)) {
+        [[NSNotificationCenter defaultCenter] addObserver:[TDAppLaunchReason sharedInstance]
+                                                 selector:@selector(_sceneWillConnectToSession:)
+                                                     name:UISceneWillConnectNotification
+                                                   object:nil];
+    }
+
+#endif
+    
     [[NSNotificationCenter defaultCenter] addObserver:[TDAppLaunchReason sharedInstance]
                                              selector:@selector(_applicationDidFinishLaunchingNotification:)
                                                  name:UIApplicationDidFinishLaunchingNotification
@@ -179,27 +190,68 @@ static NSString * __td_get_userNotificationCenterRequestContentBody(id response)
   }
 }
 
+#pragma mark - NSProxy methods
+
 
 + (void)td_hookUserNotificationCenterDelegateMethod {
     
-    NSString *pushSel = @"userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:";
-    [__td_get_userNotificationCenter_delegate() ta_aspect_hookSelector:NSSelectorFromString(pushSel) withOptions:TAAspectPositionAfter usingBlock:^(id<TAAspectInfo> aspectInfo, id center ,id response ,id completionHandler) {
+    @try {
+        NSString *pushSel = @"userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:";
+        [__td_get_userNotificationCenter_delegate() ta_aspect_hookSelector:NSSelectorFromString(pushSel) withOptions:TAAspectPositionAfter usingBlock:^(id<TAAspectInfo> aspectInfo, id center ,id response ,id completionHandler) {
+            
+            if (![TDPresetProperties disableStartReason]) {
+                NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
+                NSDictionary *userInfo = __td_get_userNotificationCenterResponse(response);
+                if (userInfo) {
+                    [properties addEntriesFromDictionary:userInfo];
+                }
+                properties[@"title"] = __td_get_userNotificationCenterRequestContentTitle(response);
+                properties[@"body"] = __td_get_userNotificationCenterRequestContentBody(response);
+                
+                [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
+                [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": @"",
+                                                                       @"data": [TDCommonUtil dictionary:properties]};
+            }
+            
+            if (![TDPresetProperties disableOpsReceiptProperties]) {
+                @try {
+                    if ([response isKindOfClass:[NSClassFromString(@"UNNotificationResponse") class]]) {
+                        NSDictionary *userInfo = [response valueForKeyPath:@"notification.request.content.userInfo"];
+                        [self td_ops_push_click:userInfo];
+                    }
+                } @catch (NSException *exception) {
+                    
+                }
+            }
+        } error:NULL];
+    } @catch (NSException *exception) {
         
-        NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
-        NSDictionary *userInfo = __td_get_userNotificationCenterResponse(response);
-        if (userInfo) {
-            [properties addEntriesFromDictionary:userInfo];
-        }
-        properties[@"title"] = __td_get_userNotificationCenterRequestContentTitle(response);
-        properties[@"body"] = __td_get_userNotificationCenterRequestContentBody(response);
-        
-        [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
-        [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": @"",
-                                                               @"data": [TDCommonUtil dictionary:properties]};
-        
-    } error:NULL];
-    
+    }
 }
+
+
++ (void)td_ops_push_click:(NSDictionary *)userInfo {
+    
+    @try {
+        if ([userInfo.allKeys containsObject:@"te_extras"] && [userInfo[@"te_extras"] isKindOfClass:[NSString class]]) {
+            NSData *jsonData = [userInfo[@"te_extras"] dataUsingEncoding:NSUTF8StringEncoding];
+            NSError *err;
+            NSDictionary *responseDic = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&err];
+            NSDictionary *opsReceiptProperties = responseDic[@"ops_receipt_properties"];
+            if (opsReceiptProperties && [opsReceiptProperties isKindOfClass:[NSDictionary class]]) {
+                NSMutableDictionary *dic = [ThinkingAnalyticsSDK _getAllInstances];
+                for (NSString *instanceToken in dic.allKeys) {
+                    ThinkingAnalyticsSDK *instance = dic[instanceToken];
+                    [instance track:@"ops_push_click" properties:responseDic];
+                    [instance flush];
+                }
+            }
+        }
+    } @catch (NSException *exception) {
+        
+    }
+}
+
 
 + (TDAppLaunchReason *)sharedInstance {
     static dispatch_once_t onceToken;
@@ -232,22 +284,38 @@ static NSString * __td_get_userNotificationCenterRequestContentBody(id response)
     
     [TDAppLaunchReason td_hookUserNotificationCenterMethod];
     
-    // 获取冷启动原因：
-    if (!launchOptions) {
-        [weakSelf clearAppLaunchParams];
-    } else if ([url isKindOfClass:[NSString class]] && url.length) {
-        self.appLaunchParams = @{@"url": [TDCommonUtil string:url],
-                                 @"data": @{}};
-    } else {
-        self.appLaunchParams = @{@"url": @"",
-                                 @"data": [TDCommonUtil dictionary:data]};
+    // 发送推送事件
+    if (![TDPresetProperties disableOpsReceiptProperties] && launchOptions) {
+        NSDictionary *remoteNotification = [launchOptions objectForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
+        [TDAppLaunchReason td_ops_push_click:remoteNotification];
     }
     
-    if ([TDAppState sharedApplication] == nil) {
-      return;
+    // 记录冷启动启动原因
+    if (![TDPresetProperties disableStartReason]) {
+        
+        if (!launchOptions) {
+            [weakSelf clearAppLaunchParams];
+        } else if ([url isKindOfClass:[NSString class]] && url.length) {
+            self.appLaunchParams = @{@"url": [TDCommonUtil string:url],
+                                     @"data": @{}};
+        } else {
+            self.appLaunchParams = @{@"url": @"",
+                                     @"data": [TDCommonUtil dictionary:data]};
+        }
     }
-
-    id applicationDelegate = [[TDAppState sharedApplication] delegate];
+    
+    
+    
+    UIApplication *application = [TDAppState sharedApplication];
+    id applicationDelegate = [application delegate];
+    if (applicationDelegate == nil)
+    {
+        return;
+    }
+    
+ 
+    // 未开启启动原因
+    if ([TDPresetProperties disableStartReason]) return;
     
     // hook 点击推送方法
     NSString *localPushSelString = @"application:didReceiveLocalNotification:";
@@ -333,7 +401,109 @@ static NSString * __td_get_userNotificationCenterRequestContentBody(id response)
             
         } error:NULL];
     }
+    
+
+#if defined(__IPHONE_13_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+    // UISceneConfiguration回调方法
+    if (@available(iOS 13.0, *)) {
+        NSString *connectingSceneSessionSel = @"application:configurationForConnectingSceneSession:options:";
+        [applicationDelegate ta_aspect_hookSelector:NSSelectorFromString(connectingSceneSessionSel) withOptions:TAAspectPositionAfter usingBlock:^(id<TAAspectInfo> aspectInfo, UIApplication *application, id connectingSceneSession, id options) {
+            
+            @try {
+                if ([options isKindOfClass:NSClassFromString(@"UISceneConnectionOptions")]) {
+                    
+                    NSURL *openURL = [[(NSSet *)[options valueForKey:@"URLContexts"] allObjects].lastObject valueForKey:@"URL"];
+                    NSURL *userURL = [[(NSSet *)[options valueForKey:@"userActivities"] allObjects].lastObject valueForKey:@"webpageURL"];
+                    id response = [options valueForKey:@"notificationResponse"];
+
+                    if (openURL && openURL.absoluteString.length) {
+                        [weakSelf clearAppLaunchParams];
+                        weakSelf.appLaunchParams = @{@"url": openURL.absoluteString,
+                                                     @"data":@{}};
+                    } else if (userURL && userURL.absoluteString.length) {
+                        [weakSelf clearAppLaunchParams];
+                        weakSelf.appLaunchParams = @{@"url": userURL.absoluteString,
+                                                     @"data":@{}};
+                    }
+                    else if (response) {
+                        NSDictionary *userInfo = __td_get_userNotificationCenterResponse(response);
+                        NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
+                        if (userInfo) {
+                            [properties addEntriesFromDictionary:userInfo];
+                        }
+                        properties[@"title"] = __td_get_userNotificationCenterRequestContentTitle(response);
+                        properties[@"body"] = __td_get_userNotificationCenterRequestContentBody(response);
+
+                        [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
+                        [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": @"",
+                                                                               @"data": [TDCommonUtil dictionary:properties]};
+                    }
+                }
+            } @catch (NSException *exception) {}
+            
+        } error:NULL];
+    }
+#endif
+    
 }
+
+#if defined(__IPHONE_13_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 130000
+
+- (void)_sceneWillConnectToSession:(id)param {
+    
+    @try {
+        static BOOL isHookconnectedScenes;
+        if (isHookconnectedScenes) {
+            return;
+        }
+        
+        __weak TDAppLaunchReason *weakSelf = self;
+        id scenes = [param valueForKey:@"object"];
+        id windowSceneDelegate = [scenes valueForKeyPath:@"delegate"];
+        [windowSceneDelegate ta_aspect_hookSelector:NSSelectorFromString(@"scene:continueUserActivity:") withOptions:TAAspectPositionAfter usingBlock:^(id<TAAspectInfo> aspectInfo, id scene ,id userActivity) {
+           
+            @try {
+                if ([userActivity isKindOfClass:NSClassFromString(@"NSUserActivity")]) {
+                    NSURL *URL = [(NSUserActivity *)userActivity webpageURL];
+                    if (URL && URL.absoluteString) {
+                        [weakSelf clearAppLaunchParams];
+                        weakSelf.appLaunchParams = @{@"url": URL.absoluteString,
+                                                     @"data":@{}};
+                    }
+                }
+            } @catch (NSException *exception) {
+                
+            }
+            
+        }  error:NULL];
+        
+        
+        [windowSceneDelegate ta_aspect_hookSelector:NSSelectorFromString(@"scene:openURLContexts:") withOptions:TAAspectPositionAfter usingBlock:^(id<TAAspectInfo> aspectInfo,  id scene ,id urlContexts) {
+            
+            @try {
+                if ([urlContexts isKindOfClass:[NSSet class]]) {
+                    NSURL *URL = [[(NSSet *)urlContexts allObjects].lastObject valueForKey:@"URL"];
+                    if (URL && URL.absoluteString) {
+                        [weakSelf clearAppLaunchParams];
+                        weakSelf.appLaunchParams = @{@"url": URL.absoluteString,
+                                                     @"data":@{}};
+                    }
+                }
+            } @catch (NSException *exception) {
+                
+            }
+            
+        }  error:NULL];
+           
+        isHookconnectedScenes = YES;
+    } @catch (NSException *exception) {
+        
+    }
+  
+}
+
+#endif
+
 
 - (NSString *)getInitDeeplink:(NSDictionary *)launchOptions {
     

@@ -14,7 +14,7 @@ namespace ThinkingAnalytics.Utils
         {
             if (enableLog)
             {
-                Debug.Log("[ThinkingSDK Unity_PC_V"+ TD_PublicConfig.LIB_VERSION + "] " + message);
+                Debug.Log("[ThinkingEngine] (Unity_V" + TD_PublicConfig.LIB_VERSION + ") " + message);
             }
         }
 
@@ -22,7 +22,7 @@ namespace ThinkingAnalytics.Utils
         {
             if (enableLog)
             {
-                Debug.LogError("[ThinkingSDK Unity_PC_V"+ TD_PublicConfig.LIB_VERSION + "] " + message);
+                Debug.LogError("[ThinkingEngine] (Unity_V" + TD_PublicConfig.LIB_VERSION + ") " + message);
             }
         }
 
@@ -30,7 +30,7 @@ namespace ThinkingAnalytics.Utils
         {
             if (enableLog)
             {
-                Debug.LogWarning("[ThinkingSDK Unity_PC_V"+ TD_PublicConfig.LIB_VERSION + "] " + message);
+                Debug.LogWarning("[ThinkingEngine] (Unity_V" + TD_PublicConfig.LIB_VERSION + ") " + message);
             }
         }
     }

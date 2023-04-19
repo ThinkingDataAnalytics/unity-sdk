@@ -11,8 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface TDEventRecord : NSObject
 
-// 由于历史原因，存入数据库时是没有存事件标识的
-// 取数据的时记录index，上报数据前会更新uuid，在上报成功后，根据uuid移除数据
+// Due to historical reasons, there is no event identifier stored in the database
+// Record index when fetching data, update uuid before reporting data, remove data according to uuid after successful reporting
 @property (nonatomic, copy) NSString *uuid;
 @property (nonatomic, strong) NSNumber *index;
 
@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithIndex:(NSNumber *)index content:(NSDictionary *)content;
 - (instancetype)initWithContent:(NSDictionary *)content;
 
-// 设置加密字典
 - (void)setSecretObject:(NSDictionary *)obj;
 
 - (NSString *)flushContent:(NSString *)appid;

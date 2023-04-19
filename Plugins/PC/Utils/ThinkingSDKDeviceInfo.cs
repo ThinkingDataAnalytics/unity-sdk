@@ -7,7 +7,7 @@ namespace ThinkingSDK.PC.Utils
 {
     public class ThinkingSDKDeviceInfo
     {
-        //设备ID
+        // devide ID
         public static string DeviceID()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.DEVICE_ID))
@@ -20,7 +20,7 @@ namespace ThinkingSDK.PC.Utils
                 return SystemInfo.deviceUniqueIdentifier;
             #endif
         }
-        //随机数持久化,作为设备ID的备选(WebGL获取不到设备ID)
+        // A persistent random number, used as an alternative to the device ID (WebGL cannot obtain the device ID)
         private static string RandomDeviceID()
         {
             string randomID = (string)ThinkingSDKFile.GetData(ThinkingSDKConstant.RANDOM_DEVICE_ID, typeof(string));
@@ -31,7 +31,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return randomID;
         }
-        //网络类型
+        // network type
         public static string NetworkType()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.NETWORK_TYPE))
@@ -49,7 +49,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return networkType;
         }
-        //移动网络运营商信息
+        // carrier name
         public static string Carrier()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.CARRIER))
@@ -58,7 +58,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return "NULL";
         }
-        //os类型
+        // os name
         public static string OS()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.OS))
@@ -80,7 +80,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return os;
         }
-        //OS版本信息
+        // os version
         public static string OSVersion()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.OS_VERSION))
@@ -89,7 +89,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return SystemInfo.operatingSystem;
         }
-        //屏幕宽度
+        // device screen width
         public static int ScreenWidth()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.SCREEN_WIDTH))
@@ -98,7 +98,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return (int)(UnityEngine.Screen.currentResolution.width);
         }
-        //屏幕高度
+        // device screen height
         public static int ScreenHeight()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.SCREEN_HEIGHT))
@@ -107,7 +107,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return (int)(UnityEngine.Screen.currentResolution.height);
         }
-        //显卡厂商名称
+        // graphics card manufacturer name
         public static string Manufacture()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.MANUFACTURE))
@@ -116,7 +116,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return SystemInfo.graphicsDeviceVendor;
         }
-        //设备型号
+        // devide model
         public static string DeviceModel()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.DEVICE_MODEL))
@@ -125,7 +125,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return SystemInfo.deviceModel;
         }
-        //本机语言
+        // device language
         public static string MachineLanguage()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.SYSTEM_LANGUAGE))

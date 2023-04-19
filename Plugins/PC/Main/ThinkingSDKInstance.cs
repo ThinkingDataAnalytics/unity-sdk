@@ -14,22 +14,25 @@ using UnityEngine;
 namespace ThinkingSDK.PC.Main
 {
     [Flags]
+    // Auto-tracking Events Type
     public enum AUTO_TRACK_EVENTS
     {
         NONE = 0,
-        APP_START = 1 << 0, // 当应用进入前台的时候触发上报，对应 ta_app_start
-        APP_END = 1 << 1, // 当应用进入后台的时候触发上报，对应 ta_app_end
-        APP_CRASH = 1 << 4, // 当出现未捕获异常的时候触发上报，对应 ta_app_crash
-        APP_INSTALL = 1 << 5, // 应用安装后首次打开的时候触发上报，对应 ta_app_install
-        ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH
+        APP_START = 1 << 0, // reporting when the app enters the foreground （ta_app_start）
+        APP_END = 1 << 1, // reporting when the app enters the background （ta_app_end）
+        APP_CRASH = 1 << 4, // reporting when an uncaught exception occurs （ta_app_crash）
+        APP_INSTALL = 1 << 5, // reporting when the app is opened for the first time after installation （ta_app_install）
+        APP_SCENE_LOAD = 1 << 6, // reporting when the scene is loaded in the app （ta_scene_loaded）
+        APP_SCENE_UNLOAD = 1 << 7, // reporting when the scene is unloaded in the app （ta_scene_loaded）
+        ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH | APP_SCENE_LOAD | APP_SCENE_UNLOAD
     }
-    // 数据上报状态
+    // Data Reporting Status
     public enum TA_TRACK_STATUS
     {
-        PAUSE = 1, // 暂停数据上报
-        STOP = 2, // 停止数据上报，并清除缓存
-        SAVE_ONLY = 3, // 数据入库，但不上报
-        NORMAL = 4 // 恢复数据上报
+        PAUSE = 1, // pause data reporting
+        STOP = 2, // stop data reporting, and clear caches
+        SAVE_ONLY = 3, // data stores in the cache, but not be reported
+        NORMAL = 4 // resume data reporting
     }
 
     public interface IDynamicSuperProperties_PC
@@ -50,7 +53,7 @@ namespace ThinkingSDK.PC.Main
         private Dictionary<string, object> mTimeEvents = new Dictionary<string, object>();
         private Dictionary<string, object> mTimeEventsBefore = new Dictionary<string, object>();
         private bool mEnableTracking = true;
-        private bool mEventSaveOnly = false; //事件数据仅保存，不上报
+        private bool mEventSaveOnly = false; //data stores in the cache, but not be reported
         protected Dictionary<string, object> mSupperProperties = new Dictionary<string, object>();
         protected Dictionary<string, Dictionary<string, object>> mAutoTrackProperties = new Dictionary<string, Dictionary<string, object>>();
         private ThinkingSDKConfig mConfig;
@@ -128,7 +131,7 @@ namespace ThinkingSDK.PC.Main
             }
             DefaultData();
             mCurrentInstance = this;
-            // 动态加载 ThinkingSDKTask ThinkingSDKAutoTrack
+            // dynamic loading ThinkingSDKTask ThinkingSDKAutoTrack
             GameObject mThinkingSDKTask = new GameObject("ThinkingSDKTask", typeof(ThinkingSDKTask));
             UnityEngine.Object.DontDestroyOnLoad(mThinkingSDKTask);
 
@@ -155,7 +158,7 @@ namespace ThinkingSDK.PC.Main
             
             if ( dateTime == DateTime.MinValue || dateTime == null)
             {
-                if (mTimeCalibration == null)//判断是否有时间校准
+                if (mTimeCalibration == null)// check if time calibrated
                 {
                     time = new ThinkingSDKTime(mConfig.TimeZone(), DateTime.Now);
                 }
@@ -171,7 +174,7 @@ namespace ThinkingSDK.PC.Main
            
             return time;
         }
-        //设置访客ID
+        // sets distisct ID
         public virtual void Identifiy(string distinctID)
         {
             if (IsPaused())
@@ -233,7 +236,7 @@ namespace ThinkingSDK.PC.Main
         {
             this.mAutoTrack.EnableAutoTrack(events, eventCallback, mAppid);
         }
-        // 设置自动采集事件的自定义属性
+        // sets auto-tracking events properties
         public virtual void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
         {
             this.mAutoTrack.SetAutoTrackProperties(events, properties);
@@ -351,12 +354,12 @@ namespace ThinkingSDK.PC.Main
                 int count = 0;
                 if (!string.IsNullOrEmpty(this.mConfig.InstanceName()))
                 {
-                    ThinkingSDKLogger.Print("Save event: " + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppID: " + this.mAppid);
+                    ThinkingSDKLogger.Print("Save event: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppID: " + this.mAppid);
                     count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic, this.mConfig.InstanceName());
                 }
                 else
                 {
-                    ThinkingSDKLogger.Print("Save event: " + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppID: " + this.mAppid);
+                    ThinkingSDKLogger.Print("Save event: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppID: " + this.mAppid);
                     count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic, this.mAppid);
                 }
                 if (this.mConfig.GetMode() != Mode.NORMAL || count >= this.mConfig.mUploadSize)
@@ -376,7 +379,7 @@ namespace ThinkingSDK.PC.Main
         }
         
         /// <summary>
-        /// 发送数据
+        /// flush events data
         /// </summary>
         public virtual void Flush()
         {
@@ -546,10 +549,10 @@ namespace ThinkingSDK.PC.Main
             }
         }
         /// <summary>
-        /// 暂停事件的计时
+        /// Pause Event timing
         /// </summary>
-        /// <param name="status">暂停状态，ture：暂停计时，false：取消暂停计时</param>
-        /// <param name="eventName">事件名称，有值：暂停指定事件计时，无值：暂停全部事件计时</param>
+        /// <param name="status">ture: puase timing, false: resume timing</param>
+        /// <param name="eventName">event name (null or empty is for all event)</param>
         public void PauseTimeEvent(bool status, string eventName = "")
         {
             if (string.IsNullOrEmpty(eventName))
@@ -727,10 +730,6 @@ namespace ThinkingSDK.PC.Main
             }
         }
 
-        /*
-        停止或开启数据上报,默认是开启状态,设置为停止时还会清空本地的访客ID,账号ID,静态公共属性
-        其中true表示可以上报数据,false表示停止数据上报
-        **/
         public void OptTracking(bool optTracking)
         {
             mOptTracking = optTracking;
@@ -747,7 +746,6 @@ namespace ThinkingSDK.PC.Main
                 ThinkingSDKFileJson.DeleteAllTrackingData(mAppid);
             }
         }
-        //是否暂停数据上报,默认是正常上报状态,其中true表示可以上报数据,false表示暂停数据上报
         public void EnableTracking(bool isEnable)
         {
             mEnableTracking = isEnable;
@@ -775,7 +773,6 @@ namespace ThinkingSDK.PC.Main
                 this.mOptTracking = true;
             }
         }
-        //停止数据上报
         public void OptTrackingAndDeleteUser()
         {
             UserDelete();

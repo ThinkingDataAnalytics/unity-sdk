@@ -10,7 +10,6 @@ namespace ThinkingSDK.PC.DataModel
     {
         private DateTime mEventTime;
         private TimeZoneInfo mTimeZone;
-        //事件持续时长
         private float mDuration;
         public void SetEventTime(DateTime dateTime)
         {

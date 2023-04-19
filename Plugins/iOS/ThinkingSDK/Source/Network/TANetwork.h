@@ -7,13 +7,8 @@ NS_ASSUME_NONNULL_BEGIN
 typedef void (^TDFlushConfigBlock)(NSDictionary *result, NSError * _Nullable error);
 
 @interface TANetwork : NSObject <NSURLSessionTaskDelegate, NSURLSessionDataDelegate>
-/**
- 应用唯一标识
- */
+
 @property (nonatomic, copy) NSString *appid;
-/**
- 私有化服务器地址
- */
 @property (nonatomic, strong) NSURL *serverURL;
 
 @property (nonatomic, strong) NSURL *serverDebugURL;

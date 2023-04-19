@@ -125,7 +125,7 @@ namespace ThinkingSDK.PC.Request
                 webRequest.uploadHandler = (UploadHandler) new UploadHandlerRaw(contentCompressed);
                 webRequest.downloadHandler = (DownloadHandler) new DownloadHandlerBuffer();
 
-                ThinkingSDKLogger.Print("Post event: " + content + "\n  Request URL: " + uri);
+                ThinkingSDKLogger.Print("Post event: \n" + content + "\n  Request URL: " + uri);
 
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
@@ -137,10 +137,10 @@ namespace ThinkingSDK.PC.Request
                     case UnityWebRequest.Result.ConnectionError:
                     case UnityWebRequest.Result.DataProcessingError:
                     case UnityWebRequest.Result.ProtocolError:
-                        ThinkingSDKLogger.Print("Error response : " + webRequest.error);
+                        ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                         break;
                     case UnityWebRequest.Result.Success:
-                        ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
+                        ThinkingSDKLogger.Print("Response: \n" + webRequest.downloadHandler.text);
                         if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
                         {
                             resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
@@ -150,11 +150,11 @@ namespace ThinkingSDK.PC.Request
                 #else
                 if (webRequest.isHttpError || webRequest.isNetworkError)
                 {
-                    ThinkingSDKLogger.Print("Error response : " + webRequest.error);
+                    ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                 }
                 else
                 {
-                    ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
+                    ThinkingSDKLogger.Print("Response: \n" + webRequest.downloadHandler.text);
                     if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
                     {
                         resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);

@@ -15,7 +15,7 @@ using System.Collections;
 namespace ThinkingSDK.PC.Request
 {
     /*
-     * 枚举post上报数据的形式,枚举值表示json和form表单
+     * Enumerate the form of data reported by post, and the enumeration value represents json and form forms
      */
     enum POST_TYPE { JSON, FORM };
     public abstract class ThinkingSDKBaseRequest
@@ -51,13 +51,13 @@ namespace ThinkingSDK.PC.Request
             return mData;
         }
         /** 
-         * 初始化接口
+         * initialization interface
          */
         public static void GetConfig(string url,ResponseHandle responseHandle)
         {
             if (!ThinkingSDKUtil.IsValiadURL(url))
             {
-                ThinkingSDKLogger.Print("invalid url");
+                ThinkingSDKLogger.Print("Invalid Url:\n" + url);
             }
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "GET";
@@ -65,8 +65,8 @@ namespace ThinkingSDK.PC.Request
             var responseResult = new StreamReader(response.GetResponseStream()).ReadToEnd();
             if (responseResult != null)
             {
-                ThinkingSDKLogger.Print("Request URL="+url);
-                ThinkingSDKLogger.Print("Response:="+responseResult);
+                ThinkingSDKLogger.Print("Request URL:\n"+url);
+                ThinkingSDKLogger.Print("Response:\n"+responseResult);
             }
         }
 
@@ -182,7 +182,7 @@ namespace ThinkingSDK.PC.Request
                 webRequest.timeout = 30;
                 webRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-                ThinkingSDKLogger.Print("Request URL=" + uri);
+                ThinkingSDKLogger.Print("Request URL: \n" + uri);
 
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
@@ -194,10 +194,10 @@ namespace ThinkingSDK.PC.Request
                     case UnityWebRequest.Result.ConnectionError:
                     case UnityWebRequest.Result.DataProcessingError:
                     case UnityWebRequest.Result.ProtocolError:
-                        ThinkingSDKLogger.Print("Error response : " + webRequest.error);
+                        ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                         break;
                     case UnityWebRequest.Result.Success:
-                        ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
+                        ThinkingSDKLogger.Print("Response: \n" + webRequest.downloadHandler.text);
                         if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
                         {
                             resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
@@ -207,11 +207,11 @@ namespace ThinkingSDK.PC.Request
                 #else
                 if (webRequest.isHttpError || webRequest.isNetworkError)
                 {
-                    ThinkingSDKLogger.Print("Error response : " + webRequest.error);
+                    ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                 }
                 else
                 {
-                    ThinkingSDKLogger.Print("Response : " + webRequest.downloadHandler.text);
+                    ThinkingSDKLogger.Print("Response: \n" + webRequest.downloadHandler.text);
                     if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
                     {
                         resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);

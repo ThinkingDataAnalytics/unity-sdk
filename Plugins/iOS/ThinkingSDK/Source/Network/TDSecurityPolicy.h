@@ -1,7 +1,6 @@
 
 /**
- 感谢 AFNetworking: https://github.com/AFNetworking/AFNetworking
- TDSecurityPolicy与 AFSecurityPolicy 实现基本相同
+ Thinks AFNetworking: https://github.com/AFNetworking/AFNetworking
  */
 #import <Foundation/Foundation.h>
 

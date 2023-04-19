@@ -22,6 +22,17 @@
     return self;
 }
 
+- (void)archiveSessionID:(long long)sessionid {
+    NSString *filePath = [self sessionIdFilePath];
+    if (![self archiveObject:@(sessionid) withFilePath:filePath]) {
+        TDLogError(@"%@ unable to archive identifyId", self);
+    }
+}
+- (long long)unarchiveSessionID {
+    return [[self unarchiveFromFile:[self sessionIdFilePath] asClass:[NSNumber class]] longLongValue];
+}
+
+
 - (void)archiveIdentifyId:(NSString *)identifyId {
     
     NSString *filePath = [self identifyIdFilePath];
@@ -214,6 +225,10 @@
     return [self persistenceFilePath:@"identifyId"];
 }
 
+- (NSString *)sessionIdFilePath {
+    return [self persistenceFilePath:@"sessionId"];
+}
+
 - (NSString *)enabledFilePath {
     return [self persistenceFilePath:@"isEnabled"];
 }
@@ -234,18 +249,16 @@
     return [self persistenceFilePath:@"installTimes"];
 }
 
-// 持久化文件
 - (NSString *)persistenceFilePath:(NSString *)data{
     NSString *filename = [NSString stringWithFormat:@"thinking-%@-%@.plist", self.appid, data];
     return [[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject]
             stringByAppendingPathComponent:filename];
 }
 
-// 兼容老版本
 - (NSString*)unarchiveOldLoginId {
     return [[NSUserDefaults standardUserDefaults] objectForKey:@"thinkingdata_accountId"];
 }
-// 兼容老版本
+
 - (void)deleteOldLoginId {
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"thinkingdata_accountId"];
     [[NSUserDefaults standardUserDefaults] synchronize];
@@ -261,6 +274,7 @@
     [dic setObject:[self unarchiveSuperProperties]?:@{}  forKey:@"superProperties"];
     [dic setObject:[NSNumber numberWithBool:[self unarchiveOptOut] ]forKey:@"optOut"];
     [dic setObject:[NSNumber numberWithBool:[self unarchiveEnabled]] forKey:@"isEnabled"];
+    [dic setObject:[NSNumber numberWithBool:[self unarchiveTrackPause]] forKey:@"isTrackPause"];
     [dic setObject:[self unarchiveDeviceId]?:@"" forKey:@"deviceId"];
     [dic setObject:[self unarchiveInstallTimes]?:@"" forKey:@"installTimes"];
     return [TDJSONUtil JSONStringForObject:dic];

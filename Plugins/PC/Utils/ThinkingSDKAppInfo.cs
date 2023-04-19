@@ -7,7 +7,7 @@ namespace ThinkingSDK.PC.Utils
 {
     public class ThinkingSDKAppInfo
     {
-        //SDK版本号
+        // sdk version
         public static string LibVersion()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.LIB_VERSION))
@@ -16,7 +16,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return ThinkingSDKPublicConfig.Version() ;
         }
-        //SDK名称
+        // sdk name
         public static string LibName()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.LIB))
@@ -25,7 +25,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return ThinkingSDKPublicConfig.Name();
         }
-        //app版本号
+        // app version
         public static string AppVersion()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.APP_VERSION))
@@ -34,7 +34,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return Application.version;
         }
-        //app唯一标识 包名
+        // app identifier, bundle ID
         public static string AppIdentifier()
         {
             if (ThinkingSDKUtil.DisPresetProperties.Contains(ThinkingSDKConstant.APP_BUNDLEID))

@@ -8,75 +8,72 @@ namespace ThinkingSDK.PC.Constant
     public class ThinkingSDKConstant
     {
        
-        //库运行的平台
+        // current platform
         public static readonly string PLATFORM = "PC";
-        //时间格式
+        // date format style
         public static readonly string TIME_PATTERN = "{0:yyyy-MM-dd HH:mm:ss.fff}";
 
-        /*
-         * 关键字声明
-         * */
-        //事件类型
+        // event type
         public static readonly string TYPE = "#type";
-        //时间
+        // event time
         public static readonly string TIME = "#time";
-        //访客ID
+        // distinct ID
         public static readonly string DISTINCT_ID = "#distinct_id";
-        //事件名称
+        // event name
         public static readonly string EVENT_NAME = "#event_name";
-        //账号ID
+        // account ID
         public static readonly string ACCOUNT_ID = "#account_id";
-        //属性
+        // event properties
         public static readonly string PROPERTIES = "properties";
-        //网络类型
+        // network type
         public static readonly string NETWORK_TYPE = "#network_type";
-        //库版本
+        // sdk version
         public static readonly string LIB_VERSION = "#lib_version";
-        //运营商信息
+        // carrier name
         public static readonly string CARRIER = "#carrier";
-        //库名称
+        // sdk name
         public static readonly string LIB = "#lib";
-        //系统类型
+        // os name
         public static readonly string OS = "#os";
-        //设备ID
+        // device ID
         public static readonly string DEVICE_ID = "#device_id";
-        //设备高度
+        // device screen height
         public static readonly string SCREEN_HEIGHT = "#screen_height";
-        //设备宽度
+        //device screen width
         public static readonly string SCREEN_WIDTH = "#screen_width";
-        //厂商
+        // device manufacturer
         public static readonly string MANUFACTURE = "#manufacturer";
-        //设备型号
+        // device model
         public static readonly string DEVICE_MODEL = "#device_model";
-        //系统语言
+        // device system language
         public static readonly string SYSTEM_LANGUAGE = "#system_language";
-        //系统版本号
+        // os version
         public static readonly string OS_VERSION = "#os_version";
-        //app版本号
+        // app version
         public static readonly string APP_VERSION = "#app_version";
-        //app唯一标识
+        // app bundle ID
         public static readonly string APP_BUNDLEID = "#bundle_id";
-        //时区偏移
+        // zone offset
         public static readonly string ZONE_OFFSET = "#zone_offset";
-        //appId
+        // project ID
         public static readonly string APPID = "#app_id";
-        //单条数据唯一标识
+        // unique ID for the event
         public static readonly string UUID = "#uuid";
-        //首次事件ID
+        // first event ID
         public static readonly string FIRST_CHECK_ID = "#first_check_id";
-        //事件唯一ID
+        // special event ID
         public static readonly string EVENT_ID = "#event_id";
-        //随机数
+        // random ID
         public static readonly string RANDOM_ID = "RANDDOM_ID";
-        //随机设备ID(WebGL)
+        // random ID(WebGL)
         public static readonly string RANDOM_DEVICE_ID = "RANDOM_DEVICE_ID";
-        //事件持续时长
+        // event duration
         public static readonly string DURATION = "#duration";
 
-        //静态公共事件属性
+        // super properties
         public static readonly string SUPER_PROPERTY = "super_properties";
 
-        //用户属性相关
+        // user properties action
         public static readonly string USER_ADD = "user_add";
         public static readonly string USER_SET = "user_set";
         public static readonly string USER_SETONCE = "user_setOnce";
@@ -85,25 +82,29 @@ namespace ThinkingSDK.PC.Constant
         public static readonly string USER_APPEND = "user_append";
         public static readonly string USER_UNIQ_APPEND = "user_uniq_append";
 
-        //是否暂停数据上报
+        // Whether to pause data reporting
         public static readonly string ENABLE_TRACK = "enable_track";
-        //是否停止数据上报
+        // Whether to stop data reporting
         public static readonly string OPT_TRACK = "opt_track";
-        //是否安装
+        // Whether the installation is recorded
         public static readonly string IS_INSTALL = "is_install";
 
-        //安装事件
+        // app install event
         public static readonly string INSTALL_EVENT = "ta_app_install";
-        //启动事件
+        // app start event
         public static readonly string START_EVENT = "ta_app_start";
-        //结束事件
+        // app end event
         public static readonly string END_EVENT = "ta_app_end";
-        //崩溃事件
+        // app crash event
         public static readonly string CRASH_EVENT = "ta_app_crash";
-        //崩溃原因
-        public static readonly string CRASH_REASON = @"#app_crashed_reason";
+        // app crash reason
+        public static readonly string CRASH_REASON = "#app_crashed_reason";
+        // scene load
+        public static readonly string APP_SCENE_LOAD = "ta_scene_loaded";
+        // scene unload
+        public static readonly string APP_SCENE_UNLOAD = "ta_scene_unloaded";
 
-        
+
 
 
 

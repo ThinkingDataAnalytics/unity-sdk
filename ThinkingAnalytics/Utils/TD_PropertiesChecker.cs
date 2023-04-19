@@ -7,6 +7,7 @@ namespace ThinkingAnalytics.Utils
     public class TD_PropertiesChecker
     {
         private static readonly Regex keyPattern = new Regex(@"^[a-zA-Z][a-zA-Z\d_#]{0,49}$");
+        private static readonly List<string> propertyNameWhitelist = new List<string>() { "#scene_name", "#scene_path", "#app_crashed_reason" };
 
         public static bool IsNumeric(object obj)
         {
@@ -40,72 +41,77 @@ namespace ThinkingAnalytics.Utils
                 return false;
             return (obj.GetType().IsGenericType && obj.GetType().GetGenericTypeDefinition() == typeof(List<>)) || obj is Array;
         }
-        // 检测属性是否合法
         public static bool CheckProperties<V>(Dictionary<string, V> properties)
         {
             if (properties == null)
             {
                 return true;
             }
+            bool ret = true;
             foreach(KeyValuePair<string, V> kv in properties) 
             {
                 if (!CheckString(kv.Key))
                 {
-                    return false;
+                    ret = false;
                 }
                 if (!(kv.Value is string || kv.Value is DateTime || kv.Value is bool || IsNumeric(kv.Value) || IsList(kv.Value) || IsDictionary(kv.Value)))
                 {
                     TD_Log.w("TA.PropertiesChecker - property values must be one of: string, numberic, Boolean, DateTime, Array, Row");
-                    return false;
+                    ret = false;
                 }
-                if (IsString(kv.Value)) 
+                if (IsString(kv.Value) && !CheckProperties(kv.Value as string)) 
                 {
-                    return CheckProperties(kv.Value as string);
+                    ret = false;
                 }
                 if (IsNumeric(kv.Value)) {
                     double number = Convert.ToDouble(kv.Value);
-                    return CheckProperties(number);
+                    if (!CheckProperties(number))
+                    {
+                        ret = false;
+                    }
                 }
-                if (IsList(kv.Value)) {
-                    return CheckProperties(kv.Value as List<object>);
+                if (IsList(kv.Value) && !CheckProperties(kv.Value as List<object>)) {
+                    ret = false;
                 }
-                if (IsDictionary(kv.Value)) 
+                if (IsDictionary(kv.Value) && !CheckProperties(kv.Value as Dictionary<string, object>)) 
                 {
-                    return CheckProperties(kv.Value as Dictionary<string, object>);
+                    ret = false;
                 }
             }
-            return true;
+            return ret;
         }
-        // 检测属性是否合法 - Array(Row)
         public static bool CheckProperties(List<object> properties)
         {
             if (properties == null)
             {
                 return true;
             }
-            foreach(object value in properties)
+            bool ret = true;
+            foreach (object value in properties)
             {
                 if (!(value is string || value is DateTime || value is bool || IsNumeric(value) || IsDictionary(value)))
                 {
                     TD_Log.w("TA.PropertiesChecker - property values in list must be one of: string, numberic, Boolean, DateTime, Row");
-                    return false;
+                    ret = false;
                 }
-                if (IsString(value)) 
+                if (IsString(value) && !CheckProperties(value as string)) 
                 {
-                    return CheckProperties(value as string);
+                    ret = false;
                 }
                 if (IsNumeric(value)) {
                     double number = Convert.ToDouble(value);
-                    return CheckProperties(number);
+                    if (!CheckProperties(number))
+                    {
+                        ret = false;
+                    }
                 }
-                if (IsDictionary(value)) 
+                if (IsDictionary(value) && !CheckProperties(value as Dictionary<string, object>)) 
                 {
-                    return CheckProperties(value as Dictionary<string, object>);
+                    ret = false;
                 }
             }
-            return true;
+            return ret;
         }
-        // 检测属性是否合法 - Array
         public static bool CheckProperties(List<string> properties)
         {
             if (properties == null)
@@ -113,16 +119,16 @@ namespace ThinkingAnalytics.Utils
                 return true;
             }
 
+            bool ret = true;
             foreach(string value in properties)
             {
-                if (!CheckString(value))
+                if (!CheckProperties(value))
                 {
-                    return false;
+                    ret = false;
                 }
             }
-            return true;
+            return ret;
         }
-        // 检测属性是否合法 - String
         public static bool CheckProperties(string properties) 
         {
             if (properties is string && System.Text.Encoding.UTF8.GetBytes(Convert.ToString(properties)).Length > 2048) {
@@ -131,12 +137,11 @@ namespace ThinkingAnalytics.Utils
             }
             return true;
         }
-        // 检测属性是否合法 - Number
         public static bool CheckProperties(double properties) 
         {
             if (properties > 9999999999999.999 || properties < -9999999999999.999)
             {
-                TD_Log.w("TA.PropertiesChecker - number value is invalid: " + properties + ", 数据范围是-9E15至9E15，小数点最多保留3位");
+                TD_Log.w("TA.PropertiesChecker - number value is invalid: " + properties + ", the data range is -9E15 to 9E15, with a maximum of 3 decimal places");
                 return false;
             }
             return true;
@@ -154,7 +159,11 @@ namespace ThinkingAnalytics.Utils
             } 
             else
             {
-                TD_Log.w("TA.PropertiesChecker - the string is invalid for TA: " + eventName + ", " + "事件名和属性名规则: 必须以字母开头，只能包含：数字，字母（忽略大小写）和下划线“_”，长度最大为50个字符。请注意配置时不要带有空格。");
+                if (propertyNameWhitelist.Contains(eventName))
+                {
+                    return true;
+                }
+                TD_Log.w("TA.PropertiesChecker - the string is invalid for TA: " + eventName + ", event name and properties name rules: must start with a letter, and can only contain: numbers, letters (ignoring case) and underscore(_), and the maximum length is 50.");
                 return false;
             }
         }

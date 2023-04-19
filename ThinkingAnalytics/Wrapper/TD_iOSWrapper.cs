@@ -1,4 +1,4 @@
-﻿#if UNITY_IOS && !(UNITY_EDITOR)
+﻿#if UNITY_IOS && !(UNITY_EDITOR) && !TE_DISABLE_IOS_OC
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -165,6 +165,17 @@ namespace ThinkingAnalytics.Wrapper
 
             finalEvent["event_name"] = taEvent.EventName;
             finalEvent["event_properties"] = taEvent.Properties;
+            if (taEvent.EventTime != null && taEvent.EventTime != DateTime.MinValue)
+            {
+                long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(taEvent.EventTime).Ticks;
+                DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+                long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+                finalEvent["event_time"] = currentMillis;
+            }
+            if (taEvent.EventTimeZone != null)
+            {
+                finalEvent["event_timezone"] = taEvent.EventTimeZone.Id;
+            }
 
             ta_track_event(appId, serilize(finalEvent));
         }
@@ -198,19 +209,10 @@ namespace ThinkingAnalytics.Wrapper
             ta_track(appId, eventName, properties, currentMillis, tz);
         }
 
-        private static void trackForAll(string eventName, string properties, DateTime dateTime, TimeZoneInfo timeZone)
+        private static void trackForAll(string eventName, string properties)
         {
             string appId = "";
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            string tz = "";
-            if (timeZone != null)
-            {
-                tz = timeZone.Id;
-            }
-            ta_track(appId, eventName, properties, currentMillis, tz);
+            track(eventName, properties, appId);
         }
 
         private static void setSuperProperties(string superProperties, string appId)
@@ -432,39 +434,35 @@ namespace ThinkingAnalytics.Wrapper
             ta_enable_third_party_sharing(appId, (int) shareType, properties);
         }
 
-        //iOS动态回调
         private static void registerRecieveGameCallback()
         {
-            //设置回调托管函数指针
             ResultHandler handler = new ResultHandler(resultHandler);
             IntPtr handlerPointer = Marshal.GetFunctionPointerForDelegate(handler);
-            //调用OC的方法，将C#的回调方法函数指针传给OC
             RegisterRecieveGameCallback(handlerPointer);
         }
 
-        //声明一个OC的注册回调方法函数指针的函数方法，每一个参数都是函数指针
         [DllImport("__Internal")]
         public static extern void RegisterRecieveGameCallback
         (
             IntPtr handlerPointer
         );    
 
-        //先声明方法、delegate修饰标记是回调方法
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate string ResultHandler(string type, string jsonData);
 
-        //实现回调方法 MonoPInvokeCallback修饰会让OC通过函数指针回调此方法
         [AOT.MonoPInvokeCallback(typeof(ResultHandler))]
         static string resultHandler(string type, string jsonData) 
         {
             if (type == "AutoTrackProperties")
             {
-                if (mAutoTrackEventCallback != null)
+                Dictionary<string, object>properties = TD_MiniJSON.Deserialize(jsonData);
+                string appId = properties["AppID"].ToString();
+                int eventType = Convert.ToInt32(properties["EventType"]);
+                if (!string.IsNullOrEmpty(appId) && mAutoTrackEventCallbacks.ContainsKey(appId))
                 {
-                    Dictionary<string, object>properties = TD_MiniJSON.Deserialize(jsonData);
-                    int eventType = Convert.ToInt32(properties["EventType"]);
                     properties.Remove("EventType");
-                    Dictionary<string, object>autoTrackProperties = mAutoTrackEventCallback.AutoTrackEventCallback(eventType, properties);
+                    properties.Remove("AppID");
+                    Dictionary<string, object>autoTrackProperties = mAutoTrackEventCallbacks[appId].AutoTrackEventCallback(eventType, properties);
                     return TD_MiniJSON.Serialize(autoTrackProperties);
                 }
             } 

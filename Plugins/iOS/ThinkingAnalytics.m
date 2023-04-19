@@ -11,12 +11,9 @@
 #define NETWORK_TYPE_WIFI 2
 #define NETWORK_TYPE_ALL 3
 
-//定义一个名字参数和C#类一样的方法
 typedef const char * (*ResultHandler) (const char *type, const char *jsonData);
-//生命一个静态变量存储回调unity的函数指针
 static ResultHandler resultHandler;
-//设置回调游戏的托管函数
-void RegisterRecieveGameCallback(ResultHandler handlerPointer) 
+void RegisterRecieveGameCallback(ResultHandler handlerPointer)
 {
     resultHandler = handlerPointer;
 }
@@ -47,6 +44,24 @@ void ta_convertToDictionary(const char *json, NSDictionary **properties_dict) {
     if (json_string) {
         *properties_dict = [NSJSONSerialization JSONObjectWithData:[json_string dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:nil];
     }
+}
+
+NSDictionary * ta_parse_date(NSDictionary *properties_dict) {
+    NSMutableDictionary *properties = [NSMutableDictionary dictionary];
+    for (NSString *key in properties_dict.allKeys) {
+        id value = properties_dict[key];
+        if ([value isKindOfClass:[NSDate class]]) {
+            NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+            formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss.SSS";
+            NSString *dateStr = [formatter stringFromDate:(NSDate *)value];
+            properties[key] = dateStr;
+        } else if ([value isKindOfClass:[NSDictionary class]]) {
+            properties[key] = ta_parse_date((NSDictionary *)value);
+        } else {
+            properties[key] = value;
+        }
+    }
+    return properties;
 }
 
 char* ta_strdup(const char* string) {
@@ -82,9 +97,9 @@ void ta_start(const char *app_id, const char *url, int mode, const char *timezon
     }
     if (enable_encrypt == YES) {
         NSString *encrypt_public_key_string = encrypt_public_key != NULL ? [NSString stringWithUTF8String:encrypt_public_key] : nil;
-        // 开启加密功能
+        // Enable data encryption
         config.enableEncrypt = YES; 
-        // 配置版本号、公钥等密钥信息
+        // Set public key and version
         config.secretKey = [[TDSecretKey alloc] initWithVersion:encrypt_version publicKey:encrypt_public_key_string];
     }
 
@@ -157,7 +172,7 @@ void ta_track_event(const char *app_id, const char *event_model_json) {
     
     eventModel.properties = event_model_dic[@"event_properties"];
     
-    NSString *timeString = event_model_dic[@"event_time"];
+    long event_time = [event_model_dic[@"event_time"] longValue];
     NSString *timezoneString = event_model_dic[@"event_timezone"];
     NSTimeZone *tz;
     if ([@"Local" isEqualToString:timezoneString]) {
@@ -166,10 +181,8 @@ void ta_track_event(const char *app_id, const char *event_model_json) {
         tz = [NSTimeZone timeZoneWithName:timezoneString];
     }
     
-    if (timeString) {
-        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-        formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss.SSS";
-        NSDate *date = [formatter dateFromString:timeString];
+    if (event_time) {
+        NSDate *date = [NSDate dateWithTimeIntervalSince1970:event_time/1000.0];
         [eventModel configTime:date timeZone:tz];
     }
     
@@ -210,9 +223,7 @@ void ta_track(const char *app_id, const char *event_name, const char *properties
 
 void ta_flush(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    if (app_id_string) {
-        [ta_getInstance(app_id_string) flush];
-    }
+    [ta_getInstance(app_id_string) flush];
 }
 
 void ta_set_super_properties(const char *app_id, const char *properties) {
@@ -248,6 +259,8 @@ const char *ta_get_super_properties(const char *app_id) {
 const char *ta_get_preset_properties(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSDictionary *property_dict = [[ta_getInstance(app_id_string) getPresetProperties] toEventPresetProperties];
+    // nsdate => nsstring
+    property_dict = ta_parse_date(property_dict);
     // nsdictionary --> nsdata
     NSData *data = [NSJSONSerialization dataWithJSONObject:property_dict options:kNilOptions error:nil];
     // nsdata -> nsstring
@@ -456,11 +469,14 @@ void ta_enable_autoTrack(const char *app_id, int autoTrackEvents, const char *pr
 
 void ta_enable_autoTrack_with_callback(const char *app_id, int autoTrackEvents) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    __block NSString * w_app_id_string = app_id_string;
     [ta_getInstance(app_id_string) enableAutoTrack: autoTrackEvents callback:^NSDictionary * _Nonnull(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary * _Nonnull properties) {
         NSMutableDictionary *callbackProperties = [NSMutableDictionary dictionaryWithDictionary:properties];
         [callbackProperties setObject:@(eventType) forKey:@"EventType"];
-        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:callbackProperties options:NSJSONWritingPrettyPrinted error:nil];
-        const char *ret = resultHandler("AutoTrackProperties", jsonData.bytes);
+        [callbackProperties setObject:w_app_id_string forKey:@"AppID"];
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:ta_parse_date(callbackProperties) options:NSJSONWritingPrettyPrinted error:nil];
+        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        const char *ret = resultHandler("AutoTrackProperties", [jsonString UTF8String]);
         NSDictionary *autoTrackProperties = nil;
         ta_convertToDictionary(ret, &autoTrackProperties);
         return autoTrackProperties;
