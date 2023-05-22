@@ -534,7 +534,7 @@ namespace ThinkingAnalytics.Wrapper
 
         private static void calibrateTimeWithNtp(string ntpServer)
         {
-            sdkClass.CallStatic("calibrateTimeWithNtpForUnity", ntpServer);
+            unityAPIInstance.Call("calibrateTimeWithNtp", ntpServer);
         }
 
         private static void enableThirdPartySharing(TAThirdPartyShareType shareType, string properties, string appId)
