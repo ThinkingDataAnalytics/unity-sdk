@@ -10,6 +10,7 @@ namespace ThinkingSDK.PC.Utils
 {
     public class ThinkingSDKUtil
     {
+        private static Dictionary<string, object> deviceInfo = null;
         public ThinkingSDKUtil()
         {
 
@@ -31,21 +32,24 @@ namespace ThinkingSDK.PC.Utils
         }
         public static Dictionary<string, object> DeviceInfo()
         {
-            Dictionary<string, object> deviceInfo = new Dictionary<string, object>();
-            deviceInfo[ThinkingSDKConstant.DEVICE_ID] = ThinkingSDKDeviceInfo.DeviceID();
-            deviceInfo[ThinkingSDKConstant.LIB_VERSION] = ThinkingSDKAppInfo.LibVersion();
-            //deviceInfo[ThinkingSDKConstant.CARRIER] = ThinkingSDKDeviceInfo.Carrier();
-            deviceInfo[ThinkingSDKConstant.LIB] = ThinkingSDKAppInfo.LibName();
-            deviceInfo[ThinkingSDKConstant.OS] = ThinkingSDKDeviceInfo.OS();
-            deviceInfo[ThinkingSDKConstant.SCREEN_HEIGHT] = ThinkingSDKDeviceInfo.ScreenHeight();
-            deviceInfo[ThinkingSDKConstant.SCREEN_WIDTH] = ThinkingSDKDeviceInfo.ScreenWidth();
-            deviceInfo[ThinkingSDKConstant.MANUFACTURE] = ThinkingSDKDeviceInfo.Manufacture();
-            deviceInfo[ThinkingSDKConstant.DEVICE_MODEL] = ThinkingSDKDeviceInfo.DeviceModel();
+            if (deviceInfo == null)
+            {
+                deviceInfo = new Dictionary<string, object>();
+                deviceInfo[ThinkingSDKConstant.DEVICE_ID] = ThinkingSDKDeviceInfo.DeviceID();
+                //deviceInfo[ThinkingSDKConstant.CARRIER] = ThinkingSDKDeviceInfo.Carrier(); //PC端不采集
+                deviceInfo[ThinkingSDKConstant.OS] = ThinkingSDKDeviceInfo.OS();
+                deviceInfo[ThinkingSDKConstant.OS_VERSION] = ThinkingSDKDeviceInfo.OSVersion();
+                deviceInfo[ThinkingSDKConstant.SCREEN_HEIGHT] = ThinkingSDKDeviceInfo.ScreenHeight();
+                deviceInfo[ThinkingSDKConstant.SCREEN_WIDTH] = ThinkingSDKDeviceInfo.ScreenWidth();
+                deviceInfo[ThinkingSDKConstant.MANUFACTURE] = ThinkingSDKDeviceInfo.Manufacture();
+                deviceInfo[ThinkingSDKConstant.DEVICE_MODEL] = ThinkingSDKDeviceInfo.DeviceModel();
+                deviceInfo[ThinkingSDKConstant.APP_VERSION] = ThinkingSDKAppInfo.AppVersion();
+                deviceInfo[ThinkingSDKConstant.APP_BUNDLEID] = ThinkingSDKAppInfo.AppIdentifier();
+                deviceInfo[ThinkingSDKConstant.LIB] = ThinkingSDKAppInfo.LibName();
+                deviceInfo[ThinkingSDKConstant.LIB_VERSION] = ThinkingSDKAppInfo.LibVersion();
+            }
             deviceInfo[ThinkingSDKConstant.SYSTEM_LANGUAGE] = ThinkingSDKDeviceInfo.MachineLanguage();
-            deviceInfo[ThinkingSDKConstant.OS_VERSION] = ThinkingSDKDeviceInfo.OSVersion();
-            deviceInfo[ThinkingSDKConstant.APP_VERSION] = ThinkingSDKAppInfo.AppVersion();
             deviceInfo[ThinkingSDKConstant.NETWORK_TYPE] = ThinkingSDKDeviceInfo.NetworkType();
-            deviceInfo[ThinkingSDKConstant.APP_BUNDLEID] = ThinkingSDKAppInfo.AppIdentifier();
             return deviceInfo;
         }
         // Get disabled preset properties
@@ -105,6 +109,7 @@ namespace ThinkingSDK.PC.Utils
             }
             return randomID;
         }
+
         // Get time zone offset
         public static double ZoneOffset(DateTime dateTime, TimeZoneInfo timeZone)
         {
@@ -114,10 +119,10 @@ namespace ThinkingSDK.PC.Utils
             {
                 timeSpan = timeZone.BaseUtcOffset;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 success = false;
-                //ThinkingSDKLogger.Print("ZoneOffset: TimeSpan get failed : " + e.Message);
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("ZoneOffset: TimeSpan get failed : " + e.Message);
             }
             try
             {
@@ -127,10 +132,10 @@ namespace ThinkingSDK.PC.Utils
                     timeSpan = timeSpan.Add(timeSpan1);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 success = false;
-                //ThinkingSDKLogger.Print("ZoneOffset: IsDaylightSavingTime get failed : " + e.Message);
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("ZoneOffset: IsDaylightSavingTime get failed : " + e.Message);
             }
             if (success == false)
             {
@@ -148,10 +153,10 @@ namespace ThinkingSDK.PC.Utils
             {
                 timeSpan = timeZone.BaseUtcOffset;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 success = false;
-                //ThinkingSDKLogger.Print("FormatDate - TimeSpan get failed : " + e.Message);
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate - TimeSpan get failed : " + e.Message);
             }
             try
             {
@@ -161,10 +166,10 @@ namespace ThinkingSDK.PC.Utils
                     timeSpan = timeSpan.Add(timeSpan1);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 success = false;
-                //ThinkingSDKLogger.Print("FormatDate: IsDaylightSavingTime get failed : " + e.Message);
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate: IsDaylightSavingTime get failed : " + e.Message);
             }
             if (success == false)
             {

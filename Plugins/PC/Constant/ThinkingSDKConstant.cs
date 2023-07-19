@@ -69,6 +69,10 @@ namespace ThinkingSDK.PC.Constant
         public static readonly string RANDOM_DEVICE_ID = "RANDOM_DEVICE_ID";
         // event duration
         public static readonly string DURATION = "#duration";
+        // flush time
+        public static readonly string FLUSH_TIME = "#flush_time";
+        // request data
+        public static readonly string REQUEST_DATA = "data";
 
         // super properties
         public static readonly string SUPER_PROPERTY = "super_properties";

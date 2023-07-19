@@ -5,9 +5,10 @@ namespace ThinkingSDK.PC.Storage
 {
     public class ThinkingSDKFile
     {
+        private static string connectorKey = "_";
         public static string GetKey(string prefix,string key)
         {
-            return prefix +"_"+ key;
+            return prefix + connectorKey + key;
         }
         public static void SaveData(string prefix, string key, object value)
         {

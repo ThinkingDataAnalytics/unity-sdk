@@ -21,8 +21,7 @@ namespace ThinkingSDK.PC.TaskManager
         private static ThinkingSDKTask mSingleTask;
 
         private bool isWaiting = false;
-
-        private int mBatchSize = 30;
+        private float updateInterval = 0;
 
         public static ThinkingSDKTask SingleTask()
         {
@@ -37,10 +36,15 @@ namespace ThinkingSDK.PC.TaskManager
         }
 
         private void Update() {
-            if (requestList.Count > 0 && !isWaiting)
+            updateInterval += UnityEngine.Time.deltaTime;
+            if (updateInterval > 0.2)
             {
-                WaitOne();
-                StartRequestSendData();
+                updateInterval = 0;
+                if (!isWaiting && requestList.Count > 0)
+                {
+                    WaitOne();
+                    StartRequestSendData();
+                }
             }
         }
 
@@ -80,18 +84,19 @@ namespace ThinkingSDK.PC.TaskManager
             {
                 ThinkingSDKBaseRequest mRequest;
                 ResponseHandle responseHandle;
-                IList<Dictionary<string, object>> list;
-                lock(_locker)
+                string list;
+                int eventCount = 0;
+                lock (_locker)
                 {
                     mRequest = requestList[0];
                     responseHandle = responseHandleList[0];
-                    list = ThinkingSDKFileJson.DequeueBatchTrackingData(batchSizeList[0], appIdList[0]);
+                    list = ThinkingSDKFileJson.DequeueBatchTrackingData(batchSizeList[0], appIdList[0], out eventCount);
                 }
                 if (mRequest != null) 
                 {
-                    if (list.Count>0)
+                    if (eventCount > 0 && list.Length > 0)
                     {
-                        this.StartCoroutine(this.SendData(mRequest, responseHandle, list));                        
+                        this.StartCoroutine(this.SendData(mRequest, responseHandle, list, eventCount));                        
                     }
                     else
                     {
@@ -111,8 +116,8 @@ namespace ThinkingSDK.PC.TaskManager
 
             }
         }
-        private IEnumerator SendData(ThinkingSDKBaseRequest mRequest, ResponseHandle responseHandle, IList<Dictionary<string, object>> list) {
-            yield return mRequest.SendData_2(responseHandle, list);
+        private IEnumerator SendData(ThinkingSDKBaseRequest mRequest, ResponseHandle responseHandle, string list, int eventCount) {
+            yield return mRequest.SendData_2(responseHandle, list, eventCount);
         }
     }
 }

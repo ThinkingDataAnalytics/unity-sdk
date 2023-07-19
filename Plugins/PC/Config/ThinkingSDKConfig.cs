@@ -31,6 +31,7 @@ namespace ThinkingSDK.PC.Config
         public int mUploadSize = 30;
         private List<string> mDisableEvents = new List<string>();
         private static Dictionary<string, ThinkingSDKConfig> sInstances = new Dictionary<string, ThinkingSDKConfig>();
+        private ResponseHandle mCallback;
         private ThinkingSDKConfig(string token,string serverUrl, string instanceName)
         {
             //verify server url
@@ -45,9 +46,9 @@ namespace ThinkingSDK.PC.Config
             {
                 this.mTimeZone = TimeZoneInfo.Local;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                //ThinkingSDKLogger.Print("TimeZoneInfo initial failed :" + e.Message);
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("TimeZoneInfo initial failed :" + e.Message);
             }
         }
         private string VerifyUrl(string serverUrl)
@@ -137,44 +138,46 @@ namespace ThinkingSDK.PC.Config
         }
         public void UpdateConfig(MonoBehaviour mono, ResponseHandle callback = null)
         {
-            Dictionary<string, object> dic = new Dictionary<string, object>();
-            ResponseHandle responseHandle = delegate (Dictionary<string, object> result) {
-                try
+            mCallback = callback;
+            mono.StartCoroutine(this.GetWithFORM(this.mConfigUrl,this.mToken,null, ConfigResponseHandle));
+        }
+
+        private void ConfigResponseHandle(Dictionary<string, object> result)
+        {
+            try
+            {
+                int code = int.Parse(result["code"].ToString());
+                if (result != null && code == 0)
                 {
-                    int code = int.Parse(result["code"].ToString());
-                    if (result!=null && code==0)
+                    Dictionary<string, object> data = (Dictionary<string, object>)result["data"];
+                    foreach (KeyValuePair<string, object> kv in data)
                     {
-                        Dictionary<string, object> data = (Dictionary<string, object>)result["data"];
-                        foreach(KeyValuePair<string, object> kv in data) 
+                        if (kv.Key == "sync_interval")
                         {
-                            if (kv.Key == "sync_interval")
+                            this.mUploadInterval = int.Parse(kv.Value.ToString());
+                        }
+                        else if (kv.Key == "sync_batch_size")
+                        {
+                            this.mUploadSize = int.Parse(kv.Value.ToString());
+                        }
+                        else if (kv.Key == "disable_event_list")
+                        {
+                            foreach (var item in (List<object>)kv.Value)
                             {
-                                this.mUploadInterval = int.Parse(kv.Value.ToString());
-                            } 
-                            else if (kv.Key == "sync_batch_size")
-                            {
-                                this.mUploadSize = int.Parse(kv.Value.ToString());
+                                this.mDisableEvents.Add((string)item);
                             }
-                            else if (kv.Key == "disable_event_list")
-                            {
-                                foreach (var item in (List<object>)kv.Value)
-                                {
-                                    this.mDisableEvents.Add((string)item);
-                                }
-                            } 
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    ThinkingSDKLogger.Print("Get config failed: " + ex.Message);
-                }
-                if (callback != null)
-                {
-                    callback();
-                }
-            };
-            mono.StartCoroutine(this.GetWithFORM(this.mConfigUrl,this.mToken,null,responseHandle));
+            }
+            catch (Exception ex)
+            {
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get config failed: " + ex.Message);
+            }
+            if (mCallback != null)
+            {
+                mCallback();
+            }
         }
 
         private IEnumerator GetWithFORM (string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle) {

@@ -43,6 +43,18 @@ namespace ThinkingSDK.PC.Utils
             return Parser.Parse(json);
         }
 
+        // Use caution!
+        public static List<object> DeserializeArray(string json)
+        {
+            // save the string for debug information
+            if (json == null)
+            {
+                return null;
+            }
+
+            return Parser.ParseArray(json);
+        }
+
         sealed class Parser : IDisposable
         {
             const string WORD_BREAK = "{}[],:\"";
@@ -80,6 +92,14 @@ namespace ThinkingSDK.PC.Utils
                 using (var instance = new Parser(jsonString))
                 {
                     return instance.ParseObject();
+                }
+            }
+
+            public static List<object> ParseArray(string jsonString)
+            {
+                using (var instance = new Parser(jsonString))
+                {
+                    return instance.ParseArray();
                 }
             }
 

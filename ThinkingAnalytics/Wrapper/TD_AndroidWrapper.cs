@@ -21,12 +21,14 @@ namespace ThinkingAnalytics.Wrapper
         /// </summary>
         /// <returns>The JSONObject instance.</returns>
         /// <param name="data">The Dictionary containing some data </param>
-        private static AndroidJavaObject getJSONObject(string dataString)
+        private static AndroidJavaObject getJSONObject(Dictionary<string, object> data)
         {
-            if (dataString.Equals("null"))
+            if (data == null)
             {
                 return null;
             }
+
+            string dataString = serilize(data);
 
             try
             {
@@ -34,7 +36,7 @@ namespace ThinkingAnalytics.Wrapper
             }
             catch (Exception e)
             {
-                TD_Log.w("ThinkingAnalytics: unexpected exception: " + e);
+                if(TD_Log.GetEnable()) TD_Log.w("ThinkingAnalytics: unexpected exception: " + e);
             }
             return null;
         }
@@ -165,7 +167,7 @@ namespace ThinkingAnalytics.Wrapper
             return new AndroidJavaObject("java.util.Date", currentMillis);
         }
 
-        private static void track(string eventName, string properties, DateTime dateTime, string appId)
+        private static void track(string eventName, Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             AndroidJavaObject date = getDate(dateTime);
             AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
@@ -173,7 +175,7 @@ namespace ThinkingAnalytics.Wrapper
             getInstance(appId).Call("track", eventName, getJSONObject(properties), date, tz);
         }
 
-        private static void track(string eventName, string properties, DateTime dateTime, TimeZoneInfo timeZone, string appId)
+        private static void track(string eventName, Dictionary<string, object> properties, DateTime dateTime, TimeZoneInfo timeZone, string appId)
         {
             AndroidJavaObject date = getDate(dateTime);
             AndroidJavaObject tz = null;
@@ -189,7 +191,7 @@ namespace ThinkingAnalytics.Wrapper
             getInstance(appId).Call("track", eventName, getJSONObject(properties), date, tz);
         }
 
-        private static void trackForAll(string eventName, string properties)
+        private static void trackForAll(string eventName, Dictionary<string, object> properties)
         {
             string appId = "";
             track(eventName, properties, appId);
@@ -221,7 +223,7 @@ namespace ThinkingAnalytics.Wrapper
                     break;
             }
             if (null == javaEvent) {
-                TD_Log.w("Unexpected java event object. Returning...");
+                if(TD_Log.GetEnable()) TD_Log.w("Unexpected java event object. Returning...");
                 return;
             }
 
@@ -248,12 +250,12 @@ namespace ThinkingAnalytics.Wrapper
             getInstance(appId).Call("track", javaEvent);
         }
 
-        private static void track(string eventName, string properties, string appId)
+        private static void track(string eventName, Dictionary<string, object> properties, string appId)
         {
             getInstance(appId).Call("track", eventName, getJSONObject(properties));
         }
 
-        private static void setSuperProperties(string superProperties, string appId)
+        private static void setSuperProperties(Dictionary<string, object> superProperties, string appId)
         {
             getInstance(appId).Call("setSuperProperties", getJSONObject(superProperties));
         }
@@ -317,22 +319,22 @@ namespace ThinkingAnalytics.Wrapper
             getInstance(appId).Call("login", uniqueId);
         }
 
-        private static void userSetOnce(string properties, string appId)
+        private static void userSetOnce(Dictionary<string, object> properties, string appId)
         {
             getInstance(appId).Call("user_setOnce", getJSONObject(properties));
         }
 
-        private static void userSetOnce(string properties, DateTime dateTime, string appId)
+        private static void userSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             getInstance(appId).Call("user_setOnce", getJSONObject(properties), getDate(dateTime));
         }
 
-        private static void userSet(string properties, string appId)
+        private static void userSet(Dictionary<string, object> properties, string appId)
         {
             getInstance(appId).Call("user_set", getJSONObject(properties));
         }
 
-        private static void userSet(string properties, DateTime dateTime, string appId)
+        private static void userSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             getInstance(appId).Call("user_set", getJSONObject(properties), getDate(dateTime));
         }
@@ -350,35 +352,35 @@ namespace ThinkingAnalytics.Wrapper
                 finalProperties.Add(s, 0);
             }
 
-            getInstance(appId).Call("user_unset", getJSONObject(TD_MiniJSON.Serialize(finalProperties)), getDate(dateTime));
+            getInstance(appId).Call("user_unset", getJSONObject(finalProperties), getDate(dateTime));
         }
 
-        private static void userAdd(string properties, string appId)
+        private static void userAdd(Dictionary<string, object> properties, string appId)
         {
             getInstance(appId).Call("user_add", getJSONObject(properties));
         }
 
-        private static void userAdd(string properties, DateTime dateTime, string appId)
+        private static void userAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             getInstance(appId).Call("user_add", getJSONObject(properties), getDate(dateTime));
         }
 
-        private static void userAppend(string properties, string appId)
+        private static void userAppend(Dictionary<string, object> properties, string appId)
         {
             getInstance(appId).Call("user_append", getJSONObject(properties));
         }
 
-        private static void userAppend(string properties, DateTime dateTime, string appId)
+        private static void userAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             getInstance(appId).Call("user_append", getJSONObject(properties), getDate(dateTime));
         }
 
-        private static void userUniqAppend(string properties, string appId)
+        private static void userUniqAppend(Dictionary<string, object> properties, string appId)
         {
             getInstance(appId).Call("user_uniqAppend", getJSONObject(properties));
         }
 
-        private static void userUniqAppend(string properties, DateTime dateTime, string appId)
+        private static void userUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             getInstance(appId).Call("user_uniqAppend", getJSONObject(properties), getDate(dateTime));
         }
@@ -430,7 +432,7 @@ namespace ThinkingAnalytics.Wrapper
             unityAPIInstance.Call("setNetworkType", TD_MiniJSON.Serialize(properties));
         }
 
-        private static void enableAutoTrack(AUTO_TRACK_EVENTS events, string properties, string appId)
+        private static void enableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
         {
             if (string.IsNullOrEmpty(appId))
             {
@@ -441,7 +443,7 @@ namespace ThinkingAnalytics.Wrapper
                 { "autoTrackType", (int)events}
             };
             unityAPIInstance.Call("enableAutoTrack", TD_MiniJSON.Serialize(propertiesNew));
-            propertiesNew["properties"] = TD_MiniJSON.Deserialize(properties);
+            propertiesNew["properties"] = properties;
             unityAPIInstance.Call("setAutoTrackProperties", TD_MiniJSON.Serialize(propertiesNew));
         }
 
@@ -459,7 +461,7 @@ namespace ThinkingAnalytics.Wrapper
             unityAPIInstance.Call("enableAutoTrack", TD_MiniJSON.Serialize(properties), listenerAdapter);
         }
 
-        private static void setAutoTrackProperties(AUTO_TRACK_EVENTS events, string properties, string appId)
+        private static void setAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
         {
             if (string.IsNullOrEmpty(appId))
             {
@@ -469,7 +471,7 @@ namespace ThinkingAnalytics.Wrapper
                 { "appId", appId},
                 { "autoTrackType", (int)events}
             };
-            propertiesNew["properties"] = TD_MiniJSON.Deserialize(properties);
+            propertiesNew["properties"] = properties;
             unityAPIInstance.Call("setAutoTrackProperties", TD_MiniJSON.Serialize(propertiesNew));
         }
 
@@ -537,13 +539,13 @@ namespace ThinkingAnalytics.Wrapper
             unityAPIInstance.Call("calibrateTimeWithNtp", ntpServer);
         }
 
-        private static void enableThirdPartySharing(TAThirdPartyShareType shareType, string properties, string appId)
+        private static void enableThirdPartySharing(TAThirdPartyShareType shareType, Dictionary<string, object> properties, string appId)
         {
             Dictionary<string, object> obj = new Dictionary<string, object>() {
                 { "appId", appId },
                 { "type", (int)shareType }
             };
-            obj["properties"] = TD_MiniJSON.Deserialize(properties);
+            obj["properties"] = properties;
             unityAPIInstance.Call("enableThirdPartySharing", TD_MiniJSON.Serialize(obj));
         }
 

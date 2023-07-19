@@ -56,7 +56,7 @@ namespace ThinkingAnalytics.Utils
                 }
                 if (!(kv.Value is string || kv.Value is DateTime || kv.Value is bool || IsNumeric(kv.Value) || IsList(kv.Value) || IsDictionary(kv.Value)))
                 {
-                    TD_Log.w("TA.PropertiesChecker - property values must be one of: string, numberic, Boolean, DateTime, Array, Row");
+                    if(TD_Log.GetEnable()) TD_Log.w("TA.PropertiesChecker - property values must be one of: string, numberic, Boolean, DateTime, Array, Row");
                     ret = false;
                 }
                 if (IsString(kv.Value) && !CheckProperties(kv.Value as string)) 
@@ -91,7 +91,7 @@ namespace ThinkingAnalytics.Utils
             {
                 if (!(value is string || value is DateTime || value is bool || IsNumeric(value) || IsDictionary(value)))
                 {
-                    TD_Log.w("TA.PropertiesChecker - property values in list must be one of: string, numberic, Boolean, DateTime, Row");
+                    if(TD_Log.GetEnable()) TD_Log.w("TA.PropertiesChecker - property values in list must be one of: string, numberic, Boolean, DateTime, Row");
                     ret = false;
                 }
                 if (IsString(value) && !CheckProperties(value as string)) 
@@ -132,7 +132,7 @@ namespace ThinkingAnalytics.Utils
         public static bool CheckProperties(string properties) 
         {
             if (properties is string && System.Text.Encoding.UTF8.GetBytes(Convert.ToString(properties)).Length > 2048) {
-                TD_Log.w("TA.PropertiesChecker - the string is too long: " + (string)(object)properties);
+                if(TD_Log.GetEnable()) TD_Log.w("TA.PropertiesChecker - the string is too long: " + (string)(object)properties);
                 return false;
             }
             return true;
@@ -141,7 +141,7 @@ namespace ThinkingAnalytics.Utils
         {
             if (properties > 9999999999999.999 || properties < -9999999999999.999)
             {
-                TD_Log.w("TA.PropertiesChecker - number value is invalid: " + properties + ", the data range is -9E15 to 9E15, with a maximum of 3 decimal places");
+                if(TD_Log.GetEnable()) TD_Log.w("TA.PropertiesChecker - number value is invalid: " + properties + ", the data range is -9E15 to 9E15, with a maximum of 3 decimal places");
                 return false;
             }
             return true;
@@ -150,7 +150,7 @@ namespace ThinkingAnalytics.Utils
         {
             if (string.IsNullOrEmpty(eventName))
             {
-                TD_Log.w("TA.PropertiesChecker - the string is null");
+                if(TD_Log.GetEnable()) TD_Log.w("TA.PropertiesChecker - the string is null");
                 return false;
             }
             if (keyPattern.IsMatch(eventName))
@@ -163,7 +163,7 @@ namespace ThinkingAnalytics.Utils
                 {
                     return true;
                 }
-                TD_Log.w("TA.PropertiesChecker - the string is invalid for TA: " + eventName + ", event name and properties name rules: must start with a letter, and can only contain: numbers, letters (ignoring case) and underscore(_), and the maximum length is 50.");
+                if(TD_Log.GetEnable()) TD_Log.w("TA.PropertiesChecker - the string is invalid for TA: " + eventName + ", event name and properties name rules: must start with a letter, and can only contain: numbers, letters (ignoring case) and underscore(_), and the maximum length is 50.");
                 return false;
             }
         }

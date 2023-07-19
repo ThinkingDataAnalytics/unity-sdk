@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:2.6.0
+    SDK VERSION:2.6.1-beta.1
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -76,6 +76,25 @@ namespace ThinkingAnalytics
 
             public string getTimeZoneId()
             {
+#if UNITY_STANDALONE_WIN
+                switch (timeZone)
+                {
+                    case TATimeZone.UTC:
+                        return "UTC";
+                    case TATimeZone.Asia_Shanghai:
+                        return "China Standard Time";
+                    case TATimeZone.Asia_Tokyo:
+                        return "Tokyo Standard Time";
+                    case TATimeZone.America_Los_Angeles:
+                        return "Pacific Standard Time";
+                    case TATimeZone.America_New_York:
+                        return "Eastern Standard Time";
+                    case TATimeZone.Other:
+                        return timeZoneId;
+                    default:
+                        break;
+                }
+#else
                 switch (timeZone)
                 {
                     case TATimeZone.UTC:
@@ -93,6 +112,7 @@ namespace ThinkingAnalytics
                     default:
                         break;
                 }
+#endif
                 return null;
             }
         }
@@ -136,7 +156,7 @@ namespace ThinkingAnalytics
         [HideInInspector]
         public Token[] tokens = new Token[1];
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Whether to enable logs
@@ -1253,11 +1273,11 @@ namespace ThinkingAnalytics
         /// <param name="tokens">projects setting, see ThinkingAnalyticsAPI.Token</param>
         public static void StartThinkingAnalytics(Token[] tokens = null)
         {
-            #if DISABLE_TA
+#if DISABLE_TA
             tracking_enabled = false;
-            #else
+#else
             tracking_enabled = true;
-            #endif
+#endif
 
             if (tracking_enabled)
             {
@@ -1277,7 +1297,7 @@ namespace ThinkingAnalytics
                         if (!string.IsNullOrEmpty(token.appid))
                         {
                             token.appid = token.appid.Replace(" ", "");
-                            TD_Log.d("ThinkingAnalytics start with APPID: " + token.appid + ", SERVERURL: " + token.serverUrl + ", MODE: " + token.mode);
+                            if(TD_Log.GetEnable()) TD_Log.d("ThinkingAnalytics start with APPID: " + token.appid + ", SERVERURL: " + token.serverUrl + ", MODE: " + token.mode);
                             ThinkingAnalyticsWrapper.ShareInstance(token, sThinkingAnalyticsAPI);
                             ThinkingAnalyticsWrapper.SetNetworkType(sThinkingAnalyticsAPI.networkType);
                         }
@@ -1285,7 +1305,7 @@ namespace ThinkingAnalytics
                 }
                 catch (Exception ex)
                 {
-                    TD_Log.d("ThinkingAnalytics start Error: " + ex.Message);
+                    if(TD_Log.GetEnable()) TD_Log.d("ThinkingAnalytics start Error: " + ex.Message);
                 }
             }
 

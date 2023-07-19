@@ -71,7 +71,7 @@ namespace ThinkingAnalytics.Wrapper
         {
             UpdateAutoTrackSceneInfos(events, appId);
             SetAutoTrackProperties(events, properties, appId);
-            enableAutoTrack(events, serilize(properties), appId);
+            enableAutoTrack(events, properties, appId);
             if ((events & AUTO_TRACK_EVENTS.APP_SCENE_LOAD) != 0)
             {
                 TrackSceneLoad(SceneManager.GetActiveScene(), appId);
@@ -90,27 +90,29 @@ namespace ThinkingAnalytics.Wrapper
             }
         }
 
+        private static string AUTO_TRACK_EVENTS_APP_SCENE_LOAD = "APP_SCENE_LOAD";
+        private static string AUTO_TRACK_EVENTS_APP_SCENE_UNLOAD = "APP_SCENE_UNLOAD";
         public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
         {
             if ((events & AUTO_TRACK_EVENTS.APP_SCENE_LOAD) != 0)
             {
-                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()))
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS_APP_SCENE_LOAD))
                 {
-                    AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()], properties);
+                    AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS_APP_SCENE_LOAD], properties);
                 }
                 else
-                    mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()] = properties;
+                    mAutoTrackProperties[AUTO_TRACK_EVENTS_APP_SCENE_LOAD] = properties;
             }
             if ((events & AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD) != 0)
             {
-                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()))
+                if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS_APP_SCENE_UNLOAD))
                 {
-                    AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()], properties);
+                    AddDictionary(mAutoTrackProperties[AUTO_TRACK_EVENTS_APP_SCENE_UNLOAD], properties);
                 }
                 else
-                    mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()] = properties;
+                    mAutoTrackProperties[AUTO_TRACK_EVENTS_APP_SCENE_UNLOAD] = properties;
             }
-            setAutoTrackProperties(events, serilize(properties), appId);
+            setAutoTrackProperties(events, properties, appId);
         }
 
         public static void TrackSceneLoad(Scene scene, string appId = "")
@@ -119,9 +121,9 @@ namespace ThinkingAnalytics.Wrapper
                 { "#scene_name", scene.name },
                 { "#scene_path", scene.path }
             };
-            if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()))
+            if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS_APP_SCENE_LOAD))
             {
-                AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_LOAD.ToString()]);
+                AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS_APP_SCENE_LOAD]);
             }
             if (string.IsNullOrEmpty(appId))
             {
@@ -158,9 +160,9 @@ namespace ThinkingAnalytics.Wrapper
                 { "#scene_name", scene.name },
                 { "#scene_path", scene.path }
             };
-            if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()))
+            if (mAutoTrackProperties.ContainsKey(AUTO_TRACK_EVENTS_APP_SCENE_UNLOAD))
             {
-                AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS.APP_SCENE_UNLOAD.ToString()]);
+                AddDictionary(properties, mAutoTrackProperties[AUTO_TRACK_EVENTS_APP_SCENE_UNLOAD]);
             }
             foreach (var kv in mAutoTrackEventInfos)
             {
@@ -181,7 +183,7 @@ namespace ThinkingAnalytics.Wrapper
             mAutoTrackEventInfos[appId] = events;
         }
 
-        private static string getFinalEventProperties(Dictionary<string, object> properties)
+        private static Dictionary<string, object> getFinalEventProperties(Dictionary<string, object> properties)
         {
             TD_PropertiesChecker.CheckProperties(properties);
 
@@ -190,11 +192,11 @@ namespace ThinkingAnalytics.Wrapper
                 Dictionary<string, object> finalProperties = new Dictionary<string, object>();
                 TD_PropertiesChecker.MergeProperties(mDynamicSuperProperties.GetDynamicSuperProperties(), finalProperties);
                 TD_PropertiesChecker.MergeProperties(properties, finalProperties);
-                return serilize(finalProperties);
+                return finalProperties;
             }
             else
             {
-                return serilize(properties);
+                return properties;
             }
 
         }
@@ -226,13 +228,13 @@ namespace ThinkingAnalytics.Wrapper
         {
             if (null == taEvent || null == taEvent.EventType)
             {
-                TD_Log.w("Ignoring invalid TA event");
+                if(TD_Log.GetEnable()) TD_Log.w("Ignoring invalid TA event");
                 return;
             }
 
             if (taEvent.EventTime == null)
             {
-                TD_Log.w("ppp null...");
+                if(TD_Log.GetEnable()) TD_Log.w("ppp null...");
             }
             TD_PropertiesChecker.CheckString(taEvent.EventName);
             TD_PropertiesChecker.CheckProperties(taEvent.Properties);
@@ -268,7 +270,7 @@ namespace ThinkingAnalytics.Wrapper
         public static void SetSuperProperties(Dictionary<string, object> superProperties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(superProperties);
-            setSuperProperties(serilize(superProperties), appId);
+            setSuperProperties(superProperties, appId);
         }
 
         public static void UnsetSuperProperty(string superPropertyName, string appId)
@@ -308,25 +310,25 @@ namespace ThinkingAnalytics.Wrapper
         public static void UserSet(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSet(serilize(properties), appId);
+            userSet(properties, appId);
         }
 
         public static void UserSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSet(serilize(properties), dateTime, appId);
+            userSet(properties, dateTime, appId);
         }
 
         public static void UserSetOnce(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSetOnce(serilize(properties), appId);
+            userSetOnce(properties, appId);
         }
 
         public static void UserSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userSetOnce(serilize(properties), dateTime, appId);
+            userSetOnce(properties, dateTime, appId);
         }
 
         public static void UserUnset(List<string> properties, string appId)
@@ -344,37 +346,37 @@ namespace ThinkingAnalytics.Wrapper
         public static void UserAdd(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAdd(serilize(properties), appId);
+            userAdd(properties, appId);
         }
 
         public static void UserAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAdd(serilize(properties), dateTime, appId);
+            userAdd(properties, dateTime, appId);
         }
 
         public static void UserAppend(Dictionary<string, object> properties, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAppend(serilize(properties), appId);
+            userAppend(properties, appId);
         }
 
         public static void UserAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userAppend(serilize(properties), dateTime, appId);
+            userAppend(properties, dateTime, appId);
         }
 
         public static void UserUniqAppend(Dictionary<string, object> properties, string appId) 
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userUniqAppend(serilize(properties), appId);
+            userUniqAppend(properties, appId);
         }
 
         public static void UserUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId) 
         {
             TD_PropertiesChecker.CheckProperties(properties);
-            userUniqAppend(serilize(properties), dateTime, appId);
+            userUniqAppend(properties, dateTime, appId);
         }
 
         public static void UserDelete(string appId)
@@ -406,7 +408,7 @@ namespace ThinkingAnalytics.Wrapper
         {
             if (!TD_PropertiesChecker.CheckProperties(dynamicSuperProperties.GetDynamicSuperProperties()))
             {
-                TD_Log.d("TA.Wrapper(" + appId + ") - Cannot set dynamic super properties due to invalid properties.");
+                if(TD_Log.GetEnable()) TD_Log.d("TA.Wrapper(" + appId + ") - Cannot set dynamic super properties due to invalid properties.");
             }
             mDynamicSuperProperties = dynamicSuperProperties;
             setDynamicSuperProperties(dynamicSuperProperties, appId);
@@ -455,7 +457,7 @@ namespace ThinkingAnalytics.Wrapper
         public static void EnableThirdPartySharing(TAThirdPartyShareType shareType, Dictionary<string, object> properties = null, string appId = "")
         {
             if (null == properties) properties = new Dictionary<string, object>();
-            enableThirdPartySharing(shareType, serilize(properties), appId);
+            enableThirdPartySharing(shareType, properties, appId);
         }
     }
 }

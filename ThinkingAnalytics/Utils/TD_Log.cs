@@ -10,6 +10,11 @@ namespace ThinkingAnalytics.Utils
             enableLog = enabled;
         }
 
+        public static bool GetEnable()
+        {
+            return enableLog;
+        }
+
         public static void d(string message)
         {
             if (enableLog)

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using ThinkingSDK.PC.Utils;
 
-
 namespace ThinkingSDK.PC.Storage
 {
     public class ThinkingSDKFileJson
@@ -12,9 +11,10 @@ namespace ThinkingSDK.PC.Storage
         internal static int EnqueueTrackingData(Dictionary<string, object> data, string prefix)
         {
             int eventId = EventAutoIncrementingID(prefix);
-            String trackingKey = prefix + "Event" + eventId.ToString();
-            data["id"] = trackingKey;
-            PlayerPrefs.SetString(trackingKey, ThinkingSDKJSON.Serialize(data));
+            string trackingKey = GetEventKeysPrefix(prefix, eventId);
+
+            var dataJson = ThinkingSDKJSON.Serialize(data);
+            PlayerPrefs.SetString(trackingKey, dataJson);
             IncreaseTrackingDataID(prefix);
             int eventCount = EventAutoIncrementingID(prefix) - EventIndexID(prefix);
             return eventCount;
@@ -23,7 +23,7 @@ namespace ThinkingSDK.PC.Storage
         // Get event end ID
         internal static int EventAutoIncrementingID(string prefix)
         {
-            string mEventAutoIncrementingID = prefix + "EventAutoIncrementingID";
+            string mEventAutoIncrementingID = GetEventAutoIncrementingIDKey(prefix);
             return PlayerPrefs.HasKey(mEventAutoIncrementingID) ? PlayerPrefs.GetInt(mEventAutoIncrementingID) : 0;
         }
 
@@ -32,55 +32,64 @@ namespace ThinkingSDK.PC.Storage
         {
             int id = EventAutoIncrementingID(prefix);
             id += 1;
-            String trackingIdKey = prefix + "EventAutoIncrementingID";
-            PlayerPrefs.SetInt(trackingIdKey, id);
+            PlayerPrefs.SetInt(GetEventAutoIncrementingIDKey(prefix), id);
         }
 
         // Reset event end ID
         private static void ResetTrackingDataID(string prefix)
         {
             int id = 0;
-            String trackingIdKey = prefix + "EventAutoIncrementingID";
-            PlayerPrefs.SetInt(trackingIdKey, id);
+            PlayerPrefs.SetInt(GetEventAutoIncrementingIDKey(prefix), id);
         }
 
         // Get event start ID
         internal static int EventIndexID(string prefix)
         {
-            string mEventIndexID = prefix + "EventIndexID";
-            return PlayerPrefs.HasKey(mEventIndexID) ? PlayerPrefs.GetInt(mEventIndexID) : 0;
+            string eventIndexID = GetEventIndexIDKey(prefix);
+            return PlayerPrefs.HasKey(eventIndexID) ? PlayerPrefs.GetInt(eventIndexID) : 0;
         }
 
         // Save time start ID
         private static void SaveEventIndexID(int indexID, string prefix)
         {
-            String trackingIdKey = prefix + "EventIndexID";
-            PlayerPrefs.SetInt(trackingIdKey, indexID);
+            string eventIndexID = GetEventIndexIDKey(prefix);
+            PlayerPrefs.SetInt(eventIndexID, indexID);
         }
 
         // Fetch a specified number of events in batches
-        internal static List<Dictionary<string, object>> DequeueBatchTrackingData(int batchSize, string prefix)
+        internal static string DequeueBatchTrackingData(int batchSize, string prefix, out int eventCount)
         {
-            List<Dictionary<string, object>> batch = new List<Dictionary<string, object>>();
+            string batchData = eventBatchPrefix;
+            List<Dictionary<string, object>> tempDataList = new List<Dictionary<string, object>>();
             int dataIndex = EventIndexID(prefix);
             int maxIndex = EventAutoIncrementingID(prefix) - 1;
-            while (batch.Count < batchSize && dataIndex <= maxIndex) {
-                String trackingKey = prefix + "Event" + dataIndex.ToString();
+            eventCount = 0;
+            while (eventCount < batchSize && dataIndex <= maxIndex) {
+                string trackingKey = GetEventKeysPrefix(prefix, dataIndex);
                 if (PlayerPrefs.HasKey(trackingKey)) {
-                    try {
-                        Dictionary<string, object> data = ThinkingSDKJSON.Deserialize(PlayerPrefs.GetString(trackingKey));
-                        data.Remove("id");
-                        batch.Add(data);
+                    string dataJson = PlayerPrefs.GetString(trackingKey);
+                    if (eventCount < batchSize - 1 && dataIndex < maxIndex)
+                    {
+                        batchData = batchData + dataJson + eventBatchInfix;
                     }
-                    catch (Exception e) {
-                        ThinkingSDKLogger.Print("There was an error processing " + trackingKey + " from the internal object pool: " + e);
-                        PlayerPrefs.DeleteKey(trackingKey);
+                    else
+                    {
+                        batchData = batchData + dataJson;
                     }
+                    eventCount++;
                 }
                 dataIndex++;
             }
-            
-            return batch;
+
+            if (eventCount > 0)
+            {
+                batchData = batchData + eventBatchSuffix;
+                return batchData;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         // Batch delete the specified number of events and return the remaining number of events
@@ -90,7 +99,7 @@ namespace ThinkingSDK.PC.Storage
             int dataIndex = EventIndexID(prefix);
             int maxIndex = EventAutoIncrementingID(prefix) - 1;
             while (deletedCount < batchSize && dataIndex <= maxIndex) {
-                String trackingKey = prefix + "Event" + dataIndex.ToString();    
+                string trackingKey = GetEventKeysPrefix(prefix, dataIndex);
                 if (PlayerPrefs.HasKey(trackingKey)) {
                     PlayerPrefs.DeleteKey(trackingKey);
                     deletedCount++;
@@ -120,6 +129,60 @@ namespace ThinkingSDK.PC.Storage
             SaveEventIndexID(0, prefix);
             ResetTrackingDataID(prefix);
             return 0;
+        }
+
+        private static string eventKeyInfix = "Event";
+        private static string eventIndexIDSuffix = "EventIndexID";
+        private static string eventAutoIncrementingIDSuffix = "EventAutoIncrementingID";
+
+        private static string eventBatchPrefix = "[";
+        private static string eventBatchInfix = ",";
+        private static string eventBatchSuffix = "]";
+
+        private static Dictionary<string, string> eventKeysPrefix = new Dictionary<string, string>() { };
+        private static Dictionary<string, string> eventIndexIDKeys = new Dictionary<string, string>() { };
+        private static Dictionary<string, string> eventAutoIncrementingIDKeys = new Dictionary<string, string>() { };
+
+        private static string GetEventKeysPrefix(string prefix, int index)
+        {
+            if (eventKeysPrefix.ContainsKey(prefix))
+            {
+                return eventKeysPrefix[prefix] + index;
+            }
+            else
+            {
+                string eventKey = prefix + eventKeyInfix;
+                eventKeysPrefix[prefix] = eventKey;
+                return eventKey + index;
+            }
+        }
+
+        private static string GetEventIndexIDKey(string prefix)
+        {
+            if (eventIndexIDKeys.ContainsKey(prefix))
+            {
+                return eventIndexIDKeys[prefix];
+            }
+            else
+            {
+                string eventKey = prefix + eventIndexIDSuffix;
+                eventIndexIDKeys[prefix] = eventKey;
+                return eventKey;
+            }
+        }
+
+        private static string GetEventAutoIncrementingIDKey(string prefix)
+        {
+            if (eventAutoIncrementingIDKeys.ContainsKey(prefix))
+            {
+                return eventAutoIncrementingIDKeys[prefix];
+            }
+            else
+            {
+                string eventKey = prefix + eventAutoIncrementingIDSuffix;
+                eventAutoIncrementingIDKeys[prefix] = eventKey;
+                return eventKey;
+            }
         }
     }
 }

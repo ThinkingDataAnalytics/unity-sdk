@@ -3,7 +3,6 @@ using UnityEngine.SceneManagement;
 using ThinkingAnalytics;
 using System.Collections.Generic;
 using System;
-using System.Threading;
 
 public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEventCallback
 {
@@ -99,7 +98,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEvent
 
 
             // Enable auto-tracking events
-            ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
+            // ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
             // Enable auto-tracking events, and set properties
             // ThinkingAnalyticsAPI.SetAutoTrackProperties(AUTO_TRACK_EVENTS.ALL, new Dictionary<string, object>()
             //  {
@@ -305,7 +304,8 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEvent
             ThinkingAnalyticsAPI.CalibrateTime(1608782412000);
 
             //NTP server, e.g: time.apple.com
-            //ThinkingAnalyticsAPI.CalibrateTimeWithNtp("time.apple.com");
+            ThinkingAnalyticsAPI.CalibrateTimeWithNtp("time.apple.com");
+            //ThinkingAnalyticsAPI.CalibrateTimeWithNtp("time1.google.com");
         }
         GUILayout.EndHorizontal();
 

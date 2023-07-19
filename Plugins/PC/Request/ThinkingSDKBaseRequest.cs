@@ -11,6 +11,7 @@ using System.IO.Compression;
 using System.Runtime.Serialization;
 using UnityEngine.Networking;
 using System.Collections;
+using ThinkingSDK.PC.Config;
 
 namespace ThinkingSDK.PC.Request
 {
@@ -22,9 +23,8 @@ namespace ThinkingSDK.PC.Request
     {
         private string mAppid;
         private string mURL;
-        private IList<Dictionary<string, object>> mData;
-
-        public ThinkingSDKBaseRequest(string appId, string url, IList<Dictionary<string, object>> data)
+        private string mData;
+        public ThinkingSDKBaseRequest(string appId, string url, string data)
         {
             mAppid = appId;
             mURL = url;
@@ -35,7 +35,7 @@ namespace ThinkingSDK.PC.Request
             mAppid = appId;
             mURL = url;
         }
-        public void SetData(IList<Dictionary<string, object>> data)
+        public void SetData(string data)
         {
             this.mData = data;
         }
@@ -46,7 +46,7 @@ namespace ThinkingSDK.PC.Request
         {
             return mURL;
         }
-        public IList<Dictionary<string, object>> Data()
+        public string Data()
         {
             return mData;
         }
@@ -57,7 +57,7 @@ namespace ThinkingSDK.PC.Request
         {
             if (!ThinkingSDKUtil.IsValiadURL(url))
             {
-                ThinkingSDKLogger.Print("Invalid Url:\n" + url);
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Invalid Url:\n" + url);
             }
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "GET";
@@ -65,8 +65,8 @@ namespace ThinkingSDK.PC.Request
             var responseResult = new StreamReader(response.GetResponseStream()).ReadToEnd();
             if (responseResult != null)
             {
-                ThinkingSDKLogger.Print("Request URL:\n"+url);
-                ThinkingSDKLogger.Print("Response:\n"+responseResult);
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Request URL:\n"+url);
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Response:\n"+responseResult);
             }
         }
 
@@ -94,81 +94,8 @@ namespace ThinkingSDK.PC.Request
             return isOk;
         }
 
-        abstract public IEnumerator SendData_2(ResponseHandle responseHandle, IList<Dictionary<string, object>> data);
+        abstract public IEnumerator SendData_2(ResponseHandle responseHandle, string data, int eventCount);
 
-        //public static void postWithFORM(string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle)
-        //{
-        //    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-        //    request.Method = "POST";
-        //    request.ContentType = "application/x-www-form-urlencoded";
-        //    request.ReadWriteTimeout = 30 * 1000;
-        //    request.Timeout = 30 * 1000;
-        //    var postData = "appid=" + appId + "&source=server&dryRun=" + 0 + "&data=" + ThinkingSDKJSON.Serialize(param);
-        //    ThinkingSDKLogger.Print(postData);
-        //    byte[] data = Encoding.UTF8.GetBytes(postData);
-        //    request.ContentLength = data.Length;
-        //    using (Stream stream = request.GetRequestStream())
-        //    {
-        //        stream.Write(data, 0, data.Length);
-        //        stream.Close();
-        //    }
-        //    HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-        //    var responseResult = new StreamReader(response.GetResponseStream()).ReadToEnd();
-        //    if (responseResult != null)
-        //    {
-        //        ThinkingSDKLogger.Print("Request URL=" + url);
-        //        ThinkingSDKLogger.Print("Response:=" + responseResult);
-        //    }
-        //}
-
-        // public static void GetWithFORM(string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle, MonoBehaviour mono)
-        // {
-        //     HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "?appid=" + appId + "&data=" + ThinkingSDKJSON.Serialize(param));
-        //     request.Method = "GET";
-        //     request.ContentType = "application/x-www-form-urlencoded";
-        //     request.ReadWriteTimeout = 30 * 1000;
-        //     request.Timeout = 30 * 1000;
-
-        //     HttpWebResponse response = null;
-        //     Stream responseStream = null;
-        //     Dictionary<string,object> resultDict = new Dictionary<string, object>();
-        //     try
-        //     {
-        //         response = (HttpWebResponse)request.GetResponse();
-        //         responseStream = response.GetResponseStream();
-        //         var responseResult = new StreamReader(responseStream).ReadToEnd();
-        //         if (responseResult != null)
-        //         {
-        //             ThinkingSDKLogger.Print("Request URL=" + url);
-        //             ThinkingSDKLogger.Print("Response:=" + responseResult);
-
-        //             resultDict = ThinkingSDKJSON.Deserialize(responseResult);
-        //         }
-        //     }
-        //     catch (WebException ex)
-        //     {
-        //         ThinkingSDKLogger.Print("server response :" + ex.Message);
-        //     }
-        //     finally
-        //     {
-        //         if (responseStream != null)
-        //         {
-        //             responseStream.Close();
-        //         }
-        //         if (response != null)
-        //         {
-        //             response.Close();
-        //         }
-        //         if (request != null)
-        //         {
-        //             request.Abort();
-        //         }
-        //         if (responseHandle != null) 
-        //         {
-        //             responseHandle(resultDict);
-        //         }
-        //     }  
-        // }
         public static IEnumerator GetWithFORM_2(string url, string appId, Dictionary<string, object> param, ResponseHandle responseHandle)
         {
             string uri = url + "?appid=" + appId;
@@ -182,42 +109,44 @@ namespace ThinkingSDK.PC.Request
                 webRequest.timeout = 30;
                 webRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-                ThinkingSDKLogger.Print("Request URL: \n" + uri);
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Request URL: \n" + uri);
 
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
 
                 Dictionary<string,object> resultDict = null;
-                #if UNITY_2020_1_OR_NEWER
+#if UNITY_2020_1_OR_NEWER
                 switch (webRequest.result)
                 {
                     case UnityWebRequest.Result.ConnectionError:
                     case UnityWebRequest.Result.DataProcessingError:
                     case UnityWebRequest.Result.ProtocolError:
-                        ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
+                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                         break;
                     case UnityWebRequest.Result.Success:
-                        ThinkingSDKLogger.Print("Response: \n" + webRequest.downloadHandler.text);
-                        if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
+                        string resultText = webRequest.downloadHandler.text;
+                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Response: \n" + resultText);
+                        if (!string.IsNullOrEmpty(resultText))
                         {
-                            resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
-                        } 
+                            resultDict = ThinkingSDKJSON.Deserialize(resultText);
+                        }
                         break;
                 }
-                #else
+#else
                 if (webRequest.isHttpError || webRequest.isNetworkError)
                 {
-                    ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                 }
                 else
                 {
-                    ThinkingSDKLogger.Print("Response: \n" + webRequest.downloadHandler.text);
-                    if (!string.IsNullOrEmpty(webRequest.downloadHandler.text)) 
+                    string resultText = webRequest.downloadHandler.text;
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Response: \n" + resultText);
+                    if (!string.IsNullOrEmpty(resultText)) 
                     {
-                        resultDict = ThinkingSDKJSON.Deserialize(webRequest.downloadHandler.text);
+                        resultDict = ThinkingSDKJSON.Deserialize(resultText);
                     } 
                 }
-                #endif
+#endif
                 if (responseHandle != null) 
                 {
                     responseHandle(resultDict);

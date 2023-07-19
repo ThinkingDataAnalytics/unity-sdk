@@ -52,7 +52,7 @@ namespace ThinkingSDK.PC.Main
         {
             if (ThinkingSDKUtil.IsEmptyString(appId))
             {
-                ThinkingSDKLogger.Print("appId is empty");
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("appId is empty");
                 return null;
             }
             ThinkingSDKInstance instance = null;
@@ -187,10 +187,10 @@ namespace ThinkingSDK.PC.Main
         {
             GetInstance(appId).Flush();
         }
-        public static void FlushImmediately (string appId = "")
-        {
-            GetInstance(appId).FlushImmediately();
-        }
+        //public static void FlushImmediately (string appId = "")
+        //{
+        //    GetInstance(appId).FlushImmediately();
+        //}
         public static void SetSuperProperties(Dictionary<string, object> superProperties,string appId = "")
         {
             GetInstance(appId).SetSuperProperties(superProperties);
