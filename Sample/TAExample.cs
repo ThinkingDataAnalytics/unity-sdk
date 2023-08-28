@@ -57,16 +57,16 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEvent
         if (GUILayout.Button("ManualInitialization", GUILayout.Height(Height)))
         {
             // 1. Manual initialization (ThinkingAnalytics prefab loaded)
-            ThinkingAnalyticsAPI.StartThinkingAnalytics();
+            // ThinkingAnalyticsAPI.StartThinkingAnalytics();
 
 
             // 2. Manual initialization (dynamically loading ThinkingAnalyticsAPI script)
-            // new GameObject("ThinkingAnalytics", typeof(ThinkingAnalyticsAPI));
+            new GameObject("ThinkingAnalytics", typeof(ThinkingAnalyticsAPI));
 
             // 2.1 Set instance parameters
-            // string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
-            // string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
-            // ThinkingAnalyticsAPI.StartThinkingAnalytics(appId, serverUrl);
+            string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
+            string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
+            ThinkingAnalyticsAPI.StartThinkingAnalytics(appId, serverUrl);
 
             // 2.1 Set personalized instance parameters
             // string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
@@ -375,7 +375,7 @@ public class TAExample : MonoBehaviour, IDynamicSuperProperties, IAutoTrackEvent
         GUILayout.Space(20);
         if (GUILayout.Button("LoadScene", GUILayout.Height(Height)))
         {
-            SceneManager.LoadScene("NewScene", LoadSceneMode.Single);
+            SceneManager.LoadScene("OtherScene", LoadSceneMode.Single);
         }
         GUILayout.EndHorizontal();
         GUILayout.EndScrollView();

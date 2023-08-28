@@ -1,23 +1,21 @@
 {
-    "name": "com.thinkingdata.unitysdk",
-    "displayName": "ThinkingAnalytics",
-    "description": "Thinking Analytics Unity SDK",
-    "repository":
-    {
+    "name": "com.thinkingdata.analytics",
+    "displayName": "TDAnalytics",
+    "description": "ThinkingData Analytics Unity SDK",
+    "repository": {
         "type": "git",
         "url": "https://github.com/ThinkingDataAnalytics/unity-sdk"
     },
-    "version": "2.6.1-beta.1",
+    "version": "2.6.0",
     "unity": "2018.3",
     "license": "Apache V2",
     "author": "ThinkingData",
-    "keywords":
-    [
+    "keywords": [
         "unity3d",
         "unity3d-package",
         "analytics",
         "thinking",
         "thinkingdata"
     ],
-    "category": "ThinkingAnalytics"
+    "category": "Analytics"
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- ThinkingAnalytics DisablePresetProperties start -->
+    <!-- TDAnalytics DisablePresetProperties start -->
     <!-- <string-array name="TDDisPresetProperties"> -->
        <!-- <item>#disk</item> -->
        <!-- <item>#fps</item> -->
@@ -35,8 +35,9 @@
        <!-- <item>#element_selector</item> -->
        <!-- <item>#app_crashed_reason</item> -->
     <!-- </string-array> -->
-    <!-- ThinkingAnalytics DisablePresetProperties end -->
+    <!-- TDAnalytics DisablePresetProperties end -->
 
-    <!-- ThinkingAnalytics disable C# Exception -->
+    <!-- TDAnalytics disable C# Exception start -->
     <!-- <bool name="DisableCSharpException">true</bool> -->
+    <!-- TDAnalytics disable C# Exception end -->
 </resources>

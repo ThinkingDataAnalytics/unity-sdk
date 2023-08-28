@@ -85,10 +85,10 @@ namespace ThinkingSDK.PC.Main
             }
             this.mSupperProperties.Clear();
         }
-        public override void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        public override void EnableAutoTrack(TDAutoTrackEventType events, Dictionary<string, object> properties)
         {
         }
-        public override void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        public override void SetAutoTrackProperties(TDAutoTrackEventType events, Dictionary<string, object> properties)
         {
         }
         public override void Flush()

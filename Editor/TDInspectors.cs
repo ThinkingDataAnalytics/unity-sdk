@@ -2,9 +2,9 @@
 using UnityEditor;
 using UnityEditorInternal;
 
-namespace ThinkingAnalytics.Editors
+namespace ThinkingData.Analytics.Editors
 {
-    [CustomEditor(typeof(ThinkingAnalyticsAPI))]
+    [CustomEditor(typeof(TDAnalytics))]
     [CanEditMultipleObjects]
     public class TD_Inspectors : Editor
     {
@@ -13,7 +13,7 @@ namespace ThinkingAnalytics.Editors
         public void OnEnable()
         {
 
-            var appId = this.serializedObject.FindProperty("tokens");
+            var appId = this.serializedObject.FindProperty("configs");
 
             _stringArray = new ReorderableList(appId.serializedObject, appId, true, true, true, true)
             {
@@ -66,7 +66,7 @@ namespace ThinkingAnalytics.Editors
 
             EditorGUI.LabelField(arect, "APP ID:", style);
             arect.x += xSpacing;
-            EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("appid"), GUIContent.none);
+            EditorGUI.PropertyField(arect, serElem.FindPropertyRelative("appId"), GUIContent.none);
 
             arect.y += EditorGUIUtility.singleLineHeight + spacing;
             arect.x -= xSpacing;
@@ -107,7 +107,7 @@ namespace ThinkingAnalytics.Editors
                 list.serializedProperty.arraySize++;
                 list.index = list.serializedProperty.arraySize - 1;
                 SerializedProperty item = list.serializedProperty.GetArrayElementAtIndex(list.index);
-                item.FindPropertyRelative("appid").stringValue = "";
+                item.FindPropertyRelative("appId").stringValue = "";
             }
             else
             {

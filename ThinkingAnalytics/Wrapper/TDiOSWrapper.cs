@@ -2,11 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using ThinkingAnalytics.Utils;
+using ThinkingData.Analytics.Utils;
 
-namespace ThinkingAnalytics.Wrapper
+namespace ThinkingData.Analytics.Wrapper
 {
-    public partial class ThinkingAnalyticsWrapper
+    public partial class TDWrapper
     {
         [DllImport("__Internal")]
         private static extern void ta_start(string app_id, string url, int mode, string timezone_id, bool enable_encrypt, int encrypt_version, string encrypt_public_key, int pinning_mode, bool allow_invalid_certificates, bool validates_domain_name, string instance_name);
@@ -101,10 +101,10 @@ namespace ThinkingAnalytics.Wrapper
         [DllImport("__Internal")]
         private static extern void ta_enable_third_party_sharing(string app_id, int share_type, string properties);
 
-        private static void init(ThinkingAnalyticsAPI.Token token)
+        private static void init(TDConfig token)
         {
             registerRecieveGameCallback();
-            ta_start(token.appid, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.GetInstanceName());
+            ta_start(token.appId, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.name);
         }
 
         private static void identify(string uniqueId, string appId)
@@ -141,19 +141,19 @@ namespace ThinkingAnalytics.Wrapper
             ta_config_custom_lib_info(lib_name, lib_version);
         }
 
-        private static void track(ThinkingAnalyticsEvent taEvent, string appId)
+        private static void track(TDEventModel taEvent, string appId)
         {
             Dictionary<string, object> finalEvent = new Dictionary<string, object>();
-            string extraId = taEvent.ExtraId;
+            string extraId = taEvent.GetEventId();
             switch (taEvent.EventType)
             {
-                case ThinkingAnalyticsEvent.Type.FIRST:
+                case TDEventModel.TDEventType.First:
                     finalEvent["event_type"] = "track_first";
                     break;
-                case ThinkingAnalyticsEvent.Type.UPDATABLE:
+                case TDEventModel.TDEventType.Updatable:
                     finalEvent["event_type"] = "track_update";
                     break;
-                case ThinkingAnalyticsEvent.Type.OVERWRITABLE:
+                case TDEventModel.TDEventType.Overwritable:
                     finalEvent["event_type"] = "track_overwrite";
                     break;
             }
@@ -165,16 +165,16 @@ namespace ThinkingAnalytics.Wrapper
 
             finalEvent["event_name"] = taEvent.EventName;
             finalEvent["event_properties"] = taEvent.Properties;
-            if (taEvent.EventTime != null && taEvent.EventTime != DateTime.MinValue)
+            if (taEvent.GetEventTime() != null && taEvent.GetEventTime() != DateTime.MinValue)
             {
-                long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(taEvent.EventTime).Ticks;
+                long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(taEvent.GetEventTime()).Ticks;
                 DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
                 long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
                 finalEvent["event_time"] = currentMillis;
             }
-            if (taEvent.EventTimeZone != null)
+            if (taEvent.GetEventTimeZone() != null)
             {
-                finalEvent["event_timezone"] = taEvent.EventTimeZone.Id;
+                finalEvent["event_timezone"] = taEvent.GetEventTimeZone().Id;
             }
 
             ta_track_event(appId, serilize(finalEvent));
@@ -233,13 +233,13 @@ namespace ThinkingAnalytics.Wrapper
         private static Dictionary<string, object> getSuperProperties(string appId)
         {
             string superPropertiesString = ta_get_super_properties(appId);
-            return TD_MiniJSON.Deserialize(superPropertiesString);
+            return TDMiniJson.Deserialize(superPropertiesString);
         }
 
         private static Dictionary<string, object> getPresetProperties(string appId)
         {
             string presetPropertiesString = ta_get_preset_properties(appId);
-            return TD_MiniJSON.Deserialize(presetPropertiesString);
+            return TDMiniJson.Deserialize(presetPropertiesString);
         }
 
         private static void timeEvent(string eventName, string appId)
@@ -349,7 +349,7 @@ namespace ThinkingAnalytics.Wrapper
             ta_user_uniq_append_with_time(appId, serilize(properties), currentMillis);
         }
 
-        private static void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType)
+        private static void setNetworkType(TDNetworkType networkType)
         {
             ta_set_network_type((int)networkType);
         }
@@ -359,12 +359,12 @@ namespace ThinkingAnalytics.Wrapper
             return ta_get_device_id();
         }
 
-        private static void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appId)
+        private static void setDynamicSuperProperties(TDDynamicSuperPropertiesHandler dynamicSuperProperties, string appId)
         {
             ta_set_dynamic_super_properties(appId);
         }
 
-        private static void setTrackStatus(TA_TRACK_STATUS status, string appId)
+        private static void setTrackStatus(TDTrackStatus status, string appId)
         {
             ta_set_track_status(appId, (int)status);
         }
@@ -404,17 +404,17 @@ namespace ThinkingAnalytics.Wrapper
             return ta_get_time_string(currentMillis);
         }
 
-        private static void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, Dictionary<string, object> properties, string appId)
+        private static void enableAutoTrack(TDAutoTrackEventType autoTrackEvents, Dictionary<string, object> properties, string appId)
         {
             ta_enable_autoTrack(appId, (int)autoTrackEvents, serilize(properties));
         }
 
-        private static void enableAutoTrack(AUTO_TRACK_EVENTS autoTrackEvents, IAutoTrackEventCallback eventCallback, string appId)
+        private static void enableAutoTrack(TDAutoTrackEventType autoTrackEvents, TDAutoTrackEventHandler eventCallback, string appId)
         {
             ta_enable_autoTrack_with_callback(appId, (int)autoTrackEvents);
         }
 
-        private static void setAutoTrackProperties(AUTO_TRACK_EVENTS autoTrackEvents, Dictionary<string, object> properties, string appId)
+        private static void setAutoTrackProperties(TDAutoTrackEventType autoTrackEvents, Dictionary<string, object> properties, string appId)
         {
             ta_set_autoTrack_properties(appId, (int)autoTrackEvents, serilize(properties));
         }
@@ -429,7 +429,7 @@ namespace ThinkingAnalytics.Wrapper
             ta_calibrate_time_with_ntp(ntpServer);
         }
 
-        private static void enableThirdPartySharing(TAThirdPartyShareType shareType, Dictionary<string, object> properties, string appId)
+        private static void enableThirdPartySharing(TDThirdPartyType shareType, Dictionary<string, object> properties, string appId)
         {
             ta_enable_third_party_sharing(appId, (int) shareType, serilize(properties));
         }
@@ -455,15 +455,15 @@ namespace ThinkingAnalytics.Wrapper
         {
             if (type == "AutoTrackProperties")
             {
-                Dictionary<string, object>properties = TD_MiniJSON.Deserialize(jsonData);
+                Dictionary<string, object>properties = TDMiniJson.Deserialize(jsonData);
                 string appId = properties["AppID"].ToString();
                 int eventType = Convert.ToInt32(properties["EventType"]);
                 if (!string.IsNullOrEmpty(appId) && mAutoTrackEventCallbacks.ContainsKey(appId))
                 {
                     properties.Remove("EventType");
                     properties.Remove("AppID");
-                    Dictionary<string, object>autoTrackProperties = mAutoTrackEventCallbacks[appId].AutoTrackEventCallback(eventType, properties);
-                    return TD_MiniJSON.Serialize(autoTrackProperties);
+                    Dictionary<string, object>autoTrackProperties = mAutoTrackEventCallbacks[appId].GetAutoTrackEventProperties(eventType, properties);
+                    return TDMiniJson.Serialize(autoTrackProperties);
                 }
             } 
             else if (type == "DynamicSuperProperties")
@@ -471,7 +471,7 @@ namespace ThinkingAnalytics.Wrapper
                 if (mDynamicSuperProperties != null)
                 {
                     Dictionary<string, object>dynamicSuperProperties = mDynamicSuperProperties.GetDynamicSuperProperties();
-                    return TD_MiniJSON.Serialize(dynamicSuperProperties);
+                    return TDMiniJson.Serialize(dynamicSuperProperties);
                 }
             }
             return "{}";

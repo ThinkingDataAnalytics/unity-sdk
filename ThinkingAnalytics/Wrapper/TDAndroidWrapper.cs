@@ -1,16 +1,16 @@
 ﻿#if UNITY_ANDROID && !(UNITY_EDITOR) && !TE_DISABLE_ANDROID_JAVA
 using System;
 using System.Collections.Generic;
-using ThinkingAnalytics.Utils;
+using ThinkingData.Analytics.Utils;
 using UnityEngine;
 
-namespace ThinkingAnalytics.Wrapper
+namespace ThinkingData.Analytics.Wrapper
 {
-    public partial class ThinkingAnalyticsWrapper
+    public partial class TDWrapper
     {
         private static readonly string JSON_CLASS = "org.json.JSONObject";
         private static readonly AndroidJavaClass sdkClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK");
-        private static readonly AndroidJavaClass configClass = new AndroidJavaClass("cn.thinkingdata.android.TDConfig");
+        //private static readonly AndroidJavaClass configClass = new AndroidJavaClass("cn.thinkingdata.android.TDConfig");
 
         private static readonly AndroidJavaObject unityAPIInstance = new AndroidJavaObject("cn.thinkingdata.engine.ThinkingAnalyticsUnityAPI");
 
@@ -36,7 +36,7 @@ namespace ThinkingAnalytics.Wrapper
             }
             catch (Exception e)
             {
-                if(TD_Log.GetEnable()) TD_Log.w("ThinkingAnalytics: unexpected exception: " + e);
+                if(TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
             return null;
         }
@@ -85,7 +85,7 @@ namespace ThinkingAnalytics.Wrapper
             sdkClass.CallStatic("setCustomerLibInfo", libName, version);
         }
 
-        private static void init(ThinkingAnalyticsAPI.Token token)
+        private static void init(TDConfig token)
         {
             AndroidJavaObject context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
             // AndroidJavaObject config = null;
@@ -120,15 +120,15 @@ namespace ThinkingAnalytics.Wrapper
 
             // sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", config);
 
-            if (string.IsNullOrEmpty(default_appId)) default_appId = token.appid;
+            if (string.IsNullOrEmpty(default_appId)) default_appId = token.appId;
             Dictionary<string, object> configDic = new Dictionary<string, object>();
-            configDic["appId"] = token.appid;
+            configDic["appId"] = token.appId;
             configDic["serverUrl"] = token.serverUrl;
             configDic["mode"] = (int) token.mode;
-            if (!string.IsNullOrEmpty(token.GetInstanceName()))
+            if (!string.IsNullOrEmpty(token.name))
             {
                 // if (string.IsNullOrEmpty(default_appId)) default_appId = token.GetInstanceName();
-                configDic["instanceName"] = token.GetInstanceName();
+                configDic["instanceName"] = token.name;
             }
             else
             {
@@ -150,7 +150,7 @@ namespace ThinkingAnalytics.Wrapper
                 };
             }
 
-            unityAPIInstance.Call("sharedInstance", context, TD_MiniJSON.Serialize(configDic));
+            unityAPIInstance.Call("sharedInstance", context, TDMiniJson.Serialize(configDic));
         }
 
         private static void flush(string appId)
@@ -197,46 +197,46 @@ namespace ThinkingAnalytics.Wrapper
             track(eventName, properties, appId);
         }
 
-        private static void track(ThinkingAnalyticsEvent taEvent, string appId)
+        private static void track(TDEventModel taEvent, string appId)
         {
             AndroidJavaObject javaEvent = null;
             switch(taEvent.EventType)
             {
-                case ThinkingAnalyticsEvent.Type.FIRST:
+                case TDEventModel.TDEventType.First:
                     javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDFirstEvent", 
                         taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)));
 
-                    string extraId = taEvent.ExtraId;
+                    string extraId = taEvent.GetEventId();
                     if (!string.IsNullOrEmpty(extraId))
                     {
                         javaEvent.Call("setFirstCheckId", extraId);
                     }
                     
                     break;
-                case ThinkingAnalyticsEvent.Type.UPDATABLE:
+                case TDEventModel.TDEventType.Updatable:
                     javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDUpdatableEvent", 
-                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.ExtraId); 
+                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.GetEventId()); 
                     break;
-                case ThinkingAnalyticsEvent.Type.OVERWRITABLE:
+                case TDEventModel.TDEventType.Overwritable:
                     javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDOverWritableEvent", 
-                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.ExtraId); 
+                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.GetEventId()); 
                     break;
             }
             if (null == javaEvent) {
-                if(TD_Log.GetEnable()) TD_Log.w("Unexpected java event object. Returning...");
+                if(TDLog.GetEnable()) TDLog.w("Unexpected java event object. Returning...");
                 return;
             }
 
-            if (taEvent.EventTime != null && taEvent.EventTime != DateTime.MinValue) {
-                AndroidJavaObject date = getDate(taEvent.EventTime);
+            if (taEvent.GetEventTime() != null && taEvent.GetEventTime() != DateTime.MinValue) {
+                AndroidJavaObject date = getDate(taEvent.GetEventTime());
                 AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
                 AndroidJavaObject tz = null;
-                if (taEvent.EventTimeZone != null) {
-                    if ("Local" == taEvent.EventTimeZone.Id) {
+                if (taEvent.GetEventTimeZone() != null) {
+                    if ("Local" == taEvent.GetEventTimeZone().Id) {
                         tz = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getDefault");
                     }
                     else {
-                        tz = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getTimeZone", taEvent.EventTimeZone.Id);
+                        tz = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getTimeZone", taEvent.GetEventTimeZone().Id);
                     }
                     javaEvent.Call("setEventTime", date, tz);
                 }
@@ -277,7 +277,7 @@ namespace ThinkingAnalytics.Wrapper
             if (null != superPropertyObject)
             {
                 string superPropertiesString = superPropertyObject.Call<string>("toString");
-                result = TD_MiniJSON.Deserialize(superPropertiesString);
+                result = TDMiniJson.Deserialize(superPropertiesString);
             }
             return result;
         }
@@ -289,7 +289,7 @@ namespace ThinkingAnalytics.Wrapper
             if (null != presetPropertyObject)
             {
                 string presetPropertiesString = presetPropertyObject.Call<string>("toString");
-                result = TD_MiniJSON.Deserialize(presetPropertiesString);
+                result = TDMiniJson.Deserialize(presetPropertiesString);
             }
             return result;
         }
@@ -405,7 +405,7 @@ namespace ThinkingAnalytics.Wrapper
             return getInstance(default_appId).Call<string>("getDeviceId");
         }
 
-        private static void setDynamicSuperProperties(IDynamicSuperProperties dynamicSuperProperties, string appId)
+        private static void setDynamicSuperProperties(TDDynamicSuperPropertiesHandler dynamicSuperProperties, string appId)
         {
             DynamicListenerAdapter listenerAdapter = new DynamicListenerAdapter();
             if (string.IsNullOrEmpty(appId))
@@ -415,24 +415,25 @@ namespace ThinkingAnalytics.Wrapper
             unityAPIInstance.Call("setDynamicSuperPropertiesTrackerListener", appId, listenerAdapter);
         }
 
-        private static void setNetworkType(ThinkingAnalyticsAPI.NetworkType networkType) {
+        private static void setNetworkType(TDNetworkType networkType) {
             Dictionary<string, object> properties = new Dictionary<string, object>() { };
             switch (networkType)
             {
-                case ThinkingAnalyticsAPI.NetworkType.DEFAULT:
-                    properties["network_type"] = 0;
-                    break;
-                case ThinkingAnalyticsAPI.NetworkType.WIFI:
+                case TDNetworkType.Wifi:
                     properties["network_type"] = 1;
                     break;
-                case ThinkingAnalyticsAPI.NetworkType.ALL:
+                case TDNetworkType.All:
                     properties["network_type"] = 2;
                     break;
+                default:
+                    properties["network_type"] = 2;
+                    break;
+
             }
-            unityAPIInstance.Call("setNetworkType", TD_MiniJSON.Serialize(properties));
+            unityAPIInstance.Call("setNetworkType", TDMiniJson.Serialize(properties));
         }
 
-        private static void enableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
+        private static void enableAutoTrack(TDAutoTrackEventType events, Dictionary<string, object> properties, string appId)
         {
             if (string.IsNullOrEmpty(appId))
             {
@@ -442,12 +443,12 @@ namespace ThinkingAnalytics.Wrapper
                 { "appId", appId},
                 { "autoTrackType", (int)events}
             };
-            unityAPIInstance.Call("enableAutoTrack", TD_MiniJSON.Serialize(propertiesNew));
+            unityAPIInstance.Call("enableAutoTrack", TDMiniJson.Serialize(propertiesNew));
             propertiesNew["properties"] = properties;
-            unityAPIInstance.Call("setAutoTrackProperties", TD_MiniJSON.Serialize(propertiesNew));
+            unityAPIInstance.Call("setAutoTrackProperties", TDMiniJson.Serialize(propertiesNew));
         }
 
-        private static void enableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback eventCallback, string appId)
+        private static void enableAutoTrack(TDAutoTrackEventType events, TDAutoTrackEventHandler eventCallback, string appId)
         {
             AutoTrackListenerAdapter listenerAdapter = new AutoTrackListenerAdapter();
             if (string.IsNullOrEmpty(appId))
@@ -458,10 +459,10 @@ namespace ThinkingAnalytics.Wrapper
                 { "appId", appId},
                 { "autoTrackType", (int)events}
             };
-            unityAPIInstance.Call("enableAutoTrack", TD_MiniJSON.Serialize(properties), listenerAdapter);
+            unityAPIInstance.Call("enableAutoTrack", TDMiniJson.Serialize(properties), listenerAdapter);
         }
 
-        private static void setAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId)
+        private static void setAutoTrackProperties(TDAutoTrackEventType events, Dictionary<string, object> properties, string appId)
         {
             if (string.IsNullOrEmpty(appId))
             {
@@ -472,25 +473,25 @@ namespace ThinkingAnalytics.Wrapper
                 { "autoTrackType", (int)events}
             };
             propertiesNew["properties"] = properties;
-            unityAPIInstance.Call("setAutoTrackProperties", TD_MiniJSON.Serialize(propertiesNew));
+            unityAPIInstance.Call("setAutoTrackProperties", TDMiniJson.Serialize(propertiesNew));
         }
 
-        private static void setTrackStatus(TA_TRACK_STATUS status, string appId)
+        private static void setTrackStatus(TDTrackStatus status, string appId)
         {
             AndroidJavaClass javaClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK$TATrackStatus");
             AndroidJavaObject trackStatus;
             switch (status)
             {
-                case TA_TRACK_STATUS.PAUSE:
+                case TDTrackStatus.Pause:
                     trackStatus = javaClass.GetStatic<AndroidJavaObject>("PAUSE");
                     break;
-                case TA_TRACK_STATUS.STOP:
+                case TDTrackStatus.Stop:
                     trackStatus = javaClass.GetStatic<AndroidJavaObject>("STOP");
                     break;
-                case TA_TRACK_STATUS.SAVE_ONLY:
+                case TDTrackStatus.SaveOnly:
                     trackStatus = javaClass.GetStatic<AndroidJavaObject>("SAVE_ONLY");
                     break;
-                case TA_TRACK_STATUS.NORMAL:
+                case TDTrackStatus.Normal:
                 default:
                     trackStatus = javaClass.GetStatic<AndroidJavaObject>("NORMAL");
                     break;
@@ -539,14 +540,14 @@ namespace ThinkingAnalytics.Wrapper
             unityAPIInstance.Call("calibrateTimeWithNtp", ntpServer);
         }
 
-        private static void enableThirdPartySharing(TAThirdPartyShareType shareType, Dictionary<string, object> properties, string appId)
+        private static void enableThirdPartySharing(TDThirdPartyType shareType, Dictionary<string, object> properties, string appId)
         {
             Dictionary<string, object> obj = new Dictionary<string, object>() {
                 { "appId", appId },
                 { "type", (int)shareType }
             };
             obj["properties"] = properties;
-            unityAPIInstance.Call("enableThirdPartySharing", TD_MiniJSON.Serialize(obj));
+            unityAPIInstance.Call("enableThirdPartySharing", TDMiniJson.Serialize(obj));
         }
 
         //dynamic super properties
@@ -560,13 +561,13 @@ namespace ThinkingAnalytics.Wrapper
             public string getDynamicSuperPropertiesString()
             {
                 Dictionary<string, object> ret;
-                if (ThinkingAnalyticsWrapper.mDynamicSuperProperties != null) {
-                    ret = ThinkingAnalyticsWrapper.mDynamicSuperProperties.GetDynamicSuperProperties();
+                if (TDWrapper.mDynamicSuperProperties != null) {
+                    ret = TDWrapper.mDynamicSuperProperties.GetDynamicSuperProperties();
                 } 
                 else {
                     ret = new Dictionary<string, object>();
                 }
-                return TD_MiniJSON.Serialize(ret);
+                return TDMiniJson.Serialize(ret);
             }
         }
 
@@ -582,15 +583,15 @@ namespace ThinkingAnalytics.Wrapper
             {
                 Dictionary<string, object> ret;
                 if (string.IsNullOrEmpty(appId)) appId = default_appId;
-                if (ThinkingAnalyticsWrapper.mAutoTrackEventCallbacks.ContainsKey(appId))
+                if (TDWrapper.mAutoTrackEventCallbacks.ContainsKey(appId))
                 {
-                    Dictionary<string, object> propertiesDic = TD_MiniJSON.Deserialize(properties);
-                    ret = ThinkingAnalyticsWrapper.mAutoTrackEventCallbacks[appId].AutoTrackEventCallback(type, propertiesDic);
+                    Dictionary<string, object> propertiesDic = TDMiniJson.Deserialize(properties);
+                    ret = TDWrapper.mAutoTrackEventCallbacks[appId].GetAutoTrackEventProperties(type, propertiesDic);
                 } 
                 else {
                     ret = new Dictionary<string, object>();
                 }
-                return TD_MiniJSON.Serialize(ret);
+                return TDMiniJson.Serialize(ret);
             }
         }
     }

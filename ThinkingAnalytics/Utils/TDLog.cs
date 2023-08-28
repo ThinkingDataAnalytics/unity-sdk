@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 
-namespace ThinkingAnalytics.Utils
+namespace ThinkingData.Analytics.Utils
 {
-    public class TD_Log
+    public class TDLog
     {
         private static bool enableLog;
         public static void EnableLog(bool enabled)
@@ -15,11 +15,20 @@ namespace ThinkingAnalytics.Utils
             return enableLog;
         }
 
+
+        public static void i(string message)
+        {
+            if (enableLog)
+            {
+                Debug.Log("[ThinkingData] Info: " + message);
+            }
+        }
+
         public static void d(string message)
         {
             if (enableLog)
             {
-                Debug.Log("[ThinkingEngine] (Unity_V" + TD_PublicConfig.LIB_VERSION + ") " + message);
+                Debug.Log("[ThinkingData] Debug: " + message);
             }
         }
 
@@ -27,7 +36,7 @@ namespace ThinkingAnalytics.Utils
         {
             if (enableLog)
             {
-                Debug.LogError("[ThinkingEngine] (Unity_V" + TD_PublicConfig.LIB_VERSION + ") " + message);
+                Debug.LogError("[ThinkingData] Error: " + message);
             }
         }
 
@@ -35,7 +44,7 @@ namespace ThinkingAnalytics.Utils
         {
             if (enableLog)
             {
-                Debug.LogWarning("[ThinkingEngine] (Unity_V" + TD_PublicConfig.LIB_VERSION + ") " + message);
+                Debug.LogWarning("[ThinkingData] Warning: " + message);
             }
         }
     }

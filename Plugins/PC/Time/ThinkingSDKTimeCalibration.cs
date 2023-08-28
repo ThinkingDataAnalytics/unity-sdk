@@ -27,5 +27,10 @@ namespace ThinkingSDK.PC.Time
             return dt.AddMilliseconds(timestamp);
         }
 
+        protected static double ConvertDateTimeInt(System.DateTime time)
+        {
+            DateTime startTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            return (double)(time - startTime).TotalMilliseconds;
+        }
     }
 }

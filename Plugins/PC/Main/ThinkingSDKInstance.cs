@@ -15,31 +15,31 @@ namespace ThinkingSDK.PC.Main
 {
     [Flags]
     // Auto-tracking Events Type
-    public enum AUTO_TRACK_EVENTS
+    public enum TDAutoTrackEventType
     {
-        NONE = 0,
-        APP_START = 1 << 0, // reporting when the app enters the foreground （ta_app_start）
-        APP_END = 1 << 1, // reporting when the app enters the background （ta_app_end）
-        APP_CRASH = 1 << 4, // reporting when an uncaught exception occurs （ta_app_crash）
-        APP_INSTALL = 1 << 5, // reporting when the app is opened for the first time after installation （ta_app_install）
-        APP_SCENE_LOAD = 1 << 6, // reporting when the scene is loaded in the app （ta_scene_loaded）
-        APP_SCENE_UNLOAD = 1 << 7, // reporting when the scene is unloaded in the app （ta_scene_loaded）
-        ALL = APP_START | APP_END | APP_INSTALL | APP_CRASH | APP_SCENE_LOAD | APP_SCENE_UNLOAD
+        None = 0,
+        AppStart = 1 << 0, // reporting when the app enters the foreground （ta_app_start）
+        AppEnd = 1 << 1, // reporting when the app enters the background （ta_app_end）
+        AppCrash = 1 << 4, // reporting when an uncaught exception occurs （ta_app_crash）
+        AppInstall = 1 << 5, // reporting when the app is opened for the first time after installation （ta_app_install）
+        AppSceneLoad = 1 << 6, // reporting when the scene is loaded in the app （ta_scene_loaded）
+        AppSceneUnload = 1 << 7, // reporting when the scene is unloaded in the app （ta_scene_loaded）
+        All = AppStart | AppEnd | AppInstall | AppCrash | AppSceneLoad | AppSceneUnload
     }
     // Data Reporting Status
-    public enum TA_TRACK_STATUS
+    public enum TDTrackStatus
     {
-        PAUSE = 1, // pause data reporting
-        STOP = 2, // stop data reporting, and clear caches
-        SAVE_ONLY = 3, // data stores in the cache, but not be reported
-        NORMAL = 4 // resume data reporting
+        Pause = 1, // pause data reporting
+        Stop = 2, // stop data reporting, and clear caches
+        SaveOnly = 3, // data stores in the cache, but not be reported
+        Normal = 4 // resume data reporting
     }
 
-    public interface IDynamicSuperProperties_PC
+    public interface TDDynamicSuperPropertiesHandler_PC
     {
          Dictionary<string, object> GetDynamicSuperProperties_PC();
     }
-    public interface IAutoTrackEventCallback_PC
+    public interface TDAutoTrackEventHandler_PC
     {
         Dictionary<string, object> AutoTrackEventCallback_PC(int type, Dictionary<string, object>properties);
     }
@@ -59,7 +59,7 @@ namespace ThinkingSDK.PC.Main
         private ThinkingSDKConfig mConfig;
         private ThinkingSDKBaseRequest mRequest;
         private ThinkingSDKTimeCalibration mTimeCalibration;
-        private IDynamicSuperProperties_PC mDynamicProperties;
+        private TDDynamicSuperPropertiesHandler_PC mDynamicProperties;
         private ThinkingSDKTask mTask {
             get {
                 return ThinkingSDKTask.SingleTask();
@@ -161,6 +161,7 @@ namespace ThinkingSDK.PC.Main
             mTask.Release();
             if (eventCount > 0)
             {
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
                 Flush();
             }
         }
@@ -202,6 +203,7 @@ namespace ThinkingSDK.PC.Main
         // sets distisct ID
         public virtual void Identifiy(string distinctID)
         {
+            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Setting distinct ID, DistinctId = " + distinctID);
             if (IsPaused())
             {
                 return;
@@ -214,7 +216,6 @@ namespace ThinkingSDK.PC.Main
         }
         public virtual string DistinctId()
         {
-          
             this.mDistinctID = (string)ThinkingSDKFile.GetData(this.mAppid,ThinkingSDKConstant.DISTINCT_ID, typeof(string));
             if (string.IsNullOrEmpty(this.mDistinctID))
             {
@@ -231,6 +232,7 @@ namespace ThinkingSDK.PC.Main
             {
                 return;
             }
+            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Login SDK, AccountId = " + accountID);
             if (!string.IsNullOrEmpty(accountID))
             {
                 this.mAccountID = accountID;
@@ -248,21 +250,21 @@ namespace ThinkingSDK.PC.Main
             {
                 return;
             }
-
+            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Logout SDK");
             this.mAccountID = "";
             ThinkingSDKFile.DeleteData(this.mAppid,ThinkingSDKConstant.ACCOUNT_ID);
         }
         //TODO
-        public virtual void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        public virtual void EnableAutoTrack(TDAutoTrackEventType events, Dictionary<string, object> properties)
         {
             this.mAutoTrack.EnableAutoTrack(events, properties, mAppid);
         }
-        public virtual void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback_PC eventCallback)
+        public virtual void EnableAutoTrack(TDAutoTrackEventType events, TDAutoTrackEventHandler_PC eventCallback)
         {
             this.mAutoTrack.EnableAutoTrack(events, eventCallback, mAppid);
         }
         // sets auto-tracking events properties
-        public virtual void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties)
+        public virtual void SetAutoTrackProperties(TDAutoTrackEventType events, Dictionary<string, object> properties)
         {
             this.mAutoTrack.SetAutoTrackProperties(events, properties);
         }
@@ -359,7 +361,7 @@ namespace ThinkingSDK.PC.Main
 
             if (this.mConfig.IsDisabledEvent(data.EventName()))
             {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("disabled Event: " + data.EventName());
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Disabled Event: " + data.EventName());
                 return;
             }
             if (this.mConfig.GetMode() == Mode.NORMAL && this.mRequest.GetType() != typeof(ThinkingSDKNormalRequest))
@@ -378,16 +380,20 @@ namespace ThinkingSDK.PC.Main
                 int count = 0;
                 if (!string.IsNullOrEmpty(this.mConfig.InstanceName()))
                 {
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Save event: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppID: " + this.mAppid);
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Enqueue data: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppId: " + this.mAppid);
                     count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic, this.mConfig.InstanceName());
                 }
                 else
                 {
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Save event: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppID: " + this.mAppid);
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Enqueue data: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppId: " + this.mAppid);
                     count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic, this.mAppid);
                 }
                 if (this.mConfig.GetMode() != Mode.NORMAL || count >= this.mConfig.mUploadSize)
                 {
+                    if (count >= this.mConfig.mUploadSize)
+                    {
+                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
+                    }
                     Flush();
                 }
             }
@@ -398,6 +404,7 @@ namespace ThinkingSDK.PC.Main
             while (true)
             {
                 yield return flushDelay;
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
                 Flush();
             }
         }
@@ -444,11 +451,11 @@ namespace ThinkingSDK.PC.Main
         //        }
         //    }
         //}
-        public void Track(ThinkingSDKEventData analyticsEvent)
+        public void Track(ThinkingSDKEventData eventModel)
         {
-            ThinkingSDKTimeInter time = GetTime(analyticsEvent.Time());
-            analyticsEvent.SetTime(time);
-            SendData(analyticsEvent);
+            ThinkingSDKTimeInter time = GetTime(eventModel.Time());
+            eventModel.SetTime(time);
+            SendData(eventModel);
         }
 
         public virtual void SetSuperProperties(Dictionary<string, object> superProperties)
@@ -665,7 +672,7 @@ namespace ThinkingSDK.PC.Main
             ThinkingSDKUserData data = new ThinkingSDKUserData(time, ThinkingSDKConstant.USER_DEL,properties);
             SendData(data);
         }
-        public void SetDynamicSuperProperties(IDynamicSuperProperties_PC dynamicSuperProperties)
+        public void SetDynamicSuperProperties(TDDynamicSuperPropertiesHandler_PC dynamicSuperProperties)
         {
             if (IsPaused())
             {
@@ -678,32 +685,32 @@ namespace ThinkingSDK.PC.Main
             bool mIsPaused = !mEnableTracking || !mOptTracking;
             if (mIsPaused)
             {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Track status is Pause or Stop");
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("SDK Track status is Pause or Stop");
             }
             return mIsPaused;
         }
 
-        public void SetTrackStatus(TA_TRACK_STATUS status)
+        public void SetTrackStatus(TDTrackStatus status)
         {
-            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("SetTrackStatus: " + status);
+            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Change Status to " + status);
             switch (status)
             {
-                case TA_TRACK_STATUS.PAUSE:
+                case TDTrackStatus.Pause:
                     mEventSaveOnly = false;
                     OptTracking(true);
                     EnableTracking(false);
                     break;
-                case TA_TRACK_STATUS.STOP:
+                case TDTrackStatus.Stop:
                     mEventSaveOnly = false;
                     EnableTracking(true);
                     OptTracking(false);
                     break;
-                case TA_TRACK_STATUS.SAVE_ONLY:
+                case TDTrackStatus.SaveOnly:
                     mEventSaveOnly = true;
                     EnableTracking(true);
                     OptTracking(true);
                     break;
-                case TA_TRACK_STATUS.NORMAL:
+                case TDTrackStatus.Normal:
                 default:
                     mEventSaveOnly = false;
                     OptTracking(true);

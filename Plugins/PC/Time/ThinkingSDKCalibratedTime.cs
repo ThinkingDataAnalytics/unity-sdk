@@ -15,7 +15,6 @@ namespace ThinkingSDK.PC.Time
             this.mCalibratedTime = calibrateTimeInter;
             this.mTimeZone = timeZoneInfo;
             this.mDate = mCalibratedTime.NowDate();
-            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("CurrentDate = " + this.mDate.ToString("UTC yyyy-MM-dd HH:mm:ss.fff"));
         }
         public string GetTime(TimeZoneInfo timeZone)
         {

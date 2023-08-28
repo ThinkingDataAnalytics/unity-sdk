@@ -1,12 +1,12 @@
 ﻿#if UNITY_EDITOR && UNITY_IOS
 using System.IO;
-using ThinkingAnalytics.Utils;
+using ThinkingData.Analytics.Utils;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.iOS.Xcode;
 using UnityEngine;
 
-namespace ThinkingAnalytics.Editors
+namespace ThinkingData.Analytics.Editors
 {
     public class TD_PostProcessBuild
     {
@@ -17,7 +17,7 @@ namespace ThinkingAnalytics.Editors
         {
             if (target != BuildTarget.iOS)
             {
-                Debug.LogWarning("[ThinkingEngine] Target is not iOS. XCodePostProcess will not run");
+                Debug.LogWarning("[ThinkingData] Warning: Target is not iOS. XCodePostProcess will not run");
                 return;
             }
 
@@ -58,8 +58,8 @@ namespace ThinkingAnalytics.Editors
             PlistDocument plist = new PlistDocument();
             plist.ReadFromFile(plistPath);
             plist.root.CreateArray("TDDisPresetProperties");
-            TD_PublicConfig.GetPublicConfig();
-            foreach (string item in TD_PublicConfig.DisPresetProperties)
+            TDPublicConfig.GetPublicConfig();
+            foreach (string item in TDPublicConfig.DisPresetProperties)
             {
                 plist.root["TDDisPresetProperties"].AsArray().AddString(item);
             }
@@ -78,7 +78,7 @@ using System.IO;
 using System.Xml;
 using System.Collections.Generic;
 
-namespace ThinkingAnalytics.Editors
+namespace ThinkingData.Analytics.Editors
 {
 
     class TD_PostProcessBuild : IPostGenerateGradleAndroidProject

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 57277738888238098}
   - component: {fileID: 1362306111410183020}
   m_Layer: 0
-  m_Name: ThinkingAnalytics
+  m_Name: TDAnalytics
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27,6 +27,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -46,9 +47,15 @@ MonoBehaviour:
   startManually: 1
   enableLog: 1
   networkType: 1
-  tokens:
-  - appid: 7a055a4bd7ec423fa5294b4a2c1eff28
+  configs:
+  - appId: 1b1c1fef65e3482bad5c9d0e6a823356
     serverUrl: https://receiver.ta.thinkingdata.cn
     mode: 0
     timeZone: 0
     timeZoneId: 
+    enableEncrypt: 0
+    encryptVersion: 0
+    encryptPublicKey: 
+    pinningMode: 0
+    allowInvalidCertificates: 0
+    validatesDomainName: 0

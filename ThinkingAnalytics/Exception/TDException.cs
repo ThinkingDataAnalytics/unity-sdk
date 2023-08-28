@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace ThinkingAnalytics.TAException
+namespace ThinkingData.Analytics.TDException
 {
-    public class ThinkingSDKExceptionHandler
+    public class TDExceptionHandler
     {
 
         //Whether to exit the program when an exception occurs
@@ -12,7 +12,7 @@ namespace ThinkingAnalytics.TAException
 
         //Whether the exception catch has been registered
         public static bool IsRegistered = false;
-        private static IAutoTrackEventCallback mEventCallback;
+        private static TDAutoTrackEventHandler mEventCallback;
         private static Dictionary<string, object> mProperties;
 
 
@@ -32,7 +32,7 @@ namespace ThinkingAnalytics.TAException
             }
         }
 
-        public static void RegisterTAExceptionHandler(IAutoTrackEventCallback eventCallback)
+        public static void RegisterTAExceptionHandler(TDAutoTrackEventHandler eventCallback)
         {
             mEventCallback = eventCallback;
             //Register exception handling delegate
@@ -92,7 +92,7 @@ namespace ThinkingAnalytics.TAException
                     {"#app_crashed_reason", reasonStr}
                 };
                 properties = MergeProperties(properties);
-                ThinkingAnalyticsAPI.Track("ta_app_crash", properties);
+                TDAnalytics.Track("ta_app_crash", properties);
 
                 if ( IsQuitWhenException )
                 {
@@ -128,7 +128,7 @@ namespace ThinkingAnalytics.TAException
                 {"#app_crashed_reason", reasonStr}
             };
             properties = MergeProperties(properties);
-            ThinkingAnalyticsAPI.Track("ta_app_crash", properties);
+            TDAnalytics.Track("ta_app_crash", properties);
 
             if ( IsQuitWhenException )
             {
@@ -139,9 +139,9 @@ namespace ThinkingAnalytics.TAException
         private static Dictionary<string, object> MergeProperties(Dictionary<string, object> properties)
         {
 
-            if (mEventCallback is IAutoTrackEventCallback)
+            if (mEventCallback is TDAutoTrackEventHandler)
             {
-                Dictionary<string, object> callbackProperties = mEventCallback.AutoTrackEventCallback((int)AUTO_TRACK_EVENTS.APP_CRASH, properties);
+                Dictionary<string, object> callbackProperties = mEventCallback.GetAutoTrackEventProperties((int)TDAutoTrackEventType.AppCrash, properties);
                 foreach (var item in callbackProperties)
                 {
                     if (!properties.ContainsKey(item.Key))

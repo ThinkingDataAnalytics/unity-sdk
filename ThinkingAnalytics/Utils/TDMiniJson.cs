@@ -10,7 +10,7 @@ using System.IO;
 using System.Text;
 using System.Globalization;
 
-namespace ThinkingAnalytics.Utils
+namespace ThinkingData.Analytics.Utils
 {
     /* Based on the JSON parser from 
 	 * http://techblog.procurios.nl/k/618/news/view/14605/14863/How-do-I-write-my-own-parser-for-JSON.html
@@ -25,7 +25,7 @@ namespace ThinkingAnalytics.Utils
     /// JSON uses Arrays and Objects. These correspond here to the datatypes ArrayList and Hashtable.
     /// All numbers are parsed to floats.
     /// </summary>
-    public class TD_MiniJSON
+    public class TDMiniJson
 	{
         /// <summary>
         /// Parses the string json into a value

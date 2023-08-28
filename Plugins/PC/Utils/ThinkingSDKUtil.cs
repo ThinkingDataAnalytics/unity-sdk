@@ -181,9 +181,12 @@ namespace ThinkingSDK.PC.Utils
         // add Dictionary to Dictionary
         public static void AddDictionary(Dictionary<string, object> originalDic, Dictionary<string, object> subDic)
         {
-            foreach (KeyValuePair<string, object> kv in subDic)
+            if (originalDic != subDic)
             {
-                originalDic[kv.Key] = kv.Value;
+                foreach (KeyValuePair<string, object> kv in subDic)
+                {
+                    originalDic[kv.Key] = kv.Value;
+                }
             }
         }
         //get timestamp

@@ -150,6 +150,7 @@ namespace ThinkingSDK.PC.Config
                 if (result != null && code == 0)
                 {
                     Dictionary<string, object> data = (Dictionary<string, object>)result["data"];
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config success: " + ThinkingSDKJSON.Serialize(data));
                     foreach (KeyValuePair<string, object> kv in data)
                     {
                         if (kv.Key == "sync_interval")
@@ -169,10 +170,14 @@ namespace ThinkingSDK.PC.Config
                         }
                     }
                 }
+                else
+                {
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config failed: " + ThinkingSDKJSON.Serialize(result));
+                }
             }
             catch (Exception ex)
             {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get config failed: " + ex.Message);
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config failed: " + ex.Message);
             }
             if (mCallback != null)
             {

@@ -109,7 +109,7 @@ namespace ThinkingSDK.PC.Request
                 webRequest.timeout = 30;
                 webRequest.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Request URL: \n" + uri);
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Request URL: \n" + uri);
 
                 // Request and wait for the desired page.
                 yield return webRequest.SendWebRequest();
@@ -121,11 +121,11 @@ namespace ThinkingSDK.PC.Request
                     case UnityWebRequest.Result.ConnectionError:
                     case UnityWebRequest.Result.DataProcessingError:
                     case UnityWebRequest.Result.ProtocolError:
-                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
+                        //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                         break;
                     case UnityWebRequest.Result.Success:
                         string resultText = webRequest.downloadHandler.text;
-                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Response: \n" + resultText);
+                        //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Response: \n" + resultText);
                         if (!string.IsNullOrEmpty(resultText))
                         {
                             resultDict = ThinkingSDKJSON.Deserialize(resultText);
@@ -135,12 +135,12 @@ namespace ThinkingSDK.PC.Request
 #else
                 if (webRequest.isHttpError || webRequest.isNetworkError)
                 {
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
+                    //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Error response: \n" + webRequest.error);
                 }
                 else
                 {
                     string resultText = webRequest.downloadHandler.text;
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Response: \n" + resultText);
+                    //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Response: \n" + resultText);
                     if (!string.IsNullOrEmpty(resultText)) 
                     {
                         resultDict = ThinkingSDKJSON.Deserialize(resultText);

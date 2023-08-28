@@ -140,17 +140,17 @@ namespace ThinkingSDK.PC.Main
         /// </summary>
         /// <param name="events"></param>
         /// <param name="appId"></param>
-        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId = "")
+        public static void EnableAutoTrack(TDAutoTrackEventType events, Dictionary<string, object> properties, string appId = "")
         {
             GetInstance(appId).EnableAutoTrack(events, properties);
         }
 
-        public static void EnableAutoTrack(AUTO_TRACK_EVENTS events, IAutoTrackEventCallback_PC eventCallback, string appId = "")
+        public static void EnableAutoTrack(TDAutoTrackEventType events, TDAutoTrackEventHandler_PC eventCallback, string appId = "")
         {
             GetInstance(appId).EnableAutoTrack(events, eventCallback);
         }
 
-        public static void SetAutoTrackProperties(AUTO_TRACK_EVENTS events, Dictionary<string, object> properties, string appId = "")
+        public static void SetAutoTrackProperties(TDAutoTrackEventType events, Dictionary<string, object> properties, string appId = "")
         {
             GetInstance(appId).SetAutoTrackProperties(events, properties);
         }
@@ -178,9 +178,9 @@ namespace ThinkingSDK.PC.Main
                 GetInstance(appId).Track(eventName, properties);
             }
         }
-        public static void Track(ThinkingSDKEventData analyticsEvent,string appId = "")
+        public static void Track(ThinkingSDKEventData eventModel,string appId = "")
         {
-            GetInstance(appId).Track(analyticsEvent);
+            GetInstance(appId).Track(eventModel);
         }
 
         public static void Flush (string appId = "")
@@ -298,11 +298,11 @@ namespace ThinkingSDK.PC.Main
         {
             GetInstance(appId).UserDelete(dateTime);
         }
-        public static void SetDynamicSuperProperties(IDynamicSuperProperties_PC dynamicSuperProperties, string appId = "")
+        public static void SetDynamicSuperProperties(TDDynamicSuperPropertiesHandler_PC dynamicSuperProperties, string appId = "")
         {
             GetInstance(appId).SetDynamicSuperProperties(dynamicSuperProperties);
         }
-        public static void SetTrackStatus(TA_TRACK_STATUS status, string appId = "")
+        public static void SetTrackStatus(TDTrackStatus status, string appId = "")
         {
             GetInstance(appId).SetTrackStatus(status);
         }

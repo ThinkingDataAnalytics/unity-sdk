@@ -4,10 +4,10 @@ using System.IO;
 using System.Xml;
 using System.Collections.Generic;
 
-namespace ThinkingAnalytics.Utils
+namespace ThinkingData.Analytics.Utils
 {
     // Crosss Platform
-    public enum TAThirdPartyShareType
+    public enum TDThirdPartyType
     {
         NONE = 0,
         APPSFLYER = 1 << 0, // AppsFlyer
@@ -20,19 +20,19 @@ namespace ThinkingAnalytics.Utils
     };
 
     // SSL
-    public enum SSLPinningMode
+    public enum TDSSLPinningMode
     {
         NONE = 0, // Only allow certificates trusted by the system
         PUBLIC_KEY = 1 << 0, // Verify public key
         CERTIFICATE = 1 << 1 // Verify all contents
     }
 
-    public class TD_PublicConfig
+    public class TDPublicConfig
     {
         public static bool DisableCSharpException = false;
         public static List<string> DisPresetProperties = new List<string>();
 
-        public static readonly string LIB_VERSION = "2.6.1-beta.1";
+        public static readonly string LIB_VERSION = "3.0.0-beta.1";
 
         public static void GetPublicConfig()
         {
