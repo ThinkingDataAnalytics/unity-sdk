@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Sockets;
 using ThinkingSDK.PC.Config;
 using ThinkingSDK.PC.Utils;
-using UnityEngine.Networking.Types;
 using System.Linq;
 
 namespace ThinkingSDK.PC.Time

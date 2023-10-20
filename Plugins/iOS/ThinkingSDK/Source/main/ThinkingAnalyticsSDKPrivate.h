@@ -96,6 +96,8 @@ static NSString * const TA_JS_TRACK_SCHEME = @"thinkinganalytics://trackEvent";
 @property (nonatomic, strong) TAPropertyPluginManager *propertyPluginManager;
 //@property (nonatomic, strong) TASessionIdPropertyPlugin *sessionidPlugin;
 @property (nonatomic, strong) TAAppLifeCycle *appLifeCycle;
+/// TD error callback
+@property (atomic, copy) void(^errorCallback)(NSInteger code, NSString * _Nullable errorMsg, NSString * _Nullable ext);
 
 @property (atomic, strong) NSMutableSet *ignoredViewTypeList;
 @property (atomic, strong) NSMutableSet *ignoredViewControllers;

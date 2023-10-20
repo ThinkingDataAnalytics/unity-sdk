@@ -3,6 +3,8 @@
 #if TARGET_OS_IOS
 #import "TDAutoTrackManager.h"
 //#import "TARouter.h"
+#import "TDAppLaunchReason.h"
+#import "TAPushClickEvent.h"
 #endif
 
 #import "TDCalibratedTimeWithNTP.h"
@@ -230,6 +232,17 @@ static dispatch_queue_t td_trackQueue;
         [TAAppLifeCycle startMonitor];
         
         [self registerAppLifeCycleListener];
+        
+#if TARGET_OS_IOS
+        NSDictionary* ops = [TDAppLaunchReason getAppPushDic];
+        if(ops != nil){
+            TAPushClickEvent *pushEvent = [[TAPushClickEvent alloc]initWithName: @"ops_push_click"];
+            pushEvent.ops = ops;
+            [self autoTrackWithEvent:pushEvent properties:@{}];
+            [self flush];
+        }
+        [TDAppLaunchReason clearAppPushParams];
+#endif
         
         if ([self ableMapInstanceTag]) {
             TDLogInfo(@"Thinking Analytics %@ SDK %@ instance initialized successfully with mode: %@, Instance Name: %@,  APP ID: %@, server url: %@, device ID: %@", [[TDDeviceInfo sharedManager] libName] ,[TDDeviceInfo libVersion], [self modeEnumToString:_config.debugMode], _config.name, appid, serverURL, [self getDeviceId]);
@@ -581,6 +594,8 @@ static dispatch_queue_t td_trackQueue;
     event.isOptOut = self.isOptOut;
     event.accountId = self.accountId;
     event.distinctId = self.identifyId;
+    
+    [self configEventTimeValueWithEvent:event time:event.time timeZone:event.timeZone];
         
     dispatch_async(td_trackQueue, ^{
         [self trackUserEvent:event properties:properties isH5:NO];
@@ -597,7 +612,14 @@ static dispatch_queue_t td_trackQueue;
             event.timeValueType = TAEventTimeValueTypeTimeAndZone;
         }
     } else {
-        event.timeValueType = TAEventTimeValueTypeNone;
+        if (calibratedTime && !calibratedTime.stopCalibrate) {
+            NSTimeInterval outTime = [TDDeviceInfo uptime] - calibratedTime.systemUptime;
+            NSDate *serverDate = [NSDate dateWithTimeIntervalSince1970:(calibratedTime.serverTime + outTime)];
+            event.time = serverDate;
+            event.timeValueType = TAEventTimeValueTypeTimeAndZone;
+        }else{
+            event.timeValueType = TAEventTimeValueTypeNone;
+        }
     }
 }
 
@@ -729,6 +751,10 @@ static dispatch_queue_t td_trackQueue;
     @synchronized (self.superProperty) {
         [self.superProperty registerDynamicSuperProperties:dynamicSuperProperties];
     }
+}
+
+- (void)registerErrorCallback:(void (^)(NSInteger, NSString * _Nullable, NSString * _Nullable))errorCallback {
+    self.errorCallback = errorCallback;
 }
 
 - (void)setSuperProperties:(NSDictionary *)properties {
@@ -895,7 +921,7 @@ static dispatch_queue_t td_trackQueue;
         return;
     }
     
-    if ([TDAppState shareInstance].relaunchInBackground && !self.config.trackRelaunchedInBackgroundEvents) {
+    if ([TDAppState shareInstance].relaunchInBackground && !self.config.trackRelaunchedInBackgroundEvents && [event.eventName isEqualToString:TD_APP_START_BACKGROUND_EVENT]) {
         return;
     }
     
@@ -1121,6 +1147,7 @@ static dispatch_queue_t td_trackQueue;
 
 - (void)autoTrackWithEvent:(TAAutoTrackEvent *)event properties:(NSDictionary *)properties {
     TDLogDebug(@"##### autoTrackWithEvent: %@", event.eventName);
+    [self configEventTimeValueWithEvent:event time:nil timeZone:nil];
     [self handleTimeEvent:event];
     [self asyncAutoTrackEventObject:event properties:properties];
 }

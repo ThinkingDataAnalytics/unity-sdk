@@ -30,13 +30,7 @@ static NSString *kTADatasType = @"TA-Datas-Type";
 }
 
 - (NSString *)URLEncode:(NSString *)string {
-    
-    NSString *encodedString = (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(NULL,
-                                                                                                    (CFStringRef)string,
-                                                                                                    NULL,
-                                                                                                    (CFStringRef)@"!*'();:@&=+$,/?%#[]",
-                                                                                                    kCFStringEncodingUTF8 ));
-
+    NSString *encodedString = [string stringByAddingPercentEncodingWithAllowedCharacters:[[NSCharacterSet characterSetWithCharactersInString:@"?!@#$^&%*+,:;='\"`<>()[]{}/\\| "] invertedSet]];
     return encodedString;
 }
 
@@ -60,6 +54,7 @@ static NSString *kTADatasType = @"TA-Datas-Type";
         if (error || ![response isKindOfClass:[NSHTTPURLResponse class]]) {
             debugResult = -2;
             TDLogError(@"Debug Networking error:%@", error);
+            [self callbackNetworkErrorWithRequest:jsonString error:error.debugDescription];
             dispatch_semaphore_signal(flushSem);
             return;
         }
@@ -113,10 +108,23 @@ static NSString *kTADatasType = @"TA-Datas-Type";
 #endif
                 }
             });
+            
+            @try {
+                if ([retDic isKindOfClass:[NSDictionary class]]) {
+                    if ([[(NSDictionary *)retDic objectForKey:@"errorLevel"] integerValue] != 0) {
+                        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:retDic options:NSJSONWritingPrettyPrinted error:NULL];
+                        NSString *string = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+                        [self callbackNetworkErrorWithRequest:jsonString error:string];
+                    }
+                }
+            } @catch (NSException *exception) {
+                
+            }
         } else {
             debugResult = -2;
             NSString *urlResponse = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
             TDLogError(@"%@", [NSString stringWithFormat:@"Debug %@ network failed with response '%@'.", self, urlResponse]);
+            [self callbackNetworkErrorWithRequest:jsonString error:urlResponse];
         }
         dispatch_semaphore_signal(flushSem);
     };
@@ -163,6 +171,7 @@ static NSString *kTADatasType = @"TA-Datas-Type";
         if (error || ![response isKindOfClass:[NSHTTPURLResponse class]]) {
             flushSucc = NO;
             TDLogError(@"Networking error:%@", error);
+            [self callbackNetworkErrorWithRequest:jsonString error:error.debugDescription];
             dispatch_semaphore_signal(flushSem);
             return;
         }
@@ -176,10 +185,24 @@ static NSString *kTADatasType = @"TA-Datas-Type";
             }
             id result = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:nil];
             TDLogDebug(@"flush success responseData---->%@",result);
+            
+            @try {
+                if ([result isKindOfClass:[NSDictionary class]]) {
+                    if ([[(NSDictionary *)result objectForKey:@"code"] integerValue] != 0) {
+                        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:result options:NSJSONWritingPrettyPrinted error:NULL];
+                        NSString *string = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+                        [self callbackNetworkErrorWithRequest:jsonString error:string];
+                    }
+                }
+            } @catch (NSException *exception) {
+                
+            }
+
         } else {
             flushSucc = NO;
             NSString *urlResponse = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
             TDLogError(@"%@", [NSString stringWithFormat:@"%@ network failed with response '%@'.", self, urlResponse]);
+            [self callbackNetworkErrorWithRequest:jsonString error:urlResponse];
         }
 
         dispatch_semaphore_signal(flushSem);
@@ -189,6 +212,18 @@ static NSString *kTADatasType = @"TA-Datas-Type";
     [task resume];
     dispatch_semaphore_wait(flushSem, DISPATCH_TIME_FOREVER);
     return flushSucc;
+}
+
+- (void)callbackNetworkErrorWithRequest:(NSString *)request error:(NSString *)error {
+    if (request == nil && error == nil) return;
+    
+    ThinkingAnalyticsSDK *tdSDK = [ThinkingAnalyticsSDK sharedInstanceWithAppid:self.appid];
+    if (tdSDK.errorCallback) {
+        NSInteger code = 10001;
+        NSString *errorMsg = error;
+        NSString *ext = request;
+        tdSDK.errorCallback(code, errorMsg, ext);
+    }
 }
 
 - (NSMutableURLRequest *)buildRequestWithJSONString:(NSString *)jsonString {

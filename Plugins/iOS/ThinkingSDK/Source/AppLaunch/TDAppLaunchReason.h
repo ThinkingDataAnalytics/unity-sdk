@@ -10,11 +10,21 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+static NSDictionary *appPushClickDic;
+
 @interface TDAppLaunchReason : NSObject
 
 @property(nonatomic, copy) NSDictionary *appLaunchParams;
 
 + (TDAppLaunchReason *)sharedInstance;
+
+- (void)clearAppLaunchParams;
+
++ (void)td_ops_push_click:(NSDictionary *)userInfo;
+
++ (NSDictionary*)getAppPushDic;
+
++ (void)clearAppPushParams;
 
 @end
 

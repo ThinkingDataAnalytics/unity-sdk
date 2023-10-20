@@ -14,7 +14,7 @@
         return 0;
     }
     NSInteger sourceGMTOffset = [timeZone secondsFromGMTForDate:self];
-    return (double)(sourceGMTOffset/3600);
+    return (double)(sourceGMTOffset/3600.0);
 }
 
 - (NSString *)ta_formatWithTimeZone:(NSTimeZone *)timeZone formatString:(NSString *)formatString {

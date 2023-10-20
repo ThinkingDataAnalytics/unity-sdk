@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 /// APP life cycle
 typedef NS_ENUM(NSUInteger, TAAppLifeCycleState) {
     TAAppLifeCycleStateInit = 1, // init status
+    TAAppLifeCycleStateBackgroundStart,
     TAAppLifeCycleStateStart,
     TAAppLifeCycleStateEnd,
     TAAppLifeCycleStateTerminate,

@@ -64,7 +64,7 @@ static CTTelephonyNetworkInfo *__td_TelephonyNetworkInfo;
         _deviceId = [deviceInfo objectForKey:@"deviceId"];
         _appVersion = [[NSBundle mainBundle] infoDictionary][@"CFBundleShortVersionString"];
         
-        _automaticData = [self td_collectProperties];
+        self.automaticData = [self td_collectProperties];
     }
     return self;
 }
@@ -74,14 +74,14 @@ static CTTelephonyNetworkInfo *__td_TelephonyNetworkInfo;
 }
 
 - (void)td_updateData {
-    _automaticData = [self td_collectProperties];
+    self.automaticData = [self td_collectProperties];
 }
 
 -(NSDictionary *)getAutomaticData {
-    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:_automaticData];
+    NSMutableDictionary *dic = [NSMutableDictionary dictionaryWithDictionary:self.automaticData];
     [dic addEntriesFromDictionary:[TDDeviceInfo getAPMParams]];
-    _automaticData = dic;
-    return _automaticData;
+    self.automaticData = dic;
+    return self.automaticData;
 }
 
 - (NSDictionary *)td_collectProperties {

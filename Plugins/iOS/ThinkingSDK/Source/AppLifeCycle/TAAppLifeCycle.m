@@ -118,7 +118,7 @@ NSString * const kTAAppLifeCycleOldStateKey = @"old";
 #endif
         [TDAppState shareInstance].relaunchInBackground = isAppStateBackground;
 
-        self.state = TAAppLifeCycleStateStart;
+        self.state = isAppStateBackground ? TAAppLifeCycleStateBackgroundStart : TAAppLifeCycleStateStart;
     };
 
     if (@available(iOS 13.0, *)) {
@@ -153,7 +153,7 @@ NSString * const kTAAppLifeCycleOldStateKey = @"old";
 
     [TDAppState shareInstance].relaunchInBackground = isAppStateBackground;
     
-    self.state = TAAppLifeCycleStateStart;
+    self.state = isAppStateBackground ? TAAppLifeCycleStateBackgroundStart : TAAppLifeCycleStateStart;
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)notification {

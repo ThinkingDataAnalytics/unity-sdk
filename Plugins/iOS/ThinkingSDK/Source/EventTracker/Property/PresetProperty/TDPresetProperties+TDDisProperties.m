@@ -92,7 +92,7 @@ static const NSString *kTDPresentSCREENNAME = @"#screen_name";
 static const NSString *kTDPresentTITLE = @"#title";
 static const NSString *kTDPresentURL = @"#url";
 static const NSString *kTDPresentREFERRER = @"#referrer";
-static const NSString *kTDPresentOpsReceiptProperties = @"ops_receipt_properties";
+static const NSString *kTDPresentOpsReceiptProperties = @"#ops_receipt_properties";
 
 
 
