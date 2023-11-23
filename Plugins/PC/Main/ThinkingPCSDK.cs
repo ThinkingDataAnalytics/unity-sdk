@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using ThinkingSDK.PC.Config;
-using ThinkingSDK.PC.Constant;
 using ThinkingSDK.PC.DataModel;
-using ThinkingSDK.PC.Storage;
 using ThinkingSDK.PC.Time;
 using ThinkingSDK.PC.Utils;
 using UnityEngine;
@@ -328,18 +325,12 @@ namespace ThinkingSDK.PC.Main
         public static void CalibrateTime(long timestamp)
         {
             ThinkingSDKTimestampCalibration timestampCalibration = new ThinkingSDKTimestampCalibration(timestamp);
-            foreach (KeyValuePair<string, ThinkingSDKInstance> kv in Instances)
-            {
-                kv.Value.SetTimeCalibratieton(timestampCalibration);
-            }
+            ThinkingSDKInstance.SetTimeCalibratieton(timestampCalibration);
         }
         public static void CalibrateTimeWithNtp(string ntpServer)
         {
             ThinkingSDKNTPCalibration ntpCalibration = new ThinkingSDKNTPCalibration(ntpServer);
-            foreach (KeyValuePair<string, ThinkingSDKInstance> kv in Instances)
-            {
-                kv.Value.SetTimeCalibratieton(ntpCalibration);
-            }
+            ThinkingSDKInstance.SetNtpTimeCalibratieton(ntpCalibration);
         }
 
         public static string GetDeviceId()

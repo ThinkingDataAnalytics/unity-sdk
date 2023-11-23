@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Net;
 using System.Text;
 using ThinkingSDK.PC.Constant;
 using ThinkingSDK.PC.Utils;

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Text;
+﻿using System.Collections.Generic;
 using ThinkingSDK.PC.Config;
 using ThinkingSDK.PC.Constant;
 using ThinkingSDK.PC.Utils;

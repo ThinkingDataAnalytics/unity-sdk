@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ThinkingSDK.PC.Constant;
 using ThinkingSDK.PC.Time;
 

@@ -388,7 +388,10 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         {
             //currnt Unix timestamp, units Ms, e.g: 1672531200000 -> 2023-01-01 08:00:00
             TDAnalytics.CalibrateTime(1672531200000);
-
+        }
+        GUILayout.Space(20);
+        if (GUILayout.Button("CalibrateTime-NTP", GUILayout.Height(Height)))
+        {
             //NTP server, e.g: time.apple.com
             TDAnalytics.CalibrateTimeWithNtp("time.apple.com");
         }

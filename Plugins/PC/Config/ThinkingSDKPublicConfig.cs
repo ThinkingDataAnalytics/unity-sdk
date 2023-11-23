@@ -1,5 +1,4 @@
-﻿using System;
-namespace ThinkingSDK.PC.Config
+﻿namespace ThinkingSDK.PC.Config
 {
     public class ThinkingSDKPublicConfig
     {

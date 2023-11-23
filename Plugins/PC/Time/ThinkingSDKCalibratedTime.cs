@@ -1,5 +1,4 @@
 ﻿using System;
-using ThinkingSDK.PC.Config;
 using ThinkingSDK.PC.Utils;
 
 namespace ThinkingSDK.PC.Time

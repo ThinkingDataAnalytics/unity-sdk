@@ -9,7 +9,7 @@ namespace ThinkingData.Analytics.Wrapper
     public partial class TDWrapper
     {
         private static readonly string JSON_CLASS = "org.json.JSONObject";
-        private static readonly AndroidJavaClass sdkClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK");
+        private static readonly AndroidJavaClass sdkClass = new AndroidJavaClass("cn.thinkingdata.analytics.ThinkingAnalyticsSDK");
         //private static readonly AndroidJavaClass configClass = new AndroidJavaClass("cn.thinkingdata.android.TDConfig");
 
         private static readonly AndroidJavaObject unityAPIInstance = new AndroidJavaObject("cn.thinkingdata.engine.ThinkingAnalyticsUnityAPI");
@@ -203,7 +203,7 @@ namespace ThinkingData.Analytics.Wrapper
             switch(taEvent.EventType)
             {
                 case TDEventModel.TDEventType.First:
-                    javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDFirstEvent", 
+                    javaEvent = new AndroidJavaObject("cn.thinkingdata.analytics.TDFirstEvent", 
                         taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)));
 
                     string extraId = taEvent.GetEventId();
@@ -214,11 +214,11 @@ namespace ThinkingData.Analytics.Wrapper
                     
                     break;
                 case TDEventModel.TDEventType.Updatable:
-                    javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDUpdatableEvent", 
+                    javaEvent = new AndroidJavaObject("cn.thinkingdata.analytics.TDUpdatableEvent", 
                         taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.GetEventId()); 
                     break;
                 case TDEventModel.TDEventType.Overwritable:
-                    javaEvent = new AndroidJavaObject("cn.thinkingdata.android.TDOverWritableEvent", 
+                    javaEvent = new AndroidJavaObject("cn.thinkingdata.analytics.TDOverWritableEvent", 
                         taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.GetEventId()); 
                     break;
             }
@@ -478,7 +478,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void setTrackStatus(TDTrackStatus status, string appId)
         {
-            AndroidJavaClass javaClass = new AndroidJavaClass("cn.thinkingdata.android.ThinkingAnalyticsSDK$TATrackStatus");
+            AndroidJavaClass javaClass = new AndroidJavaClass("cn.thinkingdata.analytics.ThinkingAnalyticsSDK$TATrackStatus");
             AndroidJavaObject trackStatus;
             switch (status)
             {

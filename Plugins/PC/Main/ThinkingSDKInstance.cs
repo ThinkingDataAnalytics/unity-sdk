@@ -58,7 +58,8 @@ namespace ThinkingSDK.PC.Main
         protected Dictionary<string, Dictionary<string, object>> mAutoTrackProperties = new Dictionary<string, Dictionary<string, object>>();
         private ThinkingSDKConfig mConfig;
         private ThinkingSDKBaseRequest mRequest;
-        private ThinkingSDKTimeCalibration mTimeCalibration;
+        private static ThinkingSDKTimeCalibration mTimeCalibration;
+        private static ThinkingSDKTimeCalibration mNtpTimeCalibration;
         private TDDynamicSuperPropertiesHandler_PC mDynamicProperties;
         private ThinkingSDKTask mTask {
             get {
@@ -74,9 +75,13 @@ namespace ThinkingSDK.PC.Main
         private ThinkingSDKAutoTrack mAutoTrack;
 
         WaitForSeconds flushDelay;
-        public void SetTimeCalibratieton(ThinkingSDKTimeCalibration timeCalibration)
+        public static void SetTimeCalibratieton(ThinkingSDKTimeCalibration timeCalibration)
         {
-            this.mTimeCalibration = timeCalibration;
+            mTimeCalibration = timeCalibration;
+        }
+        public static void SetNtpTimeCalibratieton(ThinkingSDKTimeCalibration timeCalibration)
+        {
+            mNtpTimeCalibration = timeCalibration;
         }
         private ThinkingSDKInstance()
         {
@@ -184,13 +189,17 @@ namespace ThinkingSDK.PC.Main
             
             if ( dateTime == DateTime.MinValue || dateTime == null)
             {
-                if (mTimeCalibration == null)// check if time calibrated
+                if (mNtpTimeCalibration != null)// check if time calibrated
                 {
-                    time = new ThinkingSDKTime(mConfig.TimeZone(), DateTime.Now);
+                    time = new ThinkingSDKCalibratedTime(mNtpTimeCalibration, mConfig.TimeZone());
+                }
+                else if (mTimeCalibration != null)// check if time calibrated
+                {
+                    time = new ThinkingSDKCalibratedTime(mTimeCalibration, mConfig.TimeZone());
                 }
                 else
                 {
-                    time = new ThinkingSDKCalibratedTime(mTimeCalibration, mConfig.TimeZone());
+                    time = new ThinkingSDKTime(mConfig.TimeZone(), DateTime.Now);
                 }
             }
             else

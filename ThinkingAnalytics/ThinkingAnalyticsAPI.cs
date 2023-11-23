@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.0.0
+    SDK VERSION:3.0.1
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -78,6 +78,25 @@ namespace ThinkingAnalytics
 
             public string getTimeZoneId()
             {
+#if UNITY_STANDALONE_WIN
+                switch (timeZone)
+                {
+                    case TATimeZone.UTC:
+                        return "UTC";
+                    case TATimeZone.Asia_Shanghai:
+                        return "China Standard Time";
+                    case TATimeZone.Asia_Tokyo:
+                        return "Tokyo Standard Time";
+                    case TATimeZone.America_Los_Angeles:
+                        return "Pacific Standard Time";
+                    case TATimeZone.America_New_York:
+                        return "Eastern Standard Time";
+                    case TATimeZone.Other:
+                        return timeZoneId;
+                    default:
+                        break;
+                }
+#else
                 switch (timeZone)
                 {
                     case TATimeZone.UTC:
@@ -95,6 +114,7 @@ namespace ThinkingAnalytics
                     default:
                         break;
                 }
+#endif
                 return null;
             }
 
@@ -108,7 +128,9 @@ namespace ThinkingAnalytics
                 config.allowInvalidCertificates = this.allowInvalidCertificates;
                 config.validatesDomainName = this.validatesDomainName;
                 config.name = this.instanceName;
-                config.EnableEncrypt(this.encryptPublicKey, this.encryptVersion);
+                if(this.enableEncrypt){
+                    config.EnableEncrypt(this.encryptPublicKey, this.encryptVersion);
+                }
                 return config;
             }
         }
@@ -152,7 +174,7 @@ namespace ThinkingAnalytics
         [HideInInspector]
         public Token[] tokens = new Token[1];
 
-        #endregion
+#endregion
 
         /// <summary>
         /// Whether to enable logs
@@ -1293,11 +1315,11 @@ namespace ThinkingAnalytics
         /// <param name="tokens">projects setting, see ThinkingAnalyticsAPI.Token</param>
         public static void StartThinkingAnalytics(Token[] tokens = null)
         {
-            #if DISABLE_TA
+#if DISABLE_TA
             tracking_enabled = false;
-            #else
+#else
             tracking_enabled = true;
-            #endif
+#endif
 
             if (tracking_enabled)
             {

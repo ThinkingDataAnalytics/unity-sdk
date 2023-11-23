@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.0.0
+    SDK VERSION:3.0.1
  */
 
 /**    
@@ -41,7 +41,6 @@ using ThinkingData.Analytics.Wrapper;
 using UnityEngine;
 using ThinkingData.Analytics.TDException;
 using UnityEngine.SceneManagement;
-using static ThinkingData.Analytics.TDAnalytics;
 
 namespace ThinkingData.Analytics
 {
@@ -1200,6 +1199,7 @@ namespace ThinkingData.Analytics
 
         /// <summary>
         /// Calibrate Event Time, calibrated times are used for events after that
+        /// If both CalibrateTime and CalibrateTimeWithNtp are called, the event time is based on the CalibrateTimeWithNtp result.
         /// </summary>
         /// <param name="timestamp">currnt Unix timestamp, units Ms </param>
         public static void CalibrateTime(long timestamp)
@@ -1210,6 +1210,7 @@ namespace ThinkingData.Analytics
         /// <summary>
         /// Calibrate Event Time, calibrated times are used for events after that
         /// If NTP server is not returns in 3s, the time will not be re-calibrated
+        /// If both CalibrateTime and CalibrateTimeWithNtp are called, the event time is based on the CalibrateTimeWithNtp result.
         /// </summary>
         /// <param name="ntpServer">NTP server, e.g 'time.asia.apple.com' </param>
         public static void CalibrateTimeWithNtp(string ntpServer)
