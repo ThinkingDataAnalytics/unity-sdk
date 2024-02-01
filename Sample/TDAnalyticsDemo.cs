@@ -21,9 +21,16 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
     // dynamic super properties interface implementation
     public Dictionary<string, object> GetDynamicSuperProperties()
     {
+        Thread currentThread = Thread.CurrentThread;
+        // 输出当前线程的信息
+        Debug.Log("当前线程ID: " + currentThread.ManagedThreadId);
         return new Dictionary<string, object>() 
         {
-            {"dynamic_property", DateTime.Now}
+            {"dynamic_property", DateTime.Now},
+            {"dynamic_property1", DateTime.Now},
+            {"dynamic_property2", DateTime.Now},
+            {"dynamic_property3", DateTime.Now},
+            {"dynamicTime4", DateTime.Now}
         };
     }
     // auto-tracking events interface implementation
@@ -123,21 +130,24 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             //this.gameObject.AddComponent<TDAnalytics>();
 
             // 2.1 Set instance parameters
-            string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
-            string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
-            TDAnalytics.Init(appId, serverUrl);
+            //string appId = "22e445595b0f42bd8c5fe35bc44b88d6";
+            //string serverUrl = "https://receiver-ta-dev.thinkingdata.cn";
+            //TDAnalytics.Init(appId, serverUrl);
+
 
             // 2.1 Set personalized instance parameters
-            // string appId = "1b1c1fef65e3482bad5c9d0e6a823356";
-            // string serverUrl = "https://receiver.ta.thinkingdata.cn";
-            // TDConfig tDConfig = new TDConfig(appId, serverUrl);
-            // tDConfig.mode = TDMode.Normal;
-            // tDConfig.timeZone = TDTimeZone.Local;
-            //  Enable encrypted transmission (only iOS/Android)
+            string appId = "1b1c1fef65e3482bad5c9d0e6a823356";
+            string serverUrl = "https://receiver.ta.thinkingdata.cn";
+            TDConfig tDConfig = new TDConfig(appId, serverUrl);
+            tDConfig.mode = TDMode.Normal;
+            tDConfig.timeZone = TDTimeZone.UTC;
+            //Enable encrypted transmission(only iOS / Android)
             // int encryptVersion = 0;
-            // string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
-            // tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
-            // TDAnalytics.Init(tDConfig);
+            //string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
+            //tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
+            TDAnalytics.Init(tDConfig);
+
+            TDAnalytics.SetDynamicSuperProperties(this);
 
             // 2.2 Multi-project support
             // string appId_2 = "cf918051b394495ca85d1b7787ad7243";
@@ -152,7 +162,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
 
 
             // Enable auto-tracking events
-            // TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
+            TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
             // Enable auto-tracking events, and set properties
             // TDAnalytics.SetAutoTrackProperties(TDAutoTrackEventType.All, new Dictionary<string, object>()
             //  {
@@ -189,17 +199,38 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
         if (GUILayout.Button("TrackEvent", GUILayout.Height(Height)))
         {
+            Debug.Log("======1" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            //Dictionary<string, object> properties = new Dictionary<string, object>();
+            //properties["channel"] = "ta";//string
+            //properties["age"] = 1;//number - int
+            //properties["weight"] = 5.46;//number - float
+            //properties["balance"] = -0.4;//number - negative
+            //properties["isVip"] = true;//bool
+            //properties["birthday"] = new DateTime(2022,01,01);//date
+            //properties["birthday1"] = new DateTime();//date
+            //properties["birthday2"] = new DateTime(2023, 05, 01);//date
+            //properties["birthday3"] = new DateTime(2023, 05, 03);//date
+            //properties["object"] = new Dictionary<string, object>() { { "key", "value" },{ "key1", DateTime.Now }, { "key2", DateTime.Now } };//object
+            //properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" }, { "key3", DateTime.Now }, { "key4", DateTime.Now } } };//object array
+            //properties["arr"] = new List<object>() { "value" };//array
+            //TDAnalytics.Track("TA", properties);
             Dictionary<string, object> properties = new Dictionary<string, object>();
             properties["channel"] = "ta";//string
             properties["age"] = 1;//number - int
             properties["weight"] = 5.46;//number - float
             properties["balance"] = -0.4;//number - negative
             properties["isVip"] = true;//bool
-            properties["birthday"] = new DateTime(2022,01,01);//date
-            properties["object"] = new Dictionary<string, object>() { { "key", "value" } };//object
-            properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" } } };//object array
-            properties["arr"] = new List<object>() { "value" };//array
+            properties["date1"] = new DateTime();
+            properties["date2"] = new DateTime();
+            properties["date3"] = new DateTime();
+            properties["date4"] = new DateTime();
+            properties["date5"] = new DateTime();
+            properties["birthday"] = new DateTime(2022, 01, 01);//date
+            properties["object"] = new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } };//object
+            properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } } };//object array
+            properties["arr"] = new List<object>() { "value", new DateTime(), new DateTime(), new DateTime(), new DateTime(), new DateTime() };//array
             TDAnalytics.Track("TA", properties);
+            Debug.Log("======2" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         }
         GUILayout.Space(20);
         if (GUILayout.Button("TrackFirstEvent", GUILayout.Height(Height)))

@@ -599,18 +599,20 @@ namespace ThinkingSDK.PC.Utils
                 {
                     builder.Append(value);
                 }
-                else if (value is double
-                  || value is decimal)
+                else if (value is double)
                 {
                     builder.Append(Convert.ToDouble(value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                }
+                else if (value is decimal) {
+                    builder.Append(Convert.ToDecimal(value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
                 }
                 else if (value is DateTime)
                 {
                     builder.Append('\"');
-                    DateTime dateTime = (DateTime) value;
+                    DateTime dateTime = (DateTime)value;
                     if (null != func)
                     {
-                        builder.Append(func((DateTime) value));
+                        builder.Append(func((DateTime)value));
                     }
                     else
                     {

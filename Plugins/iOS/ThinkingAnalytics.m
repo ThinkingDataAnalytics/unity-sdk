@@ -400,7 +400,7 @@ const char *ta_get_device_id() {
 
 void ta_set_dynamic_super_properties(const char *app_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
-    [ta_getInstance(app_id_string) registerDynamicSuperProperties:^NSDictionary * _Nonnull{
+    [ta_getInstance(app_id_string) setAutoTrackDynamicProperties:^NSDictionary * _Nonnull{
         const char *ret = resultHandler("DynamicSuperProperties", nil);
         NSDictionary *dynamicSuperProperties = nil;
         ta_convertToDictionary(ret, &dynamicSuperProperties);

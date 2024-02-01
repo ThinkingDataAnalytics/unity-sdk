@@ -101,10 +101,27 @@ namespace ThinkingData.Analytics.Wrapper
         [DllImport("__Internal")]
         private static extern void ta_enable_third_party_sharing(string app_id, int share_type, string properties);
 
+        private static TimeZoneInfo defaultTimeZone = null;
+
         private static void init(TDConfig token)
         {
             registerRecieveGameCallback();
             ta_start(token.appId, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.name);
+            string timeZoneId = token.getTimeZoneId();
+            if (null != timeZoneId && timeZoneId.Length > 0)
+            {
+                if (defaultTimeZone == null)
+                {
+                    defaultTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                }
+            }
+            else
+            {
+                if (defaultTimeZone == null)
+                {
+                    defaultTimeZone = TimeZoneInfo.Local;
+                }
+            }
         }
 
         private static void identify(string uniqueId, string appId)
@@ -398,10 +415,11 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static string getTimeString(DateTime dateTime)
         {
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            return ta_get_time_string(currentMillis);
+            //long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            //DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            //long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            //return ta_get_time_string(currentMillis);
+            return TDCommonUtils.FormatDate(dateTime, defaultTimeZone);
         }
 
         private static void enableAutoTrack(TDAutoTrackEventType autoTrackEvents, Dictionary<string, object> properties, string appId)
@@ -463,7 +481,8 @@ namespace ThinkingData.Analytics.Wrapper
                     properties.Remove("EventType");
                     properties.Remove("AppID");
                     Dictionary<string, object>autoTrackProperties = mAutoTrackEventCallbacks[appId].GetAutoTrackEventProperties(eventType, properties);
-                    return TDMiniJson.Serialize(autoTrackProperties);
+                    //return TDMiniJson.Serialize(autoTrackProperties);
+                    return serilize(autoTrackProperties); 
                 }
             } 
             else if (type == "DynamicSuperProperties")
@@ -471,7 +490,8 @@ namespace ThinkingData.Analytics.Wrapper
                 if (mDynamicSuperProperties != null)
                 {
                     Dictionary<string, object>dynamicSuperProperties = mDynamicSuperProperties.GetDynamicSuperProperties();
-                    return TDMiniJson.Serialize(dynamicSuperProperties);
+                    //return TDMiniJson.Serialize(dynamicSuperProperties);
+                    return serilize(dynamicSuperProperties);
                 }
             }
             return "{}";

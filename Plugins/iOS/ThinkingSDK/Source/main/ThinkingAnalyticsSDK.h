@@ -42,7 +42,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- SDK VERSION = 2.8.4
+ SDK VERSION = 2.8.6
  ThinkingData API
  
  ## Initialization
@@ -366,6 +366,13 @@ or
  Set dynamic public properties. Each event uploaded after that will contain a public event attribute.
  */
 - (void)registerDynamicSuperProperties:(NSDictionary<NSString *, id> *(^)(void))dynamicSuperProperties;
+
+
+/**
+ Dynamic super properties in  auto track  environment
+ Set dynamic public properties. Each event uploaded after that will contain a public event attribute.
+ */
+- (void)setAutoTrackDynamicProperties:(NSDictionary<NSString *, id> *(^)(void))dynamicSuperProperties;
 
 /**
  Register TD error callback

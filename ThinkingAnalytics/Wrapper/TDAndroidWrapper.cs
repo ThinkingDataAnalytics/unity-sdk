@@ -15,6 +15,7 @@ namespace ThinkingData.Analytics.Wrapper
         private static readonly AndroidJavaObject unityAPIInstance = new AndroidJavaObject("cn.thinkingdata.engine.ThinkingAnalyticsUnityAPI");
 
         private static Dictionary<string, AndroidJavaObject> light_instances = null;
+        private static TimeZoneInfo defaultTimeZone = null;
 
         /// <summary>
         /// Convert Dictionary object to JSONObject in Java.
@@ -42,13 +43,15 @@ namespace ThinkingData.Analytics.Wrapper
         }
 
         private static string getTimeString(DateTime dateTime) {
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            //long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
 
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            //DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            //long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
 
-            AndroidJavaObject date = new AndroidJavaObject("java.util.Date", currentMillis);
-            return getInstance(default_appId).Call<string>("getTimeString", date);
+            //AndroidJavaObject date = new AndroidJavaObject("java.util.Date", currentMillis);
+
+            //return getInstance(default_appId).Call<string>("getTimeString", date);
+            return TDCommonUtils.FormatDate(dateTime, defaultTimeZone);
         }
 
         private static AndroidJavaObject getInstance(string appId) {
@@ -138,6 +141,15 @@ namespace ThinkingData.Analytics.Wrapper
             if (null != timeZoneId && timeZoneId.Length > 0)
             {
                 configDic["timeZone"] = timeZoneId;
+                if (defaultTimeZone == null)
+                {
+                    defaultTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                }
+            }
+            else {
+                if (defaultTimeZone == null) {
+                    defaultTimeZone = TimeZoneInfo.Local;
+                }
             }
             if (token.enableEncrypt == true)
             {
@@ -149,7 +161,6 @@ namespace ThinkingData.Analytics.Wrapper
                     {"asymmetricEncryption", "RSA"},
                 };
             }
-
             unityAPIInstance.Call("sharedInstance", context, TDMiniJson.Serialize(configDic));
         }
 
@@ -567,7 +578,8 @@ namespace ThinkingData.Analytics.Wrapper
                 else {
                     ret = new Dictionary<string, object>();
                 }
-                return TDMiniJson.Serialize(ret);
+                //return TDMiniJson.Serialize(ret);
+                return serilize(ret);
             }
         }
 
@@ -591,7 +603,7 @@ namespace ThinkingData.Analytics.Wrapper
                 else {
                     ret = new Dictionary<string, object>();
                 }
-                return TDMiniJson.Serialize(ret);
+                return serilize(ret);
             }
         }
     }

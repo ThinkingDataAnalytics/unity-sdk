@@ -753,6 +753,15 @@ static dispatch_queue_t td_trackQueue;
     }
 }
 
+- (void)setAutoTrackDynamicProperties:(NSDictionary<NSString *,id> * _Nonnull (^)(void))dynamicSuperProperties {
+    if ([self hasDisabled]) {
+        return;
+    }
+    @synchronized (self.autoTrackSuperProperty) {
+        [self.autoTrackSuperProperty registerAutoTrackDynamicProperties:dynamicSuperProperties];
+    }
+}
+
 - (void)registerErrorCallback:(void (^)(NSInteger, NSString * _Nullable, NSString * _Nullable))errorCallback {
     self.errorCallback = errorCallback;
 }
@@ -1082,12 +1091,8 @@ static dispatch_queue_t td_trackQueue;
 }
 
 - (void)_enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType properties:(NSDictionary *)properties callback:(NSDictionary *(^)(ThinkingAnalyticsAutoTrackEventType eventType, NSDictionary *properties))callback {
-    if (self.autoTrackSuperProperty == nil) {
-        self.autoTrackSuperProperty = [[TAAutoTrackSuperProperty alloc] init];
-    }
     [self.autoTrackSuperProperty registerSuperProperties:properties withType:eventType];
     [self.autoTrackSuperProperty registerDynamicSuperProperties:callback];
-    
     
     [self _enableAutoTrack:eventType];
 }
@@ -1161,7 +1166,16 @@ static dispatch_queue_t td_trackQueue;
     event.accountId = self.accountId;
     event.distinctId = self.identifyId;
     
-    event.dynamicSuperProperties = [self.superProperty obtainDynamicSuperProperties];
+    NSDictionary *autoTrackDynamicProperties = [self.autoTrackSuperProperty obtainAutoTrackDynamicSuperProperties];
+    NSDictionary *dynamicProperties = [self.superProperty obtainDynamicSuperProperties];
+    NSMutableDictionary *unionProperties = [NSMutableDictionary dictionary];
+    if (dynamicProperties) {
+        [unionProperties addEntriesFromDictionary:dynamicProperties];
+    }
+    if (autoTrackDynamicProperties) {
+        [unionProperties addEntriesFromDictionary:autoTrackDynamicProperties];
+    }
+    event.dynamicSuperProperties = unionProperties;
     dispatch_async(td_trackQueue, ^{
         [self trackEvent:event properties:properties isH5:NO];
     });
@@ -1443,6 +1457,15 @@ static dispatch_queue_t td_trackQueue;
 
 - (NSInteger)saveEventsData:(NSDictionary *)data {
     return [self.eventTracker saveEventsData:data];
+}
+
+// MARK: - getter & setter
+
+- (TAAutoTrackSuperProperty *)autoTrackSuperProperty {
+    if (!_autoTrackSuperProperty) {
+        _autoTrackSuperProperty = [[TAAutoTrackSuperProperty alloc] init];
+    }
+    return _autoTrackSuperProperty;
 }
 
 @end
