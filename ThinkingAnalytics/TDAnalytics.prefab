@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startManually: 1
   enableLog: 1
-  networkType: 0
+  networkType: 1
   configs:
   - appId: 1b1c1fef65e3482bad5c9d0e6a823356
     serverUrl: https://receiver.ta.thinkingdata.cn

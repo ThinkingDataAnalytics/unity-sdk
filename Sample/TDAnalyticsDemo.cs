@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System;
 using System.Threading;
 using System.Collections;
-
+using ThinkingAnalytics;
 public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, TDAutoTrackEventHandler
 {
 
@@ -142,12 +142,19 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             tDConfig.mode = TDMode.Normal;
             tDConfig.timeZone = TDTimeZone.UTC;
             //Enable encrypted transmission(only iOS / Android)
-            // int encryptVersion = 0;
+            //int encryptVersion = 0;
             //string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
             //tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
             TDAnalytics.Init(tDConfig);
+            TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
+            TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
 
-            TDAnalytics.SetDynamicSuperProperties(this);
+            //new GameObject("ThinkingAnalytics", typeof(ThinkingAnalyticsAPI));
+            //string appId = "40eddce753cd4bef9883a01e168c3df0";
+            //string serverUrl = "https://receiver-ta-preview.thinkingdata.cn";
+            //ThinkingAnalyticsAPI.StartThinkingAnalytics(appId, serverUrl);
+            //ThinkingAnalyticsAPI.SetNetworkType(ThinkingAnalyticsAPI.NetworkType.WIFI);
+            //ThinkingAnalyticsAPI.EnableAutoTrack(AUTO_TRACK_EVENTS.ALL);
 
             // 2.2 Multi-project support
             // string appId_2 = "cf918051b394495ca85d1b7787ad7243";
@@ -481,16 +488,16 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         GUILayout.Space(20);
         if (GUILayout.Button("GetPresetProperties", GUILayout.Height(Height)))
         {
-            TDPresetProperties presetProperties = TDAnalytics.GetPresetProperties();
-            string deviceModel = presetProperties.DeviceModel;
-            Debug.Log("TDPresetProperties: DeviceModel is " + deviceModel);
-            Dictionary<string, object> eventPresetProperties = presetProperties.ToDictionary();
-            string propertiesStr = "  ";
-            foreach (KeyValuePair<string, object> kv in eventPresetProperties)
-            {
-                propertiesStr = propertiesStr + kv.Key + " = " + kv.Value + "\n  ";
-            }
-            Debug.Log("PresetProperties: \n" + propertiesStr);
+            //TDPresetProperties presetProperties = TDAnalytics.GetPresetProperties();
+            //string deviceModel = presetProperties.DeviceModel;
+            //Debug.Log("TDPresetProperties: DeviceModel is " + deviceModel);
+            //Dictionary<string, object> eventPresetProperties = presetProperties.ToDictionary();
+            //string propertiesStr = "  ";
+            //foreach (KeyValuePair<string, object> kv in eventPresetProperties)
+            //{
+            //    propertiesStr = propertiesStr + kv.Key + " = " + kv.Value + "\n  ";
+            //}
+            //Debug.Log("PresetProperties: \n" + propertiesStr);
         }
 
         GUILayout.Space(20);

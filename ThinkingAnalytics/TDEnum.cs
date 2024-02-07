@@ -31,8 +31,8 @@ namespace ThinkingData.Analytics
     /// </summary>
     public enum TDNetworkType
     {
-        Wifi = 1,
-        All = 0
+        Wifi = 2,
+        All = 1
     }
 
     /// <summary>
