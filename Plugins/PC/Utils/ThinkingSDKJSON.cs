@@ -604,7 +604,7 @@ namespace ThinkingSDK.PC.Utils
                     builder.Append(Convert.ToDouble(value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
                 }
                 else if (value is decimal) {
-                    builder.Append(Convert.ToDecimal(value).ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                    builder.Append(Convert.ToDecimal(value).ToString("G", System.Globalization.CultureInfo.InvariantCulture));
                 }
                 else if (value is DateTime)
                 {

@@ -221,6 +221,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             //properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" }, { "key3", DateTime.Now }, { "key4", DateTime.Now } } };//object array
             //properties["arr"] = new List<object>() { "value" };//array
             //TDAnalytics.Track("TA", properties);
+            Decimal a = 1;
             Dictionary<string, object> properties = new Dictionary<string, object>();
             properties["channel"] = "ta";//string
             properties["age"] = 1;//number - int
@@ -232,6 +233,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             properties["date3"] = new DateTime();
             properties["date4"] = new DateTime();
             properties["date5"] = new DateTime();
+            properties["num"] = a;
             properties["birthday"] = new DateTime(2022, 01, 01);//date
             properties["object"] = new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } };//object
             properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } } };//object array
