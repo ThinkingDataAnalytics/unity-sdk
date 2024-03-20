@@ -139,15 +139,18 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             string appId = "1b1c1fef65e3482bad5c9d0e6a823356";
             string serverUrl = "https://receiver.ta.thinkingdata.cn";
             TDConfig tDConfig = new TDConfig(appId, serverUrl);
-            tDConfig.mode = TDMode.Normal;
-            tDConfig.timeZone = TDTimeZone.UTC;
+            //tDConfig.mode = TDMode.Normal;
+            //tDConfig.timeZone = TDTimeZone.UTC;
             //Enable encrypted transmission(only iOS / Android)
-            //int encryptVersion = 0;
-            //string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
-            //tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
+            int encryptVersion = 0;
+            string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
+            tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
             TDAnalytics.Init(tDConfig);
-            TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
+            //TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
+            TDAnalytics.SetDynamicSuperProperties(this);
+            //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppEnd);
             TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
+
 
             //new GameObject("ThinkingAnalytics", typeof(ThinkingAnalyticsAPI));
             //string appId = "40eddce753cd4bef9883a01e168c3df0";
@@ -169,7 +172,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
 
 
             // Enable auto-tracking events
-            TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
+            //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
             // Enable auto-tracking events, and set properties
             // TDAnalytics.SetAutoTrackProperties(TDAutoTrackEventType.All, new Dictionary<string, object>()
             //  {
