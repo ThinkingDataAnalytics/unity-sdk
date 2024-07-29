@@ -16,6 +16,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static Dictionary<string, AndroidJavaObject> light_instances = null;
         private static TimeZoneInfo defaultTimeZone = null;
+        private static TDTimeZone defaultTDTimeZone = TDTimeZone.Local;
 
         /// <summary>
         /// Convert Dictionary object to JSONObject in Java.
@@ -51,33 +52,41 @@ namespace ThinkingData.Analytics.Wrapper
             //AndroidJavaObject date = new AndroidJavaObject("java.util.Date", currentMillis);
 
             //return getInstance(default_appId).Call<string>("getTimeString", date);
-            return TDCommonUtils.FormatDate(dateTime, defaultTimeZone);
+            if (defaultTimeZone == null)
+            {
+                return TDCommonUtils.FormatDate(dateTime, defaultTDTimeZone);
+            }
+            else {
+                return TDCommonUtils.FormatDate(dateTime, defaultTimeZone);
+            }
         }
 
         private static AndroidJavaObject getInstance(string appId) {
-            AndroidJavaObject context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity");
-            AndroidJavaObject currentInstance;
-
-            if (string.IsNullOrEmpty(appId))
+            using (AndroidJavaObject context = new AndroidJavaClass("com.unity3d.player.UnityPlayer").GetStatic<AndroidJavaObject>("currentActivity"))
             {
-                appId = default_appId;
-            }
+                AndroidJavaObject currentInstance;
 
-            if (light_instances != null && light_instances.ContainsKey(appId))
-            {
-                currentInstance = light_instances[appId];
-            }
-            else
-            {
-                currentInstance = sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", context, appId);
-            }
+                if (string.IsNullOrEmpty(appId))
+                {
+                    appId = default_appId;
+                }
 
-            if (currentInstance == null)
-            {
-                currentInstance = sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", context, default_appId);
-            }
+                if (light_instances != null && light_instances.ContainsKey(appId))
+                {
+                    currentInstance = light_instances[appId];
+                }
+                else
+                {
+                    currentInstance = sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", context, appId);
+                }
 
-            return currentInstance;
+                if (currentInstance == null)
+                {
+                    currentInstance = sdkClass.CallStatic<AndroidJavaObject>("sharedInstance", context, default_appId);
+                }
+
+                return currentInstance;
+            }
         }
 
 
@@ -138,12 +147,19 @@ namespace ThinkingData.Analytics.Wrapper
                 // if (string.IsNullOrEmpty(default_appId)) default_appId = token.appid;
             }
             string timeZoneId = token.getTimeZoneId();
+            defaultTDTimeZone = token.timeZone;
             if (null != timeZoneId && timeZoneId.Length > 0)
             {
                 configDic["timeZone"] = timeZoneId;
                 if (defaultTimeZone == null)
                 {
-                    defaultTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                    try
+                    {
+                        defaultTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                    }
+                    catch (Exception)
+                    {
+                    }
                 }
             }
             else {
@@ -183,23 +199,66 @@ namespace ThinkingData.Analytics.Wrapper
             AndroidJavaObject date = getDate(dateTime);
             AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
             AndroidJavaObject tz = null;
-            getInstance(appId).Call("track", eventName, getJSONObject(properties), date, tz);
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            try
+            {
+                getInstance(appId).Call("track", eventName, javaProperties, date, tz);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (date != null) {
+                    date.Dispose();
+                }
+                if (tzClass != null) {
+                    tzClass.Dispose();
+                }
+                if (javaProperties != null) {
+                    javaProperties.Dispose();
+                }
+            }
         }
 
         private static void track(string eventName, Dictionary<string, object> properties, DateTime dateTime, TimeZoneInfo timeZone, string appId)
         {
             AndroidJavaObject date = getDate(dateTime);
+            AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
             AndroidJavaObject tz = null;
+            AndroidJavaObject javaProperties = getJSONObject(properties);
             if (null != timeZone && null != timeZone.Id && timeZone.Id.Length > 0)
             {
                 if ("Local" == timeZone.Id) {
-                    tz = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getDefault");
+                    tz = tzClass.CallStatic<AndroidJavaObject>("getDefault");
                 }
                 else {
-                    tz = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getTimeZone", timeZone.Id);
+                    tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", timeZone.Id);
                 }
             }
-            getInstance(appId).Call("track", eventName, getJSONObject(properties), date, tz);
+            try
+            {
+                getInstance(appId).Call("track", eventName, javaProperties, date, tz);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (date != null) {
+                    date.Dispose();
+                }
+                if (tzClass != null) {
+                    tzClass.Dispose();
+                }
+                if (tz != null) {
+                    tz.Dispose();
+                }
+                if (javaProperties != null) {
+                    javaProperties.Dispose();
+                }
+            }
+            
         }
 
         private static void trackForAll(string eventName, Dictionary<string, object> properties)
@@ -211,11 +270,12 @@ namespace ThinkingData.Analytics.Wrapper
         private static void track(TDEventModel taEvent, string appId)
         {
             AndroidJavaObject javaEvent = null;
-            switch(taEvent.EventType)
+            AndroidJavaObject javaProperties = getJSONObject(getFinalEventProperties(taEvent.Properties));
+            switch (taEvent.EventType)
             {
                 case TDEventModel.TDEventType.First:
                     javaEvent = new AndroidJavaObject("cn.thinkingdata.analytics.TDFirstEvent", 
-                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)));
+                        taEvent.EventName, javaProperties);
 
                     string extraId = taEvent.GetEventId();
                     if (!string.IsNullOrEmpty(extraId))
@@ -226,28 +286,27 @@ namespace ThinkingData.Analytics.Wrapper
                     break;
                 case TDEventModel.TDEventType.Updatable:
                     javaEvent = new AndroidJavaObject("cn.thinkingdata.analytics.TDUpdatableEvent", 
-                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.GetEventId()); 
+                        taEvent.EventName, javaProperties, taEvent.GetEventId()); 
                     break;
                 case TDEventModel.TDEventType.Overwritable:
                     javaEvent = new AndroidJavaObject("cn.thinkingdata.analytics.TDOverWritableEvent", 
-                        taEvent.EventName, getJSONObject(getFinalEventProperties(taEvent.Properties)), taEvent.GetEventId()); 
+                        taEvent.EventName, javaProperties, taEvent.GetEventId()); 
                     break;
             }
             if (null == javaEvent) {
                 if(TDLog.GetEnable()) TDLog.w("Unexpected java event object. Returning...");
                 return;
             }
-
+            AndroidJavaObject date = getDate(taEvent.GetEventTime());
+            AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
+            AndroidJavaObject tz = null;
             if (taEvent.GetEventTime() != null && taEvent.GetEventTime() != DateTime.MinValue) {
-                AndroidJavaObject date = getDate(taEvent.GetEventTime());
-                AndroidJavaClass tzClass = new AndroidJavaClass("java.util.TimeZone");
-                AndroidJavaObject tz = null;
                 if (taEvent.GetEventTimeZone() != null) {
                     if ("Local" == taEvent.GetEventTimeZone().Id) {
-                        tz = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getDefault");
+                        tz = tzClass.CallStatic<AndroidJavaObject>("getDefault");
                     }
                     else {
-                        tz = new AndroidJavaClass("java.util.TimeZone").CallStatic<AndroidJavaObject>("getTimeZone", taEvent.GetEventTimeZone().Id);
+                        tz = tzClass.CallStatic<AndroidJavaObject>("getTimeZone", taEvent.GetEventTimeZone().Id);
                     }
                     javaEvent.Call("setEventTime", date, tz);
                 }
@@ -257,18 +316,69 @@ namespace ThinkingData.Analytics.Wrapper
                 }
                 
             }
-
-            getInstance(appId).Call("track", javaEvent);
+            try
+            {
+                getInstance(appId).Call("track", javaEvent);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (date != null) {
+                    date.Dispose();
+                }
+                if (tzClass != null) {
+                    tzClass.Dispose();
+                }
+                if (tz != null) {
+                    tz.Dispose();
+                }
+                if (javaProperties != null) {
+                    javaProperties.Dispose();
+                }
+                if (javaEvent != null) {
+                    javaEvent.Dispose();
+                }
+            }
+            
         }
 
         private static void track(string eventName, Dictionary<string, object> properties, string appId)
         {
-            getInstance(appId).Call("track", eventName, getJSONObject(properties));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            try
+            {
+                getInstance(appId).Call("track", eventName, javaProperties);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null) {
+                    javaProperties.Dispose();
+                }
+            }
         }
 
         private static void setSuperProperties(Dictionary<string, object> superProperties, string appId)
         {
-            getInstance(appId).Call("setSuperProperties", getJSONObject(superProperties));
+
+            AndroidJavaObject javaProperties = getJSONObject(superProperties);
+            try
+            {
+                getInstance(appId).Call("setSuperProperties", getJSONObject(superProperties));
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null) {
+                    javaProperties.Dispose();
+                }
+            }
         }
 
         private static void unsetSuperProperty(string superPropertyName, string appId)
@@ -285,10 +395,22 @@ namespace ThinkingData.Analytics.Wrapper
         {
             Dictionary<string, object> result = null;
             AndroidJavaObject superPropertyObject = getInstance(appId).Call<AndroidJavaObject>("getSuperProperties");
-            if (null != superPropertyObject)
+            try
             {
-                string superPropertiesString = superPropertyObject.Call<string>("toString");
-                result = TDMiniJson.Deserialize(superPropertiesString);
+                if (null != superPropertyObject)
+                {
+                    string superPropertiesString = superPropertyObject.Call<string>("toString");
+                    result = TDMiniJson.Deserialize(superPropertiesString);
+                }
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (superPropertyObject != null) {
+                    superPropertyObject.Dispose();
+                }
             }
             return result;
         }
@@ -297,10 +419,22 @@ namespace ThinkingData.Analytics.Wrapper
         {
             Dictionary<string, object> result = null;
             AndroidJavaObject presetPropertyObject = getInstance(appId).Call<AndroidJavaObject>("getPresetProperties").Call<AndroidJavaObject>("toEventPresetProperties");
-            if (null != presetPropertyObject)
+            try
             {
-                string presetPropertiesString = presetPropertyObject.Call<string>("toString");
-                result = TDMiniJson.Deserialize(presetPropertiesString);
+                if (null != presetPropertyObject)
+                {
+                    string presetPropertiesString = presetPropertyObject.Call<string>("toString");
+                    result = TDMiniJson.Deserialize(presetPropertiesString);
+                }
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (presetPropertyObject != null) {
+                    presetPropertyObject.Dispose();
+                }
             }
             return result;
         }
@@ -332,22 +466,86 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userSetOnce(Dictionary<string, object> properties, string appId)
         {
-            getInstance(appId).Call("user_setOnce", getJSONObject(properties));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            try
+            {
+                getInstance(appId).Call("user_setOnce", javaProperties);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null) {
+                    javaProperties.Dispose();
+                }
+            }
         }
 
         private static void userSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            getInstance(appId).Call("user_setOnce", getJSONObject(properties), getDate(dateTime));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            AndroidJavaObject date = getDate(dateTime);
+            try
+            {
+                getInstance(appId).Call("user_setOnce", javaProperties, date);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+                if (date != null) {
+                    date.Dispose();
+                }
+            }
         }
 
         private static void userSet(Dictionary<string, object> properties, string appId)
         {
-            getInstance(appId).Call("user_set", getJSONObject(properties));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            try
+            {
+                getInstance(appId).Call("user_set", javaProperties);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+            }
         }
 
         private static void userSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            getInstance(appId).Call("user_set", getJSONObject(properties), getDate(dateTime));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            AndroidJavaObject date = getDate(dateTime);
+            try
+            {
+                getInstance(appId).Call("user_set", javaProperties, date);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+                if (date != null)
+                {
+                    date.Dispose();
+                }
+            }
         }
 
         private static void userUnset(List<string> properties, string appId)
@@ -362,38 +560,156 @@ namespace ThinkingData.Analytics.Wrapper
             {
                 finalProperties.Add(s, 0);
             }
-
-            getInstance(appId).Call("user_unset", getJSONObject(finalProperties), getDate(dateTime));
+            AndroidJavaObject javaProperties = getJSONObject(finalProperties);
+            AndroidJavaObject date = getDate(dateTime);
+            try
+            {
+                getInstance(appId).Call("user_unset", javaProperties, date);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+                if (date != null)
+                {
+                    date.Dispose();
+                }
+            }
         }
 
         private static void userAdd(Dictionary<string, object> properties, string appId)
         {
-            getInstance(appId).Call("user_add", getJSONObject(properties));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            try
+            {
+                getInstance(appId).Call("user_add", javaProperties);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+            }
+            
         }
 
         private static void userAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            getInstance(appId).Call("user_add", getJSONObject(properties), getDate(dateTime));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            AndroidJavaObject date = getDate(dateTime);
+            try
+            {
+                getInstance(appId).Call("user_add", javaProperties, date);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+                if (date != null)
+                {
+                    date.Dispose();
+                }
+            }
         }
 
         private static void userAppend(Dictionary<string, object> properties, string appId)
         {
-            getInstance(appId).Call("user_append", getJSONObject(properties));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            try
+            {
+                getInstance(appId).Call("user_append", javaProperties);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+            }
         }
 
         private static void userAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            getInstance(appId).Call("user_append", getJSONObject(properties), getDate(dateTime));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            AndroidJavaObject date = getDate(dateTime);
+            try
+            {
+                getInstance(appId).Call("user_append", javaProperties, date);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+                if (date != null)
+                {
+                    date.Dispose();
+                }
+            }
         }
 
         private static void userUniqAppend(Dictionary<string, object> properties, string appId)
         {
-            getInstance(appId).Call("user_uniqAppend", getJSONObject(properties));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            try
+            {
+                getInstance(appId).Call("user_uniqAppend", javaProperties);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+            }
         }
 
         private static void userUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            getInstance(appId).Call("user_uniqAppend", getJSONObject(properties), getDate(dateTime));
+            AndroidJavaObject javaProperties = getJSONObject(properties);
+            AndroidJavaObject date = getDate(dateTime);
+            try
+            {
+                getInstance(appId).Call("user_uniqAppend", javaProperties, date);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (javaProperties != null)
+                {
+                    javaProperties.Dispose();
+                }
+                if (date != null)
+                {
+                    date.Dispose();
+                }
+            }
         }
 
         private static void userDelete(string appId)
@@ -403,7 +719,21 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userDelete(DateTime dateTime, string appId)
         {
-            getInstance(appId).Call("user_delete", getDate(dateTime));
+            AndroidJavaObject date = getDate(dateTime);
+            try
+            {
+                getInstance(appId).Call("user_delete", date);
+            }
+            catch (Exception e)
+            {
+                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+            }
+            finally {
+                if (date != null)
+                {
+                    date.Dispose();
+                }
+            }
         }
 
         private static void logout(string appId)

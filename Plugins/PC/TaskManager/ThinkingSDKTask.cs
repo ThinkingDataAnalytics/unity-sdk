@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using ThinkingSDK.PC.Request;
 using ThinkingSDK.PC.Constant;
 using ThinkingSDK.PC.Storage;
+using ThinkingSDK.PC.Main;
 
 namespace ThinkingSDK.PC.TaskManager
 {
@@ -47,6 +48,11 @@ namespace ThinkingSDK.PC.TaskManager
                 }
             }
         }
+
+        //private void OnDestroy()
+        //{
+        //    ThinkingPCSDK.OnDestory();
+        //}
 
         /// <summary>
         /// hold signal

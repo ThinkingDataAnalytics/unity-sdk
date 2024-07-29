@@ -140,7 +140,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             string serverUrl = "https://receiver.ta.thinkingdata.cn";
             TDConfig tDConfig = new TDConfig(appId, serverUrl);
             //tDConfig.mode = TDMode.Normal;
-            //tDConfig.timeZone = TDTimeZone.UTC;
+            tDConfig.timeZone = TDTimeZone.Asia_Shanghai;
             //Enable encrypted transmission(only iOS / Android)
             int encryptVersion = 0;
             string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
@@ -236,6 +236,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             properties["date3"] = new DateTime();
             properties["date4"] = new DateTime();
             properties["date5"] = new DateTime();
+            properties["date6"] = DateTime.Now;
             properties["num"] = a;
             properties["birthday"] = new DateTime(2022, 01, 01);//date
             properties["object"] = new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } };//object

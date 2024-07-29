@@ -333,6 +333,11 @@ namespace ThinkingSDK.PC.Main
             ThinkingSDKInstance.SetNtpTimeCalibratieton(ntpCalibration);
         }
 
+        public static void OnDestory() {
+            Instances.Clear();
+            LightInstances.Clear();
+        }
+
         public static string GetDeviceId()
         {
             return ThinkingSDKDeviceInfo.DeviceID();

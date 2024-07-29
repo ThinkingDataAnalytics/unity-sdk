@@ -102,17 +102,25 @@ namespace ThinkingData.Analytics.Wrapper
         private static extern void ta_enable_third_party_sharing(string app_id, int share_type, string properties);
 
         private static TimeZoneInfo defaultTimeZone = null;
+        private static TDTimeZone defaultTDTimeZone = TDTimeZone.Local;
 
         private static void init(TDConfig token)
         {
             registerRecieveGameCallback();
             ta_start(token.appId, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.name);
             string timeZoneId = token.getTimeZoneId();
+            defaultTDTimeZone = token.timeZone;
             if (null != timeZoneId && timeZoneId.Length > 0)
             {
                 if (defaultTimeZone == null)
                 {
-                    defaultTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                    try
+                    {
+                        defaultTimeZone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+                    }
+                    catch (Exception)
+                    {
+                    }
                 }
             }
             else
@@ -419,7 +427,14 @@ namespace ThinkingData.Analytics.Wrapper
             //DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             //long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
             //return ta_get_time_string(currentMillis);
-            return TDCommonUtils.FormatDate(dateTime, defaultTimeZone);
+            if (defaultTimeZone == null)
+            {
+                return TDCommonUtils.FormatDate(dateTime, defaultTDTimeZone);
+            }
+            else
+            {
+                return TDCommonUtils.FormatDate(dateTime, defaultTimeZone);
+            }
         }
 
         private static void enableAutoTrack(TDAutoTrackEventType autoTrackEvents, Dictionary<string, object> properties, string appId)

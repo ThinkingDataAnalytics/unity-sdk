@@ -34,8 +34,52 @@ namespace ThinkingData.Analytics.Utils
             {
                 timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
             }
-            DateTime dateNew = univDateTime + timeSpan;
-            return dateNew.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+            try
+            {
+                DateTime dateNew = univDateTime + timeSpan;
+                return dateNew.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch (Exception)
+            {
+            }
+            return univDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        public static string FormatDate(DateTime dateTime, TDTimeZone timeZone) {
+            DateTime univDateTime = dateTime.ToUniversalTime();
+            TimeSpan span;
+            switch (timeZone)
+            {
+                case TDTimeZone.Local:
+                    span = TimeZoneInfo.Local.BaseUtcOffset;
+                    break;
+                case TDTimeZone.UTC:
+                    span = TimeSpan.Zero;
+                    break;
+                case TDTimeZone.Asia_Shanghai:
+                    span = TimeSpan.FromHours(8);
+                    break;
+                case TDTimeZone.Asia_Tokyo:
+                    span = TimeSpan.FromHours(9);
+                    break;
+                case TDTimeZone.America_Los_Angeles:
+                    span = TimeSpan.FromHours(-7);
+                    break;
+                case TDTimeZone.America_New_York:
+                    span = TimeSpan.FromHours(-4);
+                    break;
+                default:
+                    span = TimeSpan.Zero;
+                    break;
+            }
+            try
+            {
+                DateTime dateNew = univDateTime + span;
+                return dateNew.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch (Exception) {
+            }
+            return univDateTime.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
         }
     }
 }
