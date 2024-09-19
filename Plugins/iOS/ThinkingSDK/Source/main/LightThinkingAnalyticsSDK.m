@@ -6,114 +6,85 @@
 - (instancetype)initWithAPPID:(NSString *)appID withServerURL:(NSString *)serverURL withConfig:(TDConfig *)config {
     if (self = [self initLight:appID withServerURL:serverURL withConfig:config]) {
     }
-    
     return self;
 }
 
-- (void)login:(NSString *)accountId {
-    if ([self hasDisabled])
+- (void)innerLogin:(NSString *)accountId {
+    if ([self hasDisabled]) {
         return;
-    
+    }
     if (![accountId isKindOfClass:[NSString class]] || accountId.length == 0) {
         TDLogError(@"accountId invald", accountId);
         return;
     }
-    
-    @synchronized (self.accountId) {
-        self.accountId = accountId;
+    TDLogInfo(@"light SDK login, SDK Name = %@, AccountId = %@", self.config.name, accountId);
+    self.accountId = accountId;
+}
+
+- (void)innerLogout {
+    if ([self hasDisabled]) {
+        return;
     }
+    TDLogInfo(@"light SDK logout.");
+    self.accountId = nil;
 }
 
-- (void)logout {
-    if ([self hasDisabled])
+- (void)innerSetIdentify:(NSString *)distinctId {
+    if ([self hasDisabled]) {
         return;
-    
-    @synchronized (self.accountId) {
-        self.accountId = nil;
-    };
-}
-
-- (void)identify:(NSString *)distinctId {
-    if ([self hasDisabled])
-        return;
-    
+    }
     if (![distinctId isKindOfClass:[NSString class]] || distinctId.length == 0) {
         TDLogError(@"identify cannot null");
         return;
     }
     
-    @synchronized (self.identifyId) {
-        self.identifyId = distinctId;
-    };
+    TDLogInfo(@"light SDK set distinct ID, Distinct Id = %@", distinctId);
+    
+    self.identifyId = distinctId;
 }
 
-- (NSString *)getDistinctId {
-    return [self.identifyId copy];
-}
-
-- (void)enableAutoTrack:(ThinkingAnalyticsAutoTrackEventType)eventType {
++ (void)enableAutoTrack:(TDAutoTrackEventType)eventType withAppId:(NSString *)appId {
     return;
 }
 
-- (void)flush {
++ (void)enableAutoTrack:(TDAutoTrackEventType)eventType callback:(NSDictionary * _Nonnull (^)(TDAutoTrackEventType, NSDictionary * _Nonnull))callback withAppId:(NSString *)appId {
+    return;
+}
++ (void)enableAutoTrack:(TDAutoTrackEventType)eventType properties:(NSDictionary *)properties withAppId:(NSString *)appId {
+    return;
+}
+
+- (void)innerFlush {
     return;
 }
 
 #pragma mark - EnableTracking
-- (void)enableTracking:(BOOL)enabled {
-    TDLogDebug(@"%@light instance: enableTracking...", self);
-    self.isEnabled = enabled;
-}
 
-- (void)optOutTracking {
-    TDLogDebug(@"%@light instance: optOutTracking...", self);
-    self.isEnabled = NO;
-}
-
-- (void)optOutTrackingAndDeleteUser {
-    TDLogDebug(@"%@light instance: optOutTrackingAndDeleteUser...", self);
-    self.isEnabled = NO;
-}
-
-- (void)optInTracking {
-    TDLogDebug(@"%@light instance: optInTracking...", self);
-    self.isEnabled = YES;
-}
-
-
-
-- (void)setTrackStatus: (TATrackStatus)status {
+- (void)innerSetTrackStatus: (TDTrackStatus)status {
     switch (status) {
-            
-        case TATrackStatusPause: {
-            TDLogDebug(@"%@light instance - switchTrackStatus: TATrackStatusStop...", self);
+        case TDTrackStatusPause: {
+            TDLogInfo(@"light instance [%@] change status to Pause", self.config.name)
             self.isEnabled = NO;
             break;
         }
-            
-        case TATrackStatusStop: {
-            TDLogDebug(@"%@light instance - switchTrackStatus: TATrackStatusStopAndClean...", self);
+        case TDTrackStatusStop: {
+            TDLogInfo(@"light instance [%@] change status to Stop", self.config.name)
             self.isEnabled = NO;
             break;
         }
-            
-        case TATrackStatusSaveOnly: {
-            TDLogDebug(@"%@light instance - switchTrackStatus: TATrackStatusPausePost...", self);
-            self.trackPause = YES;
-            break;
-        }
-            
-        case TATrackStatusNormal: {
-            TDLogDebug(@"%@light instance - switchTrackStatus: TATrackStatusRestartAll...", self);
-            self.trackPause = NO;
+        case TDTrackStatusSaveOnly: {
+            TDLogInfo(@"light instance [%@] change status to SaveOnly", self.config.name)
             self.isEnabled = YES;
-            [self flush];
+            break;
+        }
+        case TDTrackStatusNormal: {
+            TDLogInfo(@"light instance [%@] change status to Normal", self.config.name)
+            self.isEnabled = YES;
             break;
         }
         default:
             break;
     }
 }
-
 
 @end

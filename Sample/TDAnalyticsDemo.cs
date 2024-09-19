@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System;
 using System.Threading;
 using System.Collections;
-using ThinkingAnalytics;
+//using ThinkingAnalytics;
 public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, TDAutoTrackEventHandler
 {
 
@@ -146,7 +146,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
             tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
             TDAnalytics.Init(tDConfig);
-            //TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
+            TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
             TDAnalytics.SetDynamicSuperProperties(this);
             //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppEnd);
             TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
@@ -209,7 +209,6 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
         if (GUILayout.Button("TrackEvent", GUILayout.Height(Height)))
         {
-            Debug.Log("======1" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             //Dictionary<string, object> properties = new Dictionary<string, object>();
             //properties["channel"] = "ta";//string
             //properties["age"] = 1;//number - int
@@ -224,37 +223,44 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             //properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" }, { "key3", DateTime.Now }, { "key4", DateTime.Now } } };//object array
             //properties["arr"] = new List<object>() { "value" };//array
             //TDAnalytics.Track("TA", properties);
-            Decimal a = 1;
-            Dictionary<string, object> properties = new Dictionary<string, object>();
-            properties["channel"] = "ta";//string
-            properties["age"] = 1;//number - int
-            properties["weight"] = 5.46;//number - float
-            properties["balance"] = -0.4;//number - negative
-            properties["isVip"] = true;//bool
-            properties["date1"] = new DateTime();
-            properties["date2"] = new DateTime();
-            properties["date3"] = new DateTime();
-            properties["date4"] = new DateTime();
-            properties["date5"] = new DateTime();
-            properties["date6"] = DateTime.Now;
-            properties["num"] = a;
-            properties["birthday"] = new DateTime(2022, 01, 01);//date
-            properties["object"] = new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } };//object
-            properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } } };//object array
-            properties["arr"] = new List<object>() { "value", new DateTime(), new DateTime(), new DateTime(), new DateTime(), new DateTime() };//array
-            TDAnalytics.Track("TA", properties);
+            //for (int i = 0; i < 1; i++)
+            //{
+            //    Dictionary<string, object> properties = new Dictionary<string, object>();
+            //    properties["channel"] = "ta";//string
+            //    properties["age"] = 1;//number - int
+            //    properties["weight"] = 5.46;//number - float
+            //    properties["balance"] = -0.4;//number - negative
+            //    properties["isVip"] = true;//bool
+            //    properties["date1"] = new DateTime();
+            //    properties["date2"] = new DateTime();
+            //    properties["date3"] = new DateTime();
+            //    properties["date4"] = new DateTime();
+            //    properties["date5"] = new DateTime();
+            //    properties["date6"] = DateTime.Now;
+            //    properties["num"] = a;
+            //    properties["birthday"] = new DateTime(2022, 01, 01);//date
+            //    properties["object"] = new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } };//object
+            //    properties["object_arr"] = new List<object>() { new Dictionary<string, object>() { { "key", "value" }, { "data1", new DateTime() }, { "data2", new DateTime() }, { "data3", new DateTime() }, { "data4", new DateTime() }, { "data5", new DateTime() } } };//object array
+            //    properties["arr"] = new List<object>() { "value", new DateTime(), new DateTime(), new DateTime(), new DateTime(), new DateTime() };//array
+            //    TDAnalytics.Track("TA_"+i, properties, new DateTime(2022, 01, 01),TimeZoneInfo.Utc);
+            //}
             Debug.Log("======2" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            TDAnalytics.TrackStr("sss","{}",null);
+            //TDAnalytics.TrackStr("test_event", "{\"game_name\":\"海外正式\",\"rom\":\"125830144.000000\",\"device_name\":\"H030_T5\",\"puid\":\"558513179\",\"role_id\":\"710280887\",\"sdk_version\":\"1.9.2h\",\"dpi\":\"1920x1080\",\"pkg_id\":\"A1730\",\"game_id\":\"G153\",\"ram\":\"66945980.000000\",\"win_serial\":\"0000_0000_0000_0000_4868_3400_0000_0000\",\"channel_name\":\"kuroPC\",\"game_version\":\"1.2.0\",\"login_id\":\"567ec296-70f4-473c-9bb4-ab561205b5b9\",\"os\":\"win\",\"cpu_ghz\":\"2350080\",\"os_version\":\"win10\",\"event_uuid\":\"PC-567ec296-70f4-473c-9bb4-ab561205b5b964\",\"server_id\":\"86d52186155b148b5c138ceb41be9650\",\"event_time_ms\":\"1724774441952\",\"role_name\":\"PIZoY\",\"cpu_hardware\":\"Intel(R) Xeon(R) CPU E5-2696 v3 @ 2.30GHz\",\"pkg_name\":\"com.kurogame.wutheringwaves.global.sign\",\"event_id\":\"90003\",\"user_id\":\"558513179\",\"channel_op\":\"0\",\"event_name\":\"from_game\",\"last_phone_open_ts\":\"1724618745\",\"channel_id\":\"240\",\"did\":\"03000200-0400-0500-0006-000700080009\",\"win_uuid\":\"03000200-0400-0500-0006-000700080009\"}");
+            Debug.Log("======3" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         }
         GUILayout.Space(20);
         if (GUILayout.Button("TrackFirstEvent", GUILayout.Height(Height)))
         {
-            Dictionary<string, object> properties = new Dictionary<string, object>() { { "status",1 } };
+            Dictionary<string, object> properties = new Dictionary<string, object>() { { "status", 1 } };
             TDFirstEventModel firstEvent = new TDFirstEventModel("first_event");
             firstEvent.Properties = properties;
-            TDAnalytics.Track(firstEvent);
+            //TDAnalytics.Track(firstEvent);
             Dictionary<string, object> properties_2 = new Dictionary<string, object>() { { "status", 11 } };
             TDFirstEventModel firstEvent_2 = new TDFirstEventModel("first_event", "first_check_id");
-            firstEvent_2.Properties = properties_2;
+            //firstEvent_2.Properties = properties_2;
+            //firstEvent_2.StrProperties = "{\"prop\":[\"aa\",\"nb\"]}";
+            firstEvent_2.SetTime(new DateTime(2024, 03, 04), TimeZoneInfo.Utc);
             TDAnalytics.Track(firstEvent_2);
         }
         GUILayout.Space(20);
@@ -340,36 +346,40 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             TDAnalytics.Flush(instanceName);
         }
         GUILayout.EndHorizontal();
-
-
-
-
+ 
         GUILayout.Space(20);
         GUILayout.Label("UserProperty", GUI.skin.label);
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
         if (GUILayout.Button("UserSet", GUILayout.Height(Height)))
         {
             Dictionary<string, object> userProperties = new Dictionary<string, object>() { { "age", 18 } };
-            TDAnalytics.UserSet(userProperties);
+            //TDAnalytics.UserSet(userProperties);
+            //TDAnalytics.UserSet("{\"age\":19}");
+            TDAnalytics.UserSet("}");
         }
 
         GUILayout.Space(20);
         if (GUILayout.Button("UserSetOnce", GUILayout.Height(Height)))
         {
             Dictionary<string, object> userProperties = new Dictionary<string, object>() { { "gender", 1 } };
-            TDAnalytics.UserSetOnce(userProperties);
-
+            //TDAnalytics.UserSetOnce(userProperties);
+            //TDAnalytics.UserSetOnce(userProperties,new DateTime(2024,6,7));
+            //TDAnalytics.UserSetOnce("{\"age\":34}");
+            TDAnalytics.UserSetOnce("1234");
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UserAdd", GUILayout.Height(Height)))
         {
-            TDAnalytics.UserAdd("user_coin", 1);
+            //TDAnalytics.UserAdd("user_coin", 1);
+
+            //TDAnalytics.UserAddStr("{\"user_coin\":19}");
+            TDAnalytics.UserAddStr("1234");
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UserUnset", GUILayout.Height(Height)))
         {
             TDAnalytics.UserUnset("user_coin");
-            TDAnalytics.UserUnset(new List<string>() { "user_coin", "user_vip" });
+            TDAnalytics.UserUnset(new List<string>() { "user_coin", "user_vip" },new DateTime(2024,4,5));
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UserDelete", GUILayout.Height(Height)))
@@ -381,14 +391,20 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         {
             List<string> propList = new List<string>() { "apple", "ball" };
             Dictionary<string, object> userProperties = new Dictionary<string, object>() { { "prop", propList } };
-            TDAnalytics.UserAppend(userProperties);
+            //TDAnalytics.UserAppend(userProperties);
+            //TDAnalytics.UserAppend(userProperties,new DateTime(2024,7,8));
+            //TDAnalytics.UserAppend("{\"prop\":[\"aa\",\"nb\"]}");
+            TDAnalytics.UserAppend("]]]]");
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UserUniqAppend", GUILayout.Height(Height)))
         {
             List<string> propList = new List<string>() { "apple", "banana" };
             Dictionary<string, object> userProperties = new Dictionary<string, object>() { { "prop", propList } };
-            TDAnalytics.UserUniqAppend(userProperties);
+            //TDAnalytics.UserUniqAppend(userProperties);
+            //TDAnalytics.UserUniqAppend(userProperties,new DateTime(2024,9,8));
+            TDAnalytics.UserUniqAppend("{\"prop\":[\"aa\",\"nb\"]}");
+            TDAnalytics.UserUniqAppend("344");
         }
         GUILayout.EndHorizontal();
 
@@ -446,11 +462,13 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
         if (GUILayout.Button("SetSuperProperties", GUILayout.Height(Height)))
         {
-            Dictionary<string, object> superProperties = new Dictionary<string, object>() {
-                { "vip_level", 1 },
-                { "vip_title", "Supreme King" }
-            };
-            TDAnalytics.SetSuperProperties(superProperties);
+            //Dictionary<string, object> superProperties = new Dictionary<string, object>() {
+            //    { "vip_level", 1 },
+            //    { "vip_title", "Supreme King" }
+            //};
+            //TDAnalytics.SetSuperProperties(superProperties);
+            //TDAnalytics.SetSuperProperties("{\"vip_level\":10,\"vip_title\":\"haha\"}");
+            TDAnalytics.SetSuperProperties("0000");
         }
         GUILayout.Space(20);
         if (GUILayout.Button("UpdateSuperProperties", GUILayout.Height(Height)))
@@ -464,7 +482,8 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         GUILayout.Space(20);
         if (GUILayout.Button("ClearSuperProperties", GUILayout.Height(Height)))
         {
-            TDAnalytics.UnsetSuperProperty("vip_level");
+            //TDAnalytics.UnsetSuperProperty("vip_level");
+            TDAnalytics.ClearSuperProperties();
         }
 
         GUILayout.Space(20);
@@ -477,7 +496,13 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         GUILayout.BeginHorizontal(GUI.skin.textArea, GUILayout.Height(Height));
         if (GUILayout.Button("SetDynamicSuperProperties", GUILayout.Height(Height)))
         {
-            TDAnalytics.SetDynamicSuperProperties(this);
+            //TDAnalytics.SetDynamicSuperProperties(this);
+            //TDAnalytics.EnableThirdPartySharing(ThinkingData.Analytics.Utils.TDThirdPartyType.APPSFLYER | ThinkingData.Analytics.Utils.TDThirdPartyType.ADJUST);
+            //TDAnalytics.SetAutoTrackProperties(TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppEnd, new Dictionary<string, object>
+            //{
+            //    { "key1","kk"}
+            //});
+            TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppStart, this);
         }
 
         GUILayout.Space(20);
@@ -494,16 +519,16 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         GUILayout.Space(20);
         if (GUILayout.Button("GetPresetProperties", GUILayout.Height(Height)))
         {
-            //TDPresetProperties presetProperties = TDAnalytics.GetPresetProperties();
-            //string deviceModel = presetProperties.DeviceModel;
-            //Debug.Log("TDPresetProperties: DeviceModel is " + deviceModel);
-            //Dictionary<string, object> eventPresetProperties = presetProperties.ToDictionary();
-            //string propertiesStr = "  ";
-            //foreach (KeyValuePair<string, object> kv in eventPresetProperties)
-            //{
-            //    propertiesStr = propertiesStr + kv.Key + " = " + kv.Value + "\n  ";
-            //}
-            //Debug.Log("PresetProperties: \n" + propertiesStr);
+            TDPresetProperties presetProperties = TDAnalytics.GetPresetProperties();
+            string deviceModel = presetProperties.DeviceModel;
+            Debug.Log("TDPresetProperties: DeviceModel is " + deviceModel);
+            Dictionary<string, object> eventPresetProperties = presetProperties.ToDictionary();
+            string propertiesStr = "  ";
+            foreach (KeyValuePair<string, object> kv in eventPresetProperties)
+            {
+                propertiesStr = propertiesStr + kv.Key + " = " + kv.Value + "\n  ";
+            }
+            Debug.Log("PresetProperties: \n" + propertiesStr);
         }
 
         GUILayout.Space(20);

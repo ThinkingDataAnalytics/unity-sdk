@@ -13,7 +13,7 @@
 #import "TDAppState.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
 #import "TDAppDelegateProxyManager.h"
-#import "TAPushClickEvent.h"
+#import "TDPushClickEvent.h"
 
 @implementation TDAppLaunchReason
 
@@ -45,10 +45,10 @@
                 }else{
                     for (NSString *instanceToken in dic.allKeys) {
                         ThinkingAnalyticsSDK *instance = dic[instanceToken];
-                        TAPushClickEvent *pushEvent = [[TAPushClickEvent alloc]initWithName: @"ops_push_click"];
+                        TDPushClickEvent *pushEvent = [[TDPushClickEvent alloc]initWithName: @"te_ops_push_click"];
                         pushEvent.ops = opsReceiptProperties;
                         [instance autoTrackWithEvent:pushEvent properties:@{}];
-                        [instance flush];
+                        [instance innerFlush];
                     }
                 }
             }
@@ -95,7 +95,7 @@
     NSDictionary *data = [self getInitData:launchOptions];
     
     // 发送推送事件
-    if (![TDPresetProperties disableOpsReceiptProperties] && launchOptions) {
+    if ([ThinkingAnalyticsSDK defaultInstance].config.enableAutoPush && launchOptions) {
         NSDictionary *remoteNotification = [launchOptions objectForKey:@"UIApplicationLaunchOptionsRemoteNotificationKey"];
         [TDAppLaunchReason td_ops_push_click:remoteNotification];
     }
@@ -160,6 +160,8 @@
         return @{};
     }
     
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     if ([launchOptions.allKeys containsObject:UIApplicationLaunchOptionsLocalNotificationKey]) {
         // 本地推送可能会解析不出alertbody，这里特殊处理一下
         UILocalNotification *notification = launchOptions[UIApplicationLaunchOptionsLocalNotificationKey];
@@ -170,7 +172,8 @@
         }
         return properties;
     }
-    
+#pragma clang diagnostic pop
+
     return launchOptions;
 }
 

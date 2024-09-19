@@ -1,8 +1,8 @@
-#if __has_include(<ThinkingSDK/ThinkingAnalyticsSDK.h>)
-#import <ThinkingSDK/ThinkingAnalyticsSDK.h>
+#if __has_include(<ThinkingSDK/ThinkingSDK.h>)
+#import <ThinkingSDK/ThinkingSDK.h>
 #import <ThinkingSDK/TDDeviceInfo.h>
 #else
-#import "ThinkingAnalyticsSDK.h"
+#import "ThinkingSDK.h"
 #import "TDDeviceInfo.h"
 #endif
 #import <pthread.h>
@@ -157,36 +157,33 @@ void ta_config_custom_lib_info(const char *lib_name, const char *lib_version) {
     [ThinkingAnalyticsSDK setCustomerLibInfoWithLibName:lib_name_string libVersion:lib_version_string];
 }
 
-void ta_track_event(const char *app_id, const char *event_model_json) {
-    NSDictionary *event_model_dic = nil;
-    ta_convertToDictionary(event_model_json, &event_model_dic);
+void ta_track_event(const char *app_id, int type,const char *event_name,const char *properties,const char *event_id,long long time_stamp_millis, const char *timezone) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSString *event_name_string = event_name != NULL ? [NSString stringWithUTF8String:event_name] : nil;
+    NSString *event_id_string = event_id != NULL ? [NSString stringWithUTF8String:event_id] : nil;
     TDEventModel *eventModel;
-    NSString *eventType = event_model_dic[@"event_type"];
-    if ([eventType isEqualToString:@"track_first"]) {
-        eventModel = [[TDFirstEventModel alloc] initWithEventName:event_model_dic[@"event_name"] firstCheckID:event_model_dic[@"extra_id"]];
-    } else if ([eventType isEqualToString:@"track_update"]) {
-        eventModel = [[TDUpdateEventModel alloc] initWithEventName:event_model_dic[@"event_name"] eventID:event_model_dic[@"extra_id"]];
-    } else if ([eventType isEqualToString:@"track_overwrite"]) {
-        eventModel = [[TDOverwriteEventModel alloc] initWithEventName:event_model_dic[@"event_name"] eventID:event_model_dic[@"extra_id"]];
+    if(type == 0){
+        eventModel = [[TDFirstEventModel alloc] initWithEventName:event_name_string firstCheckID:event_id_string];
+    }else if(type == 1){
+        eventModel = [[TDUpdateEventModel alloc] initWithEventName:event_name_string eventID:event_id_string];
+    }else if(type == 2){
+        eventModel = [[TDOverwriteEventModel alloc] initWithEventName:event_name_string eventID:event_id_string];
     }
-    
-    eventModel.properties = event_model_dic[@"event_properties"];
-    
-    long event_time = [event_model_dic[@"event_time"] longValue];
-    NSString *timezoneString = event_model_dic[@"event_timezone"];
+    if(eventModel == NULL) return;
+    NSDictionary *evevent_properties = nil;
+    ta_convertToDictionary(properties, &evevent_properties);
+    eventModel.properties = evevent_properties;
+    NSString *timezoneString = timezone != NULL ? [NSString stringWithUTF8String:timezone] : nil;
     NSTimeZone *tz;
     if ([@"Local" isEqualToString:timezoneString]) {
         tz = [NSTimeZone localTimeZone];
     } else {
         tz = [NSTimeZone timeZoneWithName:timezoneString];
     }
-    
-    if (event_time) {
-        NSDate *date = [NSDate dateWithTimeIntervalSince1970:event_time/1000.0];
+    if (time_stamp_millis > 0) {
+        NSDate *date = [NSDate dateWithTimeIntervalSince1970:time_stamp_millis/1000.0];
         [eventModel configTime:date timeZone:tz];
     }
-    
-    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     [ta_getInstance(app_id_string) trackWithEventModel:eventModel];
 }
 

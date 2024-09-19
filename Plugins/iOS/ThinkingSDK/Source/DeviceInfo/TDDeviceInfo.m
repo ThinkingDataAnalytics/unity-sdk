@@ -14,7 +14,6 @@
 #import "ThinkingAnalyticsSDKPrivate.h"
 #import "TDFile.h"
 #import "TDPresetProperties+TDDisProperties.h"
-#import <sys/sysctl.h>
 
 #define kTDDyldPropertyNames @[@"TDPerformance"]
 #define kTDGetPropertySelName @"getPresetProperties"
@@ -275,7 +274,7 @@ static CTTelephonyNetworkInfo *__td_TelephonyNetworkInfo;
         installTimesKeychain = [wrapper getInstallTimesOld];
     }
     
-    TDFile *file = [[TDFile alloc] initWithAppid:[ThinkingAnalyticsSDK sharedInstance].appid];
+    TDFile *file = [[TDFile alloc] initWithAppid:[ThinkingAnalyticsSDK defaultInstance].config.appid];
     if (deviceIdKeychain.length == 0 || installTimesKeychain.length == 0) {
         deviceIdKeychain = [file unarchiveDeviceId];
         installTimesKeychain = [file unarchiveInstallTimes];
@@ -456,26 +455,5 @@ static CTTelephonyNetworkInfo *__td_TelephonyNetworkInfo;
     return NO;
 #endif
 }
-
-+ (NSTimeInterval)uptime
-{
-    struct timeval boottime;
-    int mib[2] = {CTL_KERN, KERN_BOOTTIME};
-    size_t size = sizeof(boottime);
-
-    struct timeval now;
-    struct timezone tz;
-    gettimeofday(&now, &tz);
-
-    double uptime = -1;
-
-    if (sysctl(mib, 2, &boottime, &size, NULL, 0) != -1 && boottime.tv_sec != 0)
-    {
-        uptime = now.tv_sec - boottime.tv_sec;
-        uptime += (double)(now.tv_usec - boottime.tv_usec) / 1000000.0;
-    }
-    return uptime;
-}
-
 
 @end

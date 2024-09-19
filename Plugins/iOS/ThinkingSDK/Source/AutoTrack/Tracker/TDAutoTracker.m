@@ -30,9 +30,9 @@
     return self;
 }
 
-- (void)trackWithInstanceTag:(NSString *)instanceName event:(TAAutoTrackEvent *)event params:(NSDictionary *)params {
+- (void)trackWithInstanceTag:(NSString *)instanceName event:(TDAutoTrackEvent *)event params:(NSDictionary *)params {
     if ([self canTrackWithInstanceToken:instanceName]) {
-        ThinkingAnalyticsSDK *instance = [ThinkingAnalyticsSDK sharedInstanceWithAppid:instanceName];
+        ThinkingAnalyticsSDK *instance = [ThinkingAnalyticsSDK instanceWithAppid:instanceName];
 #ifdef DEBUG
         if (!instance) {
             @throw [NSException exceptionWithName:@"Thinkingdata Exception" reason:[NSString stringWithFormat:@"check this thinking instance, instanceTag: %@", instanceName] userInfo:nil];
@@ -40,7 +40,11 @@
 #endif
         [instance autoTrackWithEvent:event properties:params];
                 
-        if (self.autoFlush) [instance flush];
+        if (self.autoFlush) [instance innerFlush];
+        
+        if ([[self class] isEqual:NSClassFromString(@"TDInstallTracker")]) {
+            [[TAModuleManager sharedManager] triggerEvent:TAMDidCustomEvent withCustomParam:[TDAnalyticsRouterEventManager deviceActivationEvent]];
+        }
     }
 }
 

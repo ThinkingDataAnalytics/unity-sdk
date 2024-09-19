@@ -2,12 +2,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_OPTIONS(NSInteger, TimeValueType) {
-    TDTimeValueTypeNone      = 0,
-    TDTimeValueTypeTimeOnly  = 1 << 0,
-    TDTimeValueTypeAll       = 1 << 1,
-};
-
 typedef NSString *kEDEventTypeName;
 
 FOUNDATION_EXTERN kEDEventTypeName const TD_EVENT_TYPE_TRACK_FIRST;
@@ -20,11 +14,10 @@ FOUNDATION_EXTERN kEDEventTypeName const TD_EVENT_TYPE_TRACK_OVERWRITE;
 + (instancetype)new NS_UNAVAILABLE;
 
 @property (nonatomic, copy, readonly) NSString *eventName;
-@property (nonatomic, copy, readonly) kEDEventTypeName eventType; // Default is TD_EVENT_TYPE_TRACK
-
+@property (nonatomic, copy, readonly) kEDEventTypeName eventType;
 @property (nonatomic, strong) NSDictionary *properties;
 
-- (void)configTime:(NSDate *)time timeZone:(NSTimeZone * _Nullable)timeZone;
+- (void)configTime:(NSDate *)time timeZone:(NSTimeZone *)timeZone;
 
 @end
 

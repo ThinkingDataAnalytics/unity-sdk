@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.0.7
+    SDK VERSION:3.0.8
  */
 
 /**    
@@ -387,6 +387,23 @@ namespace ThinkingData.Analytics
             }
         }
 
+        public static void TrackStr(string eventName, string properties = "", string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.TrackStr(eventName, properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { eventName, properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
         /// <summary>
         /// Track a Event
         /// </summary>
@@ -568,6 +585,22 @@ namespace ThinkingData.Analytics
             }
         }
 
+        public static void SetSuperProperties(string properties,string appId = "") {
+            if (tracking_enabled)
+            {
+                TDWrapper.SetSuperProperties(properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
         /// <summary>
         /// Delete Property form current Super Properties
         /// </summary>
@@ -707,6 +740,23 @@ namespace ThinkingData.Analytics
             }
         }
 
+        public static void UserSet(string properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.UserSet(properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
         /// <summary>
         /// Sets User Properties, this will overwrite the original properties value
         /// </summary>
@@ -812,6 +862,24 @@ namespace ThinkingData.Analytics
 
         }
 
+        public static void UserSetOnce(string properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.UserSetOnce(properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+
+        }
+
         /// <summary>
         /// Sets User Properties for Once. The property would be neglected, if such property had been set before
         /// </summary>
@@ -873,6 +941,23 @@ namespace ThinkingData.Analytics
             }
         }
 
+        public static void UserAddStr(string properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.UserAddStr(properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
         /// <summary>
         /// Accumulates the property, type of Number. If the property has not been set, it would be given a value of 0 before computing. 
         /// </summary>
@@ -918,6 +1003,23 @@ namespace ThinkingData.Analytics
             }
         }
 
+        public static void UserAppend(string properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.UserAppend(properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
         /// <summary>
         /// Appends the property, type of List.
         /// </summary>
@@ -947,6 +1049,23 @@ namespace ThinkingData.Analytics
         /// <param name="properties">user properties</param>
         /// <param name="appId">project ID (optional)</param>
         public static void UserUniqAppend(Dictionary<string, object> properties, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.UserUniqAppend(properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
+        public static void UserUniqAppend(string properties, string appId = "")
         {
             if (tracking_enabled)
             {

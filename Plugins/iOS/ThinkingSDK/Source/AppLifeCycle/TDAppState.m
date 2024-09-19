@@ -12,8 +12,6 @@
 #import <UIKit/UIKit.h>
 #endif
 
-NSString *_td_lastKnownState;
-
 @implementation TDAppState
 
 + (instancetype)shareInstance {

@@ -2,6 +2,7 @@
 #import "TDColdStartTracker.h"
 #import "TDHotStartTracker.h"
 #import "TDInstallTracker.h"
+#import "TDAutoTrackConst.h"
 
 FOUNDATION_EXTERN NSString * const TD_EVENT_PROPERTY_TITLE;
 FOUNDATION_EXTERN NSString * const TD_EVENT_PROPERTY_URL_PROPERTY;
@@ -20,9 +21,11 @@ FOUNDATION_EXTERN NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION;
 
 - (void)trackEventView:(UIView *)view withIndexPath:(NSIndexPath *)indexPath;
 
-- (void)trackWithAppid:(NSString *)appid withOption:(ThinkingAnalyticsAutoTrackEventType)type;
+- (void)trackWithAppid:(NSString *)appid withOption:(TDAutoTrackEventType)type;
 
 - (void)viewControlWillAppear:(UIViewController *)controller;
+
+- (void)trackWithEvent:(TDAutoTrackEvent *)event withProperties:(NSDictionary *)properties;
 
 + (UIViewController *)topPresentedViewController;
 

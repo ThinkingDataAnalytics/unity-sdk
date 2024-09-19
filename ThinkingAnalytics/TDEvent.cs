@@ -23,6 +23,7 @@ namespace ThinkingData.Analytics
         public TDEventType? EventType { get; set; }
         public string EventName { get; }
         public Dictionary<string, object> Properties { get; set; }
+        public string StrProperties { get; set; }
 
         private DateTime EventTime { get; set; }
         private TimeZoneInfo EventTimeZone { get; set; }

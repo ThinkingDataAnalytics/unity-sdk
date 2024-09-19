@@ -214,6 +214,11 @@ namespace ThinkingData.Analytics.Wrapper
             track(eventName, getFinalEventProperties(properties), appId);
         }
 
+        public static void TrackStr(string eventName, string properties, string appId)
+        {
+            trackStr(eventName, properties, appId);
+        }
+
         public static void Track(string eventName, Dictionary<string, object> properties, DateTime datetime, string appId)
         {
             TDPropertiesChecker.CheckString(eventName);
@@ -281,6 +286,10 @@ namespace ThinkingData.Analytics.Wrapper
             setSuperProperties(superProperties, appId);
         }
 
+        public static void SetSuperProperties(string superProperties,string appId) {
+            setSuperProperties(superProperties, appId);
+        }
+
         public static void UnsetSuperProperty(string superPropertyName, string appId)
         {
             TDPropertiesChecker.CheckString(superPropertyName);
@@ -321,6 +330,10 @@ namespace ThinkingData.Analytics.Wrapper
             userSet(properties, appId);
         }
 
+        public static void UserSet(string properties,string appId) {
+            userSet(properties, appId);
+        }
+
         public static void UserSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TDPropertiesChecker.CheckProperties(properties);
@@ -330,6 +343,11 @@ namespace ThinkingData.Analytics.Wrapper
         public static void UserSetOnce(Dictionary<string, object> properties, string appId)
         {
             TDPropertiesChecker.CheckProperties(properties);
+            userSetOnce(properties, appId);
+        }
+
+        public static void UserSetOnce(string properties, string appId)
+        {
             userSetOnce(properties, appId);
         }
 
@@ -357,6 +375,11 @@ namespace ThinkingData.Analytics.Wrapper
             userAdd(properties, appId);
         }
 
+        public static void UserAddStr(string properties, string appId)
+        {
+            userAddStr(properties, appId);
+        }
+
         public static void UserAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TDPropertiesChecker.CheckProperties(properties);
@@ -369,6 +392,11 @@ namespace ThinkingData.Analytics.Wrapper
             userAppend(properties, appId);
         }
 
+        public static void UserAppend(string properties, string appId)
+        {
+            userAppend(properties, appId);
+        }
+
         public static void UserAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             TDPropertiesChecker.CheckProperties(properties);
@@ -378,6 +406,11 @@ namespace ThinkingData.Analytics.Wrapper
         public static void UserUniqAppend(Dictionary<string, object> properties, string appId) 
         {
             TDPropertiesChecker.CheckProperties(properties);
+            userUniqAppend(properties, appId);
+        }
+
+        public static void UserUniqAppend(string properties, string appId)
+        {
             userUniqAppend(properties, appId);
         }
 

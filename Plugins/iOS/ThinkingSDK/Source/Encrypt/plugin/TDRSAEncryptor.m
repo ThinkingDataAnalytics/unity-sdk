@@ -88,7 +88,7 @@
     }
     
     //a tag to read/write keychain storage
-    NSString *tag = @"RSAUtil_PubKey";
+    NSString *tag = @"RSAUtil_PubKey_1";
     NSData *d_tag = [NSData dataWithBytes:[tag UTF8String] length:[tag length]];
     
     // Delete any old lingering key with the same tag
@@ -96,17 +96,17 @@
     [publicKey setObject:(__bridge id) kSecClassKey forKey:(__bridge id)kSecClass];
     [publicKey setObject:(__bridge id) kSecAttrKeyTypeRSA forKey:(__bridge id)kSecAttrKeyType];
     [publicKey setObject:d_tag forKey:(__bridge id)kSecAttrApplicationTag];
-    SecItemDelete((__bridge CFDictionaryRef)publicKey);
+    [publicKey setObject:(__bridge id) kSecAttrAccessibleAfterFirstUnlock forKey:(__bridge id)kSecAttrAccessible];
+    OSStatus status = SecItemDelete((__bridge CFDictionaryRef)publicKey);
     
     // Add persistent version of the key to system keychain
     [publicKey setObject:data forKey:(__bridge id)kSecValueData];
-    [publicKey setObject:(__bridge id) kSecAttrKeyClassPublic forKey:(__bridge id)
-     kSecAttrKeyClass];
+    [publicKey setObject:(__bridge id) kSecAttrKeyClassPublic forKey:(__bridge id)kSecAttrKeyClass];
     [publicKey setObject:[NSNumber numberWithBool:YES] forKey:(__bridge id)
      kSecReturnPersistentRef];
     
     CFTypeRef persistKey = nil;
-    OSStatus status = SecItemAdd((__bridge CFDictionaryRef)publicKey, &persistKey);
+    status = SecItemAdd((__bridge CFDictionaryRef)publicKey, &persistKey);
     if (persistKey != nil) {
         CFRelease(persistKey);
     }

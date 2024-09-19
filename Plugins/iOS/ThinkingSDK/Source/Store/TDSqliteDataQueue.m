@@ -2,7 +2,11 @@
 #import <sqlite3.h>
 
 #import "TDLogging.h"
+#if __has_include(<ThinkingDataCore/TDJSONUtil.h>)
+#import <ThinkingDataCore/TDJSONUtil.h>
+#else
 #import "TDJSONUtil.h"
+#endif
 #import "TDConfig.h"
 #import "TDEventRecord.h"
 
@@ -26,7 +30,6 @@
     dispatch_once(&onceToken, ^{
         NSString *filepath = [[NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"TDData-data.plist"];
         sharedInstance = [[self alloc] initWithPath:filepath withAppid:appid];
-        TDLogDebug(@"sqlite path：%@", filepath);
     });
     return sharedInstance;
 }
@@ -110,13 +113,23 @@
 
 - (void)delExpiredData {
     NSTimeInterval oneDay = 24*60*60*1;
+    
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     NSDate *date = [[NSDate alloc] initWithTimeIntervalSinceNow: -oneDay * [TDConfig expirationDays]];
+#pragma clang diagnostic pop
+
     int expirationDate = [date timeIntervalSince1970];
     [self removeOldRecords:expirationDate];
 }
 
 - (NSInteger)addObject:(id)obj withAppid:(NSString *)appid {
+    
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     NSUInteger maxCacheSize = [TDConfig maxNumEvents];
+#pragma clang diagnostic pop
+
     if (_allmessageCount >= maxCacheSize) {
         [self removeFirstRecords:100 withAppid:nil];
     }
@@ -164,17 +177,20 @@
                 continue;
             }
             
-            NSData *jsonData = [[NSString stringWithUTF8String:jsonChar] dataUsingEncoding:NSUTF8StringEncoding];
-            NSError *err;
-            if (jsonData) {
-                NSDictionary *eventDict = [NSJSONSerialization JSONObjectWithData:jsonData
-                                                                          options:NSJSONReadingMutableContainers
-                                                                            error:&err];
-                if (!err && [eventDict isKindOfClass:[NSDictionary class]]) {
-                    [records addObject:[[TDEventRecord alloc] initWithIndex:[NSNumber numberWithLongLong:index] content:eventDict]];
+            @try {
+                NSData *jsonData = [[NSString stringWithUTF8String:jsonChar] dataUsingEncoding:NSUTF8StringEncoding];
+                NSError *err;
+                if (jsonData) {
+                    NSDictionary *eventDict = [NSJSONSerialization JSONObjectWithData:jsonData
+                                                                              options:NSJSONReadingMutableContainers
+                                                                                error:&err];
+                    if (!err && [eventDict isKindOfClass:[NSDictionary class]]) {
+                        [records addObject:[[TDEventRecord alloc] initWithIndex:[NSNumber numberWithLongLong:index] content:eventDict]];
+                    }
                 }
+            } @catch (NSException *exception) {
+                
             }
-            
         }
     }
     sqlite3_finalize(stmt);

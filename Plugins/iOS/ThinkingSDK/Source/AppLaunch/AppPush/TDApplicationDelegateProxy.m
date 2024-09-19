@@ -1,6 +1,10 @@
 
 #import "TDApplicationDelegateProxy.h"
+#if __has_include(<ThinkingDataCore/TDClassHelper.h>)
+#import <ThinkingDataCore/TDClassHelper.h>
+#else
 #import "TDClassHelper.h"
+#endif
 #import "NSObject+TDDelegateProxy.h"
 #import "UIApplication+TDPushClick.h"
 #import <objc/message.h>
@@ -16,7 +20,7 @@
     [TDApplicationDelegateProxy trackEventWithTarget:self application:application remoteNotification:userInfo];
 }
 
-- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification {
+- (void)application:(UIApplication *)application didReceiveLocalNotification:(UILocalNotification *)notification API_DEPRECATED("Use UserNotifications Framework's -[UNUserNotificationCenterDelegate willPresentNotification:withCompletionHandler:] or -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]", ios(4.0, 10.0)) {
     SEL selector = @selector(application:didReceiveLocalNotification:);
     [TDApplicationDelegateProxy invokeWithTarget:self selector:selector, application, notification];
     [TDApplicationDelegateProxy trackEventWithTarget:self application:application localNotification:notification];
@@ -49,7 +53,7 @@
     return [TDApplicationDelegateProxy invokeReturnBOOLWithTarget:self selector:selector arg1:application arg2:url];
 }
 
-- (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler{
+- (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler API_AVAILABLE(ios(9.0)){
     SEL selector = @selector(application:performActionForShortcutItem:completionHandler:);
     [TDApplicationDelegateProxy invokeWithTarget:self selector:selector, application, shortcutItem, completionHandler];
     if (![TDPresetProperties disableStartReason])  {
@@ -81,7 +85,7 @@
 
 }
 
-+ (void)trackEventWithTarget:(NSObject *)target application:(UIApplication *)application localNotification:(UILocalNotification *)notification {
++ (void)trackEventWithTarget:(NSObject *)target application:(UIApplication *)application localNotification:(UILocalNotification *)notification API_DEPRECATED("Use UserNotifications Framework's -[UNUserNotificationCenterDelegate willPresentNotification:withCompletionHandler:] or -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]", ios(4.0, 10.0)){
 
     if (target != application.delegate) {
         return;

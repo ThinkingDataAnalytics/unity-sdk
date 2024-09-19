@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ThinkingData.Analytics.Utils;
+using ThinkingSDK.PC.Main;
 
 namespace ThinkingData.Analytics.Wrapper
 {
@@ -21,7 +22,7 @@ namespace ThinkingData.Analytics.Wrapper
         [DllImport("__Internal")]
         private static extern void ta_track(string app_id, string event_name, string properties, long time_stamp_millis, string timezone);
         [DllImport("__Internal")]
-        private static extern void ta_track_event(string app_id, string event_string);
+        private static extern void ta_track_event(string app_id,int type, string event_name, string properties,string event_id, long time_stamp_millis, string timezone);
         [DllImport("__Internal")]
         private static extern void ta_set_super_properties(string app_id, string properties);
         [DllImport("__Internal")]
@@ -168,46 +169,51 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void track(TDEventModel taEvent, string appId)
         {
-            Dictionary<string, object> finalEvent = new Dictionary<string, object>();
-            string extraId = taEvent.GetEventId();
+            int type = -1;
             switch (taEvent.EventType)
             {
                 case TDEventModel.TDEventType.First:
-                    finalEvent["event_type"] = "track_first";
+                    type = 0;
                     break;
                 case TDEventModel.TDEventType.Updatable:
-                    finalEvent["event_type"] = "track_update";
+                    type = 1;
                     break;
                 case TDEventModel.TDEventType.Overwritable:
-                    finalEvent["event_type"] = "track_overwrite";
+                    type = 2;
                     break;
             }
-
-            if (!string.IsNullOrEmpty(extraId))
+            string jsonStr;
+            if (taEvent.Properties == null)
             {
-                finalEvent["extra_id"] = extraId;
+                jsonStr = taEvent.StrProperties;
             }
-
-            finalEvent["event_name"] = taEvent.EventName;
-            finalEvent["event_properties"] = taEvent.Properties;
+            else
+            {
+                jsonStr = serilize(taEvent.Properties);
+            }
+            long currentMillis = 0;
             if (taEvent.GetEventTime() != null && taEvent.GetEventTime() != DateTime.MinValue)
             {
                 long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(taEvent.GetEventTime()).Ticks;
                 DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-                long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-                finalEvent["event_time"] = currentMillis;
+                currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
             }
+            string timeZoneId = "";
             if (taEvent.GetEventTimeZone() != null)
             {
-                finalEvent["event_timezone"] = taEvent.GetEventTimeZone().Id;
+                timeZoneId = taEvent.GetEventTimeZone().Id;
             }
-
-            ta_track_event(appId, serilize(finalEvent));
+            ta_track_event(appId, type, taEvent.EventName, jsonStr, taEvent.GetEventId(), currentMillis, timeZoneId);
         }
 
         private static void track(string eventName, Dictionary<string, object> properties, string appId)
         {  
             ta_track(appId, eventName, serilize(properties), 0, "");
+        }
+
+        private static void trackStr(string eventName, string properties, string appId)
+        {
+            ta_track(appId, eventName, properties, 0, "");
         }
 
         private static void track(string eventName, Dictionary<string, object> properties, DateTime dateTime, string appId)
@@ -243,6 +249,10 @@ namespace ThinkingData.Analytics.Wrapper
         private static void setSuperProperties(Dictionary<string, object> superProperties, string appId)
         {
             ta_set_super_properties(appId, serilize(superProperties));
+        }
+
+        private static void setSuperProperties(string superProperties, string appId) {
+            ta_set_super_properties(appId, superProperties);
         }
 
         private static void unsetSuperProperty(string superPropertyName, string appId)
@@ -282,6 +292,10 @@ namespace ThinkingData.Analytics.Wrapper
             ta_user_set(appId, serilize(properties));
         }
 
+        private static void userSet(string properties, string appId) {
+            ta_user_set(appId, properties);
+        }
+
         private static void userSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
@@ -314,6 +328,10 @@ namespace ThinkingData.Analytics.Wrapper
             ta_user_set_once(appId, serilize(properties));
         }
 
+        private static void userSetOnce(string properties, string appId) {
+            ta_user_set_once(appId, properties);
+        }
+
         private static void userSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
@@ -325,6 +343,10 @@ namespace ThinkingData.Analytics.Wrapper
         private static void userAdd(Dictionary<string, object> properties, string appId)
         {
             ta_user_add(appId, serilize(properties));
+        }
+
+        private static void userAddStr(string properties, string appId) {
+            ta_user_add(appId, properties);
         }
 
         private static void userAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
@@ -353,6 +375,10 @@ namespace ThinkingData.Analytics.Wrapper
             ta_user_append(appId, serilize(properties));
         }
 
+        private static void userAppend(string properties, string appId) {
+            ta_user_append(appId, properties);
+        }
+
         private static void userAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
@@ -364,6 +390,11 @@ namespace ThinkingData.Analytics.Wrapper
         private static void userUniqAppend(Dictionary<string, object> properties, string appId)
         {
             ta_user_uniq_append(appId, serilize(properties));
+        }
+
+        private static void userUniqAppend(string properties, string appId)
+        {
+            ta_user_uniq_append(appId, properties);
         }
 
         private static void userUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)

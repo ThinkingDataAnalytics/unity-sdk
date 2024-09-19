@@ -36,3 +36,33 @@
 #else
 #import "TDDeviceInfo.h"
 #endif
+
+#if __has_include(<ThinkingSDK/TDAnalytics+Public.h>)
+#import <ThinkingSDK/TDAnalytics+Public.h>
+#else
+#import "TDAnalytics+Public.h"
+#endif
+
+#if __has_include(<ThinkingSDK/TDAnalytics+Multiple.h>)
+#import <ThinkingSDK/TDAnalytics+Multiple.h>
+#else
+#import "TDAnalytics+Multiple.h"
+#endif
+
+#if __has_include(<ThinkingSDK/TDAnalytics+WebView.h>)
+#import <ThinkingSDK/TDAnalytics+WebView.h>
+#else
+#import "TDAnalytics+WebView.h"
+#endif
+
+#if __has_include(<ThinkingSDK/TDAnalytics+ThirdParty.h>)
+#import <ThinkingSDK/TDAnalytics+ThirdParty.h>
+#else
+#import "TDAnalytics+ThirdParty.h"
+#endif
+
+#if __has_include(<ThinkingSDK/ThinkingAnalyticsSDK+OldPublic.h>)
+#import <ThinkingSDK/ThinkingAnalyticsSDK+OldPublic.h>
+#else
+#import "ThinkingAnalyticsSDK+OldPublic.h"
+#endif

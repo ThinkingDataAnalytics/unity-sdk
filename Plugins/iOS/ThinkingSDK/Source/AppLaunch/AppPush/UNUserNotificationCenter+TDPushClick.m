@@ -12,7 +12,7 @@
     if (!self.delegate) {
         return;
     }
-    [TDUNUserNotificationCenterDelegateProxy proxyDelegate:self.delegate selectors:[NSSet setWithArray:@[@"userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:"]]];
+    [TDUNUserNotificationCenterDelegateProxy proxyDelegate:self.delegate selectors:[NSSet setWithArray:@[@"userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:", @"userNotificationCenter:willPresentNotification:withCompletionHandler:"]]];
 }
 
 @end

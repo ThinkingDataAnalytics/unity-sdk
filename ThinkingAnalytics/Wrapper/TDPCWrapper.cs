@@ -121,6 +121,14 @@ namespace ThinkingData.Analytics.Wrapper
             {
                 eventData.SetProperties(taEvent.Properties);
             }
+            else {
+                try
+                {
+                    eventData.SetProperties(TDMiniJson.Deserialize(taEvent.StrProperties));
+                }
+                catch (Exception) {
+                }
+            }
             if (taEvent.GetEventTime() != null && taEvent.GetEventTimeZone() != null)
             {
                 eventData.SetEventTime(taEvent.GetEventTime());
@@ -132,6 +140,16 @@ namespace ThinkingData.Analytics.Wrapper
         private static void track(string eventName, Dictionary<string, object> properties, string appId)
         {
             ThinkingPCSDK.Track(eventName, properties, appId);
+        }
+
+        private static void trackStr(string eventName, string properties, string appId) {
+            try
+            {
+                ThinkingPCSDK.Track(eventName, TDMiniJson.Deserialize(properties), appId);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         private static void track(string eventName, Dictionary<string, object> properties, DateTime dateTime, string appId)
@@ -152,6 +170,16 @@ namespace ThinkingData.Analytics.Wrapper
         private static void setSuperProperties(Dictionary<string, object> superProperties, string appId)
         {
             ThinkingPCSDK.SetSuperProperties(superProperties, appId);
+        }
+
+        private static void setSuperProperties(string superProperties, string appId)
+        {
+            try
+            {
+                ThinkingPCSDK.SetSuperProperties(TDMiniJson.Deserialize(superProperties), appId);
+            }
+            catch (Exception) {
+            }
         }
 
         private static void unsetSuperProperty(string superPropertyName, string appId)
@@ -187,6 +215,16 @@ namespace ThinkingData.Analytics.Wrapper
             ThinkingPCSDK.UserSet(properties, appId);
         }
 
+        private static void userSet(string properties,string appId)
+        {
+            try
+            {
+                ThinkingPCSDK.UserSet(TDMiniJson.Deserialize(properties), appId);
+            }
+            catch (Exception) {
+            }
+        }
+
         private static void userSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             ThinkingPCSDK.UserSet(properties, dateTime, appId);
@@ -207,6 +245,16 @@ namespace ThinkingData.Analytics.Wrapper
             ThinkingPCSDK.UserSetOnce(properties, appId);
         }
 
+        private static void userSetOnce(string properties, string appId)
+        {
+            try
+            {
+                ThinkingPCSDK.UserSetOnce(TDMiniJson.Deserialize(properties), appId);
+            }
+            catch (Exception) {
+            }
+        }
+
         private static void userSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             ThinkingPCSDK.UserSetOnce(properties, dateTime, appId);
@@ -215,6 +263,16 @@ namespace ThinkingData.Analytics.Wrapper
         private static void userAdd(Dictionary<string, object> properties, string appId)
         {
             ThinkingPCSDK.UserAdd(properties, appId);
+        }
+
+        private static void userAddStr(string properties, string appId)
+        {
+            try
+            {
+                ThinkingPCSDK.UserAdd(TDMiniJson.Deserialize(properties), appId);
+            }
+            catch (Exception) {
+            }
         }
 
         private static void userAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
@@ -237,6 +295,16 @@ namespace ThinkingData.Analytics.Wrapper
             ThinkingPCSDK.UserAppend(properties, appId);
         }
 
+        private static void userAppend(string properties, string appId)
+        {
+            try
+            {
+                ThinkingPCSDK.UserAppend(TDMiniJson.Deserialize(properties), appId);
+            }
+            catch (Exception) {
+            }
+        }
+
         private static void userAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
             ThinkingPCSDK.UserAppend(properties, dateTime, appId);
@@ -245,6 +313,16 @@ namespace ThinkingData.Analytics.Wrapper
         private static void userUniqAppend(Dictionary<string, object> properties, string appId)
         {
             ThinkingPCSDK.UserUniqAppend(properties, appId);
+        }
+
+        private static void userUniqAppend(string properties, string appId)
+        {
+            try
+            {
+                ThinkingPCSDK.UserUniqAppend(TDMiniJson.Deserialize(properties), appId);
+            }
+            catch (Exception) {
+            }
         }
 
         private static void userUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
