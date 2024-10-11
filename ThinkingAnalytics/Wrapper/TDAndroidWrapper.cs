@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using ThinkingData.Analytics.Utils;
 using UnityEngine;
-using UnityEngine.Networking.Types;
 
 namespace ThinkingData.Analytics.Wrapper
 {
