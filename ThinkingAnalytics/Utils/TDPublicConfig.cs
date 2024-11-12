@@ -31,7 +31,7 @@ namespace ThinkingData.Analytics.Utils
         public static bool DisableCSharpException = false;
         public static List<string> DisPresetProperties = new List<string>();
 
-        public static readonly string LIB_VERSION = "3.0.8";
+        public static readonly string LIB_VERSION = "3.1.0";
 
         public static void GetPublicConfig()
         {

@@ -1,0 +1,6 @@
+﻿import { TDOpenHarmonyProxy } from  "./TDOpenHarmonyProxy.ts";
+export function RegisterNativeBridge(){
+    var register = { }
+    register["TDOpenHarmonyProxy"] = TDOpenHarmonyProxy;
+    return register
+}
