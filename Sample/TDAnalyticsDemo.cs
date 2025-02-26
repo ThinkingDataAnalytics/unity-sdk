@@ -145,9 +145,10 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             int encryptVersion = 0;
             string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
             tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
+            tDConfig.reportingToTencentSdk = 2;
             TDAnalytics.Init(tDConfig);
             TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
-            TDAnalytics.SetDynamicSuperProperties(this);
+            //TDAnalytics.SetDynamicSuperProperties(this);
             //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppEnd);
             TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.All);
 
@@ -245,7 +246,8 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
             //    TDAnalytics.Track("TA_"+i, properties, new DateTime(2022, 01, 01),TimeZoneInfo.Utc);
             //}
             Debug.Log("======2" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-            TDAnalytics.TrackStr("sss","{}",null);
+            //TDAnalytics.TrackStr("sss","{}",null);
+            TDAnalytics.Track("ssss");
             //TDAnalytics.TrackStr("test_event", "{\"game_name\":\"海外正式\",\"rom\":\"125830144.000000\",\"device_name\":\"H030_T5\",\"puid\":\"558513179\",\"role_id\":\"710280887\",\"sdk_version\":\"1.9.2h\",\"dpi\":\"1920x1080\",\"pkg_id\":\"A1730\",\"game_id\":\"G153\",\"ram\":\"66945980.000000\",\"win_serial\":\"0000_0000_0000_0000_4868_3400_0000_0000\",\"channel_name\":\"kuroPC\",\"game_version\":\"1.2.0\",\"login_id\":\"567ec296-70f4-473c-9bb4-ab561205b5b9\",\"os\":\"win\",\"cpu_ghz\":\"2350080\",\"os_version\":\"win10\",\"event_uuid\":\"PC-567ec296-70f4-473c-9bb4-ab561205b5b964\",\"server_id\":\"86d52186155b148b5c138ceb41be9650\",\"event_time_ms\":\"1724774441952\",\"role_name\":\"PIZoY\",\"cpu_hardware\":\"Intel(R) Xeon(R) CPU E5-2696 v3 @ 2.30GHz\",\"pkg_name\":\"com.kurogame.wutheringwaves.global.sign\",\"event_id\":\"90003\",\"user_id\":\"558513179\",\"channel_op\":\"0\",\"event_name\":\"from_game\",\"last_phone_open_ts\":\"1724618745\",\"channel_id\":\"240\",\"did\":\"03000200-0400-0500-0006-000700080009\",\"win_uuid\":\"03000200-0400-0500-0006-000700080009\"}");
             Debug.Log("======3" + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         }
@@ -254,14 +256,14 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         {
             Dictionary<string, object> properties = new Dictionary<string, object>() { { "status", 1 } };
             TDFirstEventModel firstEvent = new TDFirstEventModel("first_event");
-            firstEvent.Properties = properties;
-            //TDAnalytics.Track(firstEvent);
-            Dictionary<string, object> properties_2 = new Dictionary<string, object>() { { "status", 11 } };
-            TDFirstEventModel firstEvent_2 = new TDFirstEventModel("first_event", "first_check_id");
+            //firstEvent.Properties = properties;
+            TDAnalytics.Track(firstEvent);
+            //Dictionary<string, object> properties_2 = new Dictionary<string, object>() { { "status", 11 } };
+            //TDFirstEventModel firstEvent_2 = new TDFirstEventModel("first_event", "first_check_id");
             //firstEvent_2.Properties = properties_2;
             //firstEvent_2.StrProperties = "{\"prop\":[\"aa\",\"nb\"]}";
-            firstEvent_2.SetTime(new DateTime(2024, 03, 04), TimeZoneInfo.Utc);
-            TDAnalytics.Track(firstEvent_2);
+            //firstEvent_2.SetTime(new DateTime(2024, 03, 04), TimeZoneInfo.Utc);
+            //TDAnalytics.Track(firstEvent_2);
         }
         GUILayout.Space(20);
         if (GUILayout.Button("TrackUpdateEvent", GUILayout.Height(Height)))
