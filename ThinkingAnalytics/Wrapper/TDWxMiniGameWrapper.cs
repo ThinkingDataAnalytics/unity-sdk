@@ -1,4 +1,4 @@
-#if ((!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR) && (!(UNITY_OPENHARMONY) || UNITY_EDITOR)) || TE_DISABLE_ANDROID_JAVA || TE_DISABLE_IOS_OC
+#if ((!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR) && (!(UNITY_OPENHARMONY) || UNITY_EDITOR))
 using System.Runtime.InteropServices;
 namespace ThinkingData.Analytics.Wrapper
 {
