@@ -1,6 +1,6 @@
 #import "TDSwizzler.h"
-
 #import <objc/runtime.h>
+#import "TDCoreLog.h"
 
 #define MAPTABLE_ID(x) (__bridge id)((void *)x)
 
@@ -112,13 +112,13 @@ static void (*td_swizzledMethods[MAX_ARGS - MIN_ARGS + 1])() = {td_swizzledMetho
                   named:(NSString *)aName {
     Method aMethod = class_getInstanceMethod(aClass, aSelector);
     if (!aMethod) {
-        NSLog(@"[ThinkingData] SwizzleException:Cannot find method for %@ on %@",NSStringFromSelector(aSelector), NSStringFromClass(aClass));
+        TDCORELOG(@"Cannot find method for %@ on %@",NSStringFromSelector(aSelector), NSStringFromClass(aClass));
         return;
     }
     
     uint numArgs = method_getNumberOfArguments(aMethod);
     if (numArgs < MIN_ARGS || numArgs > MAX_ARGS) {
-        NSLog(@"[ThinkingData] Cannot swizzle method with %d args", numArgs);
+        TDCORELOG(@"Cannot swizzle method with %d args", numArgs);
     }
     
     IMP swizzledMethod = (IMP)td_swizzledMethods[numArgs - 2];
@@ -132,7 +132,7 @@ static void (*td_swizzledMethods[MAX_ARGS - MIN_ARGS + 1])() = {td_swizzledMetho
                   named:(NSString *)aName {
     Method aMethod = class_getInstanceMethod(aClass, aSelector);
     if (!aMethod) {
-        NSLog(@"[ThinkingData] Cannot find method for %@ on %@", NSStringFromSelector(aSelector), NSStringFromClass(aClass));
+        TDCORELOG(@"Cannot find method for %@ on %@", NSStringFromSelector(aSelector), NSStringFromClass(aClass));
     }
     
     BOOL isLocal = [self isLocallyDefinedMethod:aMethod onClass:aClass];
@@ -149,7 +149,7 @@ static void (*td_swizzledMethods[MAX_ARGS - MIN_ARGS + 1])() = {td_swizzledMetho
             @try {
                 swizzle = [[TDSwizzle alloc] initWithBlock:aBlock named:aName forClass:aClass selector:aSelector originalMethod:originalMethod];
             } @catch (NSException *exception) {
-                NSLog(@"[ThinkingData] %@ error: %@", self, exception);
+                TDCORELOG(@"%@ error: %@", self, exception);
             }
             [self setSwizzle:swizzle forMethod:aMethod];
         } else {
@@ -160,12 +160,12 @@ static void (*td_swizzledMethods[MAX_ARGS - MIN_ARGS + 1])() = {td_swizzledMetho
         
         // Add the swizzle as a new local method on the class.
         if (!class_addMethod(aClass, aSelector, aSwizzleMethod, method_getTypeEncoding(aMethod))) {
-            NSLog(@"[ThinkingData] Could not add swizzled for %@::%@, even though it didn't already exist locally", NSStringFromClass(aClass), NSStringFromSelector(aSelector));
+            TDCORELOG(@"Could not add swizzled for %@::%@, even though it didn't already exist locally", NSStringFromClass(aClass), NSStringFromSelector(aSelector));
         }
         // Now re-get the Method, it should be the one we just added.
         Method newMethod = class_getInstanceMethod(aClass, aSelector);
         if (aMethod == newMethod) {
-            NSLog(@"[ThinkingData] Newly added method for %@::%@ was the same as the old method", NSStringFromClass(aClass), NSStringFromSelector(aSelector));
+            TDCORELOG(@"Newly added method for %@::%@ was the same as the old method", NSStringFromClass(aClass), NSStringFromSelector(aSelector));
         }
         
         TDSwizzle *newSwizzle = [[TDSwizzle alloc] initWithBlock:aBlock named:aName forClass:aClass selector:aSelector originalMethod:originalMethod];

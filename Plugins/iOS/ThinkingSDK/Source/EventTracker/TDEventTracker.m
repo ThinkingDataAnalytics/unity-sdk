@@ -7,9 +7,18 @@
 
 #import "TDEventTracker.h"
 #import "TDAnalyticsNetwork.h"
-#import "TDAnalyticsReachability.h"
 #import "TDEventRecord.h"
 #import "TDConfigPrivate.h"
+
+#if TARGET_OS_IOS
+
+#if __has_include(<ThinkingDataCore/TDNetworkReachability.h>)
+#import <ThinkingDataCore/TDNetworkReachability.h>
+#else
+#import "TDNetworkReachability.h"
+#endif
+
+#endif
 
 static dispatch_queue_t td_networkQueue;
 static NSUInteger const kBatchSize = 50;
@@ -51,7 +60,6 @@ static NSURLSessionTask *g_currentTask = nil;
 
 - (TDAnalyticsNetwork *)generateNetworkWithConfig:(TDConfig *)config {
     TDAnalyticsNetwork *network = [[TDAnalyticsNetwork alloc] init];
-    network.mode = config.mode;
     network.appid = config.appid;
     network.sessionDidReceiveAuthenticationChallenge = config.securityPolicy.sessionDidReceiveAuthenticationChallenge;
     network.serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/sync", config.serverUrl]];
@@ -70,7 +78,7 @@ static NSURLSessionTask *g_currentTask = nil;
         if (isSaveOnly) {
             return;
         }
-        TDLogInfo(@"queueing debug data: %@", event);
+        TDLogInfo(@"Enqueue data: %@", event);
         dispatch_async(self.queue, ^{
             dispatch_async(td_networkQueue, ^{
                 [self flushDebugEvent:event];
@@ -102,13 +110,21 @@ static NSURLSessionTask *g_currentTask = nil;
         if (isSaveOnly) {
             return;
         }
-        TDLogInfo(@"flush data when the cache is full. count: %ld, uploadSize: %d", count, [self.config.uploadSize integerValue]);
+        TDLogInfo(@"SDK flush success. The cache is full. count: %ld, uploadSize: %d", count, [self.config.uploadSize integerValue]);
         [self flush];
     }
 }
 
+- (void)trackDebugEvent:(NSDictionary *)event {
+    dispatch_async(self.queue, ^{
+        dispatch_async(td_networkQueue, ^{
+            [self.network flushDebugEvents:event appid:self.config.appid isDebugOnly:YES];
+        });
+    });
+}
+
 - (void)flushImmediately:(NSDictionary *)event {
-    TDLogInfo(@"flush immediately.");
+    TDLogInfo(@"SDK flush success. Immediately.");
     [self.network flushEvents:@[event]];
 }
 
@@ -136,19 +152,18 @@ static NSURLSessionTask *g_currentTask = nil;
 
 - (void)flushDebugEvent:(NSDictionary *)event {
     if (self.config.mode == TDModeDebug || self.config.mode == TDModeDebugOnly) {
-        int debugResult = [self.network flushDebugEvents:event withAppid:self.config.appid];
+        BOOL isDebugOnly = self.config.mode == TDModeDebugOnly;
+        int debugResult = [self.network flushDebugEvents:event appid:self.config.appid isDebugOnly:isDebugOnly];
         if (debugResult == -1) {
             // Downgrade
             if (self.config.mode == TDModeDebug) {
                 dispatch_async(self.queue, ^{
                     [self saveEventsData:event];
                 });
-                
-                self.config.mode = TDModeNormal;
-                self.network.mode = TDModeNormal;
             } else if (self.config.mode == TDModeDebugOnly) {
                 TDLogDebug(@"The data will be discarded due to this device is not allowed to debug:%@", event);
             }
+            self.config.mode = TDModeNormal;
         }
         else if (debugResult == -2) {
             TDLogDebug(@"Exception occurred when sending message to Server:%@", event);
@@ -197,13 +212,15 @@ static NSURLSessionTask *g_currentTask = nil;
 /// @param completion synchronous callback
 /// This method needs to be performed in networkQueue, and will continue to send network requests until the data in the database is sent
 - (void)_syncWithSize:(NSUInteger)size completion:(void(^)(void))completion {
-    NSString *networkType = [[TDAnalyticsReachability shareInstance] networkState];
-    if (!([TDAnalyticsReachability convertNetworkType:networkType] & [self.config getNetworkType])) {
+#if TARGET_OS_IOS
+    NSString *networkType = [[TDNetworkReachability shareInstance] networkState];
+    if (!([self convertNetworkType:networkType] & [self.config getNetworkType])) {
         if (completion) {
             completion();
         }
         return;
     }
+#endif
     
     NSArray<NSDictionary *> *recordArray;
     NSArray *recodIds;
@@ -311,6 +328,23 @@ static NSURLSessionTask *g_currentTask = nil;
     dispatch_sync(td_networkQueue, ^{});
 }
 
+- (ThinkingNetworkType)convertNetworkType:(NSString *)networkType {
+    if ([@"NULL" isEqualToString:networkType]) {
+        return ThinkingNetworkTypeALL;
+    } else if ([@"WIFI" isEqualToString:networkType]) {
+        return ThinkingNetworkTypeWIFI;
+    } else if ([@"2G" isEqualToString:networkType]) {
+        return ThinkingNetworkType2G;
+    } else if ([@"3G" isEqualToString:networkType]) {
+        return ThinkingNetworkType3G;
+    } else if ([@"4G" isEqualToString:networkType]) {
+        return ThinkingNetworkType4G;
+    }else if([@"5G"isEqualToString:networkType])
+    {
+        return ThinkingNetworkType5G;
+    }
+    return ThinkingNetworkTypeNONE;
+}
 
 //MARK: - Setter & Getter
 

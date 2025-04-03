@@ -6,14 +6,19 @@
 //
 
 #import "TDAppEndEvent.h"
-#import "TDPresetProperties+TDDisProperties.h"
+
+#if __has_include(<ThinkingDataCore/TDCorePresetDisableConfig.h>)
+#import <ThinkingDataCore/TDCorePresetDisableConfig.h>
+#else
+#import "TDCorePresetDisableConfig.h"
+#endif
 
 @implementation TDAppEndEvent
 
 - (NSMutableDictionary *)jsonObject {
     NSMutableDictionary *dict = [super jsonObject];
     
-    if (![TDPresetProperties disableScreenName]) {
+    if (![TDCorePresetDisableConfig disableScreenName]) {
         self.properties[@"#screen_name"] = self.screenName ?: @"";
     }
     

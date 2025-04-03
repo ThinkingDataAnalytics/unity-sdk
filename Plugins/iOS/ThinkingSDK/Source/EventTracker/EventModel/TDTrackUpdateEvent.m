@@ -33,9 +33,7 @@
         return;
     }
     if (self.eventId.length <= 0) {
-        NSString *errorMsg = @"property 'eventId' cannot be empty which in UpdateEvent";
-        *error = TAPropertyError(100012, errorMsg);
-        return;
+        TDLogError(@"property 'eventId' cannot be empty which in UpdateEvent");
     }
 }
 

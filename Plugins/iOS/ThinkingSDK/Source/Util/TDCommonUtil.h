@@ -15,8 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSDictionary *)dictionary:(NSDictionary *)dic;
 
-+ (NSTimeInterval)uptime;
-
 @end
 
 NS_ASSUME_NONNULL_END

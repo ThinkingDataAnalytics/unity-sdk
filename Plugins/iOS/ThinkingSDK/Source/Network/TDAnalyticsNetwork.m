@@ -14,6 +14,12 @@
 #import "TDSecurityPolicy.h"
 #import "TDAppState.h"
 
+#if __has_include(<ThinkingDataCore/TDCoreDeviceInfo.h>)
+#import <ThinkingDataCore/TDCoreDeviceInfo.h>
+#else
+#import "TDCoreDeviceInfo.h"
+#endif
+
 #if TARGET_OS_IOS
 #import "TDToastView.h"
 #endif
@@ -52,19 +58,10 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
     return encodedString;
 }
 
-- (int)flushDebugEvents:(NSDictionary *)record withAppid:(NSString *)appid {
+- (int)flushDebugEvents:(NSDictionary *)record appid:(NSString *)appid isDebugOnly:(BOOL)isDebugOnly {
     __block int debugResult = -1;
-    NSMutableDictionary *recordDic = [record mutableCopy];
-    NSMutableDictionary *properties = [[recordDic objectForKey:@"properties"] mutableCopy];
-    
-    if ([ThinkingAnalyticsSDK isTrackEvent:[record objectForKey:@"#type"]]) {
-        @synchronized ([TDDeviceInfo sharedManager]) {
-            [properties addEntriesFromDictionary:[[TDDeviceInfo sharedManager] getAutomaticData]];
-        }
-    }
-    [recordDic setObject:properties forKey:@"properties"];
-    NSString *jsonString = [TDJSONUtil JSONStringForObject:recordDic];
-    NSMutableURLRequest *request = [self buildDebugRequestWithJSONString:jsonString withAppid:appid withDeviceId:[[[TDDeviceInfo sharedManager] getAutomaticData] objectForKey:@"#device_id"]];
+    NSString *jsonString = [TDJSONUtil JSONStringForObject:record];
+    NSMutableURLRequest *request = [self buildDebugRequestWithJSONString:jsonString appid:appid deviceId:[TDCoreDeviceInfo deviceId] isDebugOnly:isDebugOnly];
     dispatch_semaphore_t flushSem = dispatch_semaphore_create(0);
 
     void (^block)(NSData *, NSURLResponse *, NSError *) = ^(NSData *data, NSURLResponse *response, NSError *error) {
@@ -124,7 +121,7 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
                             return;
                         }
                         UIWindow *window = application.keyWindow;
-                        [TDToastView showInWindow:window text:[NSString stringWithFormat:@"The current mode is:%@", self.mode == TDModeDebugOnly ? @"DebugOnly(Data is not persisted) \n The test joint debugging stage is allowed to open \n Please turn off the Debug function before the official launch" : @"Debug"] duration:2.0];
+                        [TDToastView showInWindow:window text:[NSString stringWithFormat:@"The current mode is:%@", isDebugOnly ? @"DebugOnly(Data is not persisted) \n The test joint debugging stage is allowed to open \n Please turn off the Debug function before the official launch" : @"Debug"] duration:2.0];
                     });
 #endif
                 }
@@ -154,7 +151,7 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
     };
 
     NSURLSessionDataTask *task = [[self sharedURLSession] dataTaskWithRequest:request completionHandler:block];
-    TDLogDebug(@"Send event. %@\nRequest = %@", request.URL.absoluteString, recordDic);
+    TDLogDebug(@"Send event. %@\nRequest = %@", request.URL.absoluteString, record);
     [task resume];
 
     dispatch_semaphore_wait(flushSem, DISPATCH_TIME_FOREVER);
@@ -317,10 +314,12 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
     }
 }
 
-- (NSMutableURLRequest *)buildDebugRequestWithJSONString:(NSString *)jsonString withAppid:(NSString *)appid withDeviceId:(NSString *)deviceId {
+- (NSMutableURLRequest *)buildDebugRequestWithJSONString:(NSString *)jsonString appid:(NSString *)appid deviceId:(NSString *)deviceId isDebugOnly:(BOOL)isDebugOnly {
     // dryRun=0, if the verification is passed, it will be put into storage. dryRun=1, no storage
-    int dryRun = self.mode == TDModeDebugOnly ? 1 : 0;
-    NSString *postData = [NSString stringWithFormat:@"appid=%@&source=client&dryRun=%d&deviceId=%@&data=%@", appid, dryRun, deviceId, [self URLEncode:jsonString]];
+    int dryRun = isDebugOnly ? 1 : 0;
+    NSString *appendParams = [NSString stringWithFormat:@"appid=%@&source=client&dryRun=%d&deviceId=%@", appid, dryRun, deviceId];
+    TDLogDebug(@"RequestAppendParams: %@", appendParams);
+    NSString *postData = [NSString stringWithFormat:@"%@&data=%@", appendParams, [self URLEncode:jsonString]];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[self formatURLWithOriginalUrl:self.serverDebugURL]];
     [request setHTTPMethod:@"POST"];
     request.HTTPBody = [postData dataUsingEncoding:NSUTF8StringEncoding];

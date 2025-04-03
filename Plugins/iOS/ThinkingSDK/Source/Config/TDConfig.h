@@ -71,6 +71,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign) BOOL enableAutoPush;
 
+/// Enable the automatic time calibration function
+@property (nonatomic, assign) BOOL enableAutoCalibrated;
+
 /// server url
 @property (nonatomic, copy) NSString *configureURL DEPRECATED_MSG_ATTRIBUTE("Deprecated. replace with property: serverUrl");
 

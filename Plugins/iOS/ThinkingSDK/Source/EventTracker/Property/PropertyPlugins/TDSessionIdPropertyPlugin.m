@@ -7,10 +7,15 @@
 
 #import "TDSessionIdPropertyPlugin.h"
 #import "TDPresetProperties.h"
-#import "TDPresetProperties+TDDisProperties.h"
 #import "TDAppLifeCycle.h"
 #import "TDFile.h"
 #import "TDAppState.h"
+
+#if __has_include(<ThinkingDataCore/TDCorePresetDisableConfig.h>)
+#import <ThinkingDataCore/TDCorePresetDisableConfig.h>
+#else
+#import "TDCorePresetDisableConfig.h"
+#endif
 
 @interface TDSessionIdPropertyPlugin ()
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id> *properties;
@@ -34,7 +39,7 @@
 
 - (void)updateSessionId {
 #if TARGET_OS_IOS
-    if (![TDPresetProperties disableSessionID]) {
+    if (![TDCorePresetDisableConfig disableSessionID]) {
         @synchronized ([self class]) {
             self.sessionid ++;
             self.sessionidString = [NSString stringWithFormat:@"%@_%lld", [NSUUID UUID].UUIDString, self.sessionid];
@@ -46,7 +51,7 @@
 }
 
 - (void)start {
-    if (![TDPresetProperties disableSessionID]) {
+    if (![TDCorePresetDisableConfig disableSessionID]) {
         @synchronized ([self class]) {
             if (!self.file) {
                 self.file = [[TDFile alloc] initWithAppid:self.instanceToken];

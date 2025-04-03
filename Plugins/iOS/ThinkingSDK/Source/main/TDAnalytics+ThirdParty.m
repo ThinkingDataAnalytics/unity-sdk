@@ -29,17 +29,42 @@
     ThinkingAnalyticsSDK *instance = [ThinkingAnalyticsSDK instanceWithAppid:appId];
     
     if (instance != nil) {
-        Class TARouterCls = NSClassFromString(@"TARouter");
-        // com.thinkingdata://call.service/TAThirdPartyManager.TAThirdPartyProtocol/...?params={}(value url encode)
-        NSURL *url = [NSURL URLWithString:@"com.thinkingdata://call.service.thinkingdata/TAThirdPartyManager.TAThirdPartyProtocol.enableThirdPartySharing:instance:property:/"];
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wundeclared-selector"
-        if (TARouterCls && [TARouterCls respondsToSelector:@selector(canOpenURL:)] && [TARouterCls respondsToSelector:@selector(openURL:withParams:)]) {
-            if ([TARouterCls performSelector:@selector(canOpenURL:) withObject:url]) {
-                [TARouterCls performSelector:@selector(openURL:withParams:) withObject:url withObject:@{@"TAThirdPartyManager":@{@1:[NSNumber numberWithInteger:type],@2:instance,@3:(properties?:@{})}}];
-            }
+        Class TAThirdPartyManager = NSClassFromString(@"TAThirdPartyManager");
+        if (TAThirdPartyManager == nil) {
+            return;
         }
-    #pragma clang diagnostic pop
+        NSObject *manager = [[TAThirdPartyManager alloc] init];
+        if (manager == nil) {
+            return;
+        }
+        
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundeclared-selector"
+        SEL action = @selector(enableThirdPartySharing:instance:property:);
+#pragma clang diagnostic pop
+
+        NSMethodSignature *methodSig = [manager methodSignatureForSelector:action];
+        if (methodSig == nil) {
+            return;
+        }
+        
+        @try {
+            NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSig];
+            
+            NSNumber *thirdPartyTypeNumber = [NSNumber numberWithInteger:type];
+            [invocation setArgument:&thirdPartyTypeNumber atIndex:2];
+            
+            [invocation setArgument:&instance atIndex:3];
+            
+            NSDictionary *thirdPartyProperties = properties;
+            [invocation setArgument:&thirdPartyProperties atIndex:4];
+
+            [invocation setSelector:action];
+            [invocation setTarget:manager];
+            [invocation invoke];
+        } @catch (NSException *exception) {
+            TDLogError(@"ThirdParty invocate failed!")
+        }
     }
 }
 

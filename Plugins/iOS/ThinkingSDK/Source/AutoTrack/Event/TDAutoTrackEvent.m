@@ -7,7 +7,12 @@
 
 #import "TDAutoTrackEvent.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
-#import "TDPresetProperties+TDDisProperties.h"
+
+#if __has_include(<ThinkingDataCore/TDCorePresetDisableConfig.h>)
+#import <ThinkingDataCore/TDCorePresetDisableConfig.h>
+#else
+#import "TDCorePresetDisableConfig.h"
+#endif
 
 @implementation TDAutoTrackEvent
 
@@ -17,12 +22,12 @@
     // app_start app_end events are collected by the automatic collection management class. There are the following problems: the automatic collection management class and the timeTracker event duration management class are processed by listening to appLifeCycle notifications, so they are not at a precise and unified time point. There will be small errors that need to be eliminated.
     // After testing, the error is less than 0.01s.
     CGFloat minDuration = 0.01;
-    if (![TDPresetProperties disableDuration]) {
+    if (![TDCorePresetDisableConfig disableDuration]) {
         if (self.foregroundDuration > minDuration) {
             self.properties[@"#duration"] = @([NSString stringWithFormat:@"%.3f", self.foregroundDuration].floatValue);
         }
     }
-    if (![TDPresetProperties disableBackgroundDuration]) {
+    if (![TDCorePresetDisableConfig disableBackgroundDuration]) {
         if (self.backgroundDuration > minDuration) {
             self.properties[TD_BACKGROUND_DURATION] = @([NSString stringWithFormat:@"%.3f", self.backgroundDuration].floatValue);
         }

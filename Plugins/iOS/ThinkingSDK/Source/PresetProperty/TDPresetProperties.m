@@ -7,7 +7,26 @@
 //
 
 #import "TDPresetProperties.h"
-#import "TDPresetProperties+TDDisProperties.h"
+
+static const NSString *kTDPresetBundleId = @"#bundle_id";
+static const NSString *kTDPresetCarrier = @"#carrier";
+static const NSString *kTDPresetDeviceId = @"#device_id";
+static const NSString *kTDPresetDeviceModel = @"#device_model";
+static const NSString *kTDPresetManufacturer = @"#manufacturer";
+static const NSString *kTDPresetNetworkType = @"#network_type";
+static const NSString *kTDPresetOSName = @"#os";
+static const NSString *kTDPresetOSVersion = @"#os_version";
+static const NSString *kTDPresetScreenHeight = @"#screen_height";
+static const NSString *kTDPresetScreenWidth = @"#screen_width";
+static const NSString *kTDPresetSystemLanguage = @"#system_language";
+static const NSString *kTDPresetZoneOffset = @"#zone_offset";
+static const NSString *kTDPresetAppVersion = @"#app_version";
+static const NSString *kTDPresetInstallTime = @"#install_time";
+static const NSString *kTDPresetIsSimulator = @"#simulator";
+static const NSString *kTDPresetRam = @"#ram";
+static const NSString *kTDPresetDisk = @"#disk";
+static const NSString *kTDPresetFps  = @"#fps";
+static const NSString *kTDPresetDeviceType = @"#device_type";
 
 @interface TDPresetProperties ()
 
@@ -19,13 +38,17 @@
 @property (nonatomic, copy, readwrite) NSString *network_type;
 @property (nonatomic, copy, readwrite) NSString *os;
 @property (nonatomic, copy, readwrite) NSString *os_version;
-@property (nonatomic, copy, readwrite) NSNumber *screen_height;
-@property (nonatomic, copy, readwrite) NSNumber *screen_width;
+@property (nonatomic, strong, readwrite) NSNumber *screen_height;
+@property (nonatomic, strong, readwrite) NSNumber *screen_width;
 @property (nonatomic, copy, readwrite) NSString *system_language;
 @property (nonatomic, copy, readwrite) NSNumber *zone_offset;
+@property (nonatomic, copy, readwrite) NSString *appVersion;
 @property (nonatomic, copy, readwrite) NSString *install_time;
-
-@property (nonatomic, copy) NSDictionary *presetProperties;
+@property (nonatomic, strong, readwrite) NSNumber *isSimulator;
+@property (nonatomic, copy, readwrite) NSString *ram;
+@property (nonatomic, copy, readwrite) NSString *disk;
+@property (nonatomic, strong, readwrite) NSNumber *fps;
+@property (nonatomic, copy, readwrite) NSString *deviceType;
 
 @end
 
@@ -34,55 +57,90 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [super init];
     if (self) {
-        [self updateValuesWithDictionary:dict];
+        self.bundle_id = dict[kTDPresetBundleId];
+        self.carrier = dict[kTDPresetCarrier];
+        self.device_id = dict[kTDPresetDeviceId];
+        self.device_model = dict[kTDPresetDeviceModel];
+        self.manufacturer = dict[kTDPresetManufacturer];
+        self.network_type = dict[kTDPresetNetworkType];
+        self.os = dict[kTDPresetOSName];
+        self.os_version = dict[kTDPresetOSVersion];
+        self.screen_height = dict[kTDPresetScreenHeight];
+        self.screen_width = dict[kTDPresetScreenWidth];
+        self.system_language = dict[kTDPresetSystemLanguage];
+        self.zone_offset = dict[kTDPresetZoneOffset];
+        self.appVersion = dict[kTDPresetAppVersion];
+        self.install_time = dict[kTDPresetInstallTime];
+        self.isSimulator = dict[kTDPresetIsSimulator];
+        self.ram = dict[kTDPresetRam];
+        self.disk = dict[kTDPresetDisk];
+        self.fps = dict[kTDPresetFps];
+        self.deviceType = dict[kTDPresetDeviceType];
     }
     return self;
 }
 
-
-
-- (void)updateValuesWithDictionary:(NSDictionary *)dict {
-    _bundle_id = dict[@"#bundle_id"]?:@"";
-    _carrier = dict[@"#carrier"]?:@"";
-    _device_id = dict[@"#device_id"]?:@"";
-    _device_model = dict[@"#device_model"]?:@"";
-    _manufacturer = dict[@"#manufacturer"]?:@"";
-    _network_type = dict[@"#network_type"]?:@"";
-    _os = dict[@"#os"]?:@"";
-    _os_version = dict[@"#os_version"]?:@"";
-    _screen_height = dict[@"#screen_height"]?:@(0);
-    _screen_width = dict[@"#screen_width"]?:@(0);
-    _system_language = dict[@"#system_language"]?:@"";
-    _zone_offset = dict[@"#zone_offset"]?:@(0);
-    _install_time = dict[@"#install_time"]?:@"";
-
-    _presetProperties = [NSDictionary dictionaryWithDictionary:dict];
-    
-    NSMutableDictionary *updateProperties = [_presetProperties mutableCopy];
-    NSArray *propertykeys = updateProperties.allKeys;
-    NSArray *registerkeys = [TDPresetProperties disPresetProperties];
-    NSMutableSet *set1 = [NSMutableSet setWithArray:propertykeys];
-    NSMutableSet *set2 = [NSMutableSet setWithArray:registerkeys];
-    [set1 intersectSet:set2];
-    if (set1.allObjects.count) {
-        [updateProperties removeObjectsForKeys:set1.allObjects];
-    }
-    
-    if ([updateProperties.allKeys containsObject:@"#lib"]) {
-        [updateProperties removeObjectForKey:@"#lib"];
-    }
-    if ([updateProperties.allKeys containsObject:@"#lib_version"]) {
-        [updateProperties removeObjectForKey:@"#lib_version"];
-    }
-    if ([updateProperties.allKeys containsObject:@"#time_calibration"]) {
-        [updateProperties removeObjectForKey:@"#time_calibration"];
-    }
-    
-    _presetProperties = updateProperties;
-}
-
 - (NSDictionary *)toEventPresetProperties {
-    return [_presetProperties copy];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    if (self.bundle_id) {
+        dict[kTDPresetBundleId] = self.bundle_id;
+    }
+    if (self.carrier) {
+        dict[kTDPresetCarrier] = self.carrier;
+    }
+    if (self.device_id) {
+        dict[kTDPresetDeviceId] = self.device_id;
+    }
+    if (self.device_model) {
+        dict[kTDPresetDeviceModel] = self.device_model;
+    }
+    if (self.manufacturer) {
+        dict[kTDPresetManufacturer] = self.manufacturer;
+    }
+    if (self.network_type) {
+        dict[kTDPresetNetworkType] = self.network_type;
+    }
+    if (self.os) {
+        dict[kTDPresetOSName] = self.os;
+    }
+    if (self.os_version) {
+        dict[kTDPresetOSVersion] = self.os_version;
+    }
+    if (self.screen_height) {
+        dict[kTDPresetScreenHeight] = self.screen_height;
+    }
+    if (self.screen_width) {
+        dict[kTDPresetScreenWidth] = self.screen_width;
+    }
+    if (self.system_language) {
+        dict[kTDPresetSystemLanguage] = self.system_language;
+    }
+    if (self.zone_offset) {
+        dict[kTDPresetZoneOffset] = self.zone_offset;
+    }
+    if (self.appVersion) {
+        dict[kTDPresetAppVersion] = self.appVersion;
+    }
+    if (self.install_time) {
+        dict[kTDPresetInstallTime] = self.install_time;
+    }
+    if (self.isSimulator) {
+        dict[kTDPresetIsSimulator] = self.isSimulator;
+    }
+    if (self.ram) {
+        dict[kTDPresetRam] = self.ram;
+    }
+    if (self.disk) {
+        dict[kTDPresetDisk] = self.disk;
+    }
+    if (self.fps) {
+        dict[kTDPresetFps] = self.fps;
+    }
+    if (self.deviceType) {
+        dict[kTDPresetDeviceType] = self.deviceType;
+    }
+
+    return dict;
 }
 
 @end

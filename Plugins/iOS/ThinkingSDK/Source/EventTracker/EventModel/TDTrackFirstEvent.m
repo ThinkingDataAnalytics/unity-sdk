@@ -6,7 +6,13 @@
 //
 
 #import "TDTrackFirstEvent.h"
-#import "TDDeviceInfo.h"
+
+#if __has_include(<ThinkingDataCore/TDCoreDeviceInfo.h>)
+#import <ThinkingDataCore/TDCoreDeviceInfo.h>
+#else
+#import "TDCoreDeviceInfo.h"
+#endif
+
 
 @implementation TDTrackFirstEvent
 
@@ -34,7 +40,7 @@
 - (NSMutableDictionary *)jsonObject {
     NSMutableDictionary *dict = [super jsonObject];
     
-    dict[@"#first_check_id"] = self.firstCheckId ?: [TDDeviceInfo sharedManager].deviceId;
+    dict[@"#first_check_id"] = self.firstCheckId ?: [TDCoreDeviceInfo deviceId];
     
     return dict;
 }

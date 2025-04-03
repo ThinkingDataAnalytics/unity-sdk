@@ -8,6 +8,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSData *)JSONSerializeForObject:(id)object;
 
++ (nullable id)jsonForData:(nonnull NSData *)data;
+
++ (nullable NSMutableDictionary *)formatDateWithFormatter:(nonnull NSDateFormatter *)dateFormatter dict:(NSDictionary *)dict;
+
 @end
 
 NS_ASSUME_NONNULL_END

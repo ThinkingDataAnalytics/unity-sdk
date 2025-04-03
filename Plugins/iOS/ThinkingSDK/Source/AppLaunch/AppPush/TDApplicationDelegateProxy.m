@@ -1,16 +1,24 @@
 
 #import "TDApplicationDelegateProxy.h"
+#import "NSObject+TDDelegateProxy.h"
+#import "UIApplication+TDPushClick.h"
+#import <objc/message.h>
+#import "TDAppLaunchReason.h"
+#import "TDCommonUtil.h"
+#import "TDLogging.h"
+
 #if __has_include(<ThinkingDataCore/TDClassHelper.h>)
 #import <ThinkingDataCore/TDClassHelper.h>
 #else
 #import "TDClassHelper.h"
 #endif
-#import "NSObject+TDDelegateProxy.h"
-#import "UIApplication+TDPushClick.h"
-#import <objc/message.h>
-#import "TDPresetProperties+TDDisProperties.h"
-#import "TDAppLaunchReason.h"
-#import "TDCommonUtil.h"
+
+#if __has_include(<ThinkingDataCore/TDCorePresetDisableConfig.h>)
+#import <ThinkingDataCore/TDCorePresetDisableConfig.h>
+#else
+#import "TDCorePresetDisableConfig.h"
+#endif
+
 
 @implementation TDApplicationDelegateProxy
 
@@ -28,7 +36,7 @@
 
 - (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler {
     SEL selector = @selector(application:continueUserActivity:restorationHandler:);
-    if (![TDPresetProperties disableStartReason])  {
+    if (![TDCorePresetDisableConfig disableStartReason])  {
         [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
         [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": [TDCommonUtil string: userActivity.webpageURL.absoluteString],@"data":@{}};
     }
@@ -37,7 +45,7 @@
 
 - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
     SEL selector = @selector(application:openURL:options:);
-    if (![TDPresetProperties disableStartReason])  {
+    if (![TDCorePresetDisableConfig disableStartReason])  {
         [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
         [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": [TDCommonUtil string:url.absoluteString],@"data":@{}};
     }
@@ -46,7 +54,7 @@
 
 - (BOOL)application:(UIApplication *)application handleOpenURL:(NSURL *)url {
     SEL selector = @selector(application:handleOpenURL:);
-    if (![TDPresetProperties disableStartReason])  {
+    if (![TDCorePresetDisableConfig disableStartReason])  {
         [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
         [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": [TDCommonUtil string:url.absoluteString], @"data":@{}};
     }
@@ -56,7 +64,7 @@
 - (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler API_AVAILABLE(ios(9.0)){
     SEL selector = @selector(application:performActionForShortcutItem:completionHandler:);
     [TDApplicationDelegateProxy invokeWithTarget:self selector:selector, application, shortcutItem, completionHandler];
-    if (![TDPresetProperties disableStartReason])  {
+    if (![TDCorePresetDisableConfig disableStartReason])  {
         [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
         [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": @"",@"data": [TDCommonUtil dictionary:shortcutItem.userInfo]};
     }
@@ -70,7 +78,7 @@
     }
 
     if ([[UIDevice currentDevice].systemVersion floatValue] >= 10.0) {
-        NSLog(@"iOS version >= 10.0, callback for %@ was ignored.", @"application:didReceiveRemoteNotification:fetchCompletionHandler:");
+        TDLogInfo(@"iOS version >= 10.0, callback for %@ was ignored.", @"application:didReceiveRemoteNotification:fetchCompletionHandler:");
         return;
     }
     
@@ -78,7 +86,7 @@
         return;
     }
     
-    if (![TDPresetProperties disableStartReason])  {
+    if (![TDCorePresetDisableConfig disableStartReason])  {
         [[TDAppLaunchReason sharedInstance] clearAppLaunchParams];
         [TDAppLaunchReason sharedInstance].appLaunchParams = @{@"url": @"", @"data": [TDCommonUtil dictionary:userInfo]};
     }
@@ -100,7 +108,7 @@
         return;
     }
     
-    if (![TDPresetProperties disableStartReason]) {
+    if (![TDCorePresetDisableConfig disableStartReason]) {
         NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
         properties[@"alertBody"] = notification.alertBody;
         if (@available(iOS 8.2, *)) {

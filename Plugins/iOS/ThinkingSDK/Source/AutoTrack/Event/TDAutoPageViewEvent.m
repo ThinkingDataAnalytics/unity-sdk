@@ -6,23 +6,28 @@
 //
 
 #import "TDAutoPageViewEvent.h"
-#import "TDPresetProperties+TDDisProperties.h"
+
+#if __has_include(<ThinkingDataCore/TDCorePresetDisableConfig.h>)
+#import <ThinkingDataCore/TDCorePresetDisableConfig.h>
+#else
+#import "TDCorePresetDisableConfig.h"
+#endif
 
 @implementation TDAutoPageViewEvent
 
 - (NSMutableDictionary *)jsonObject {
     NSMutableDictionary *dict = [super jsonObject];
     
-    if (![TDPresetProperties disableScreenName]) {
+    if (![TDCorePresetDisableConfig disableScreenName]) {
         self.properties[@"#screen_name"] = self.screenName;
     }
-    if (![TDPresetProperties disableTitle]) {
+    if (![TDCorePresetDisableConfig disableTitle]) {
         self.properties[@"#title"] = self.pageTitle;
     }
-    if (![TDPresetProperties disableUrl]) {
+    if (![TDCorePresetDisableConfig disableUrl]) {
         self.properties[@"#url"] = self.pageUrl;
     }
-    if (![TDPresetProperties disableReferrer]) {
+    if (![TDCorePresetDisableConfig disableReferrer]) {
         self.properties[@"#referrer"] = self.referrer;
     }
     return dict;

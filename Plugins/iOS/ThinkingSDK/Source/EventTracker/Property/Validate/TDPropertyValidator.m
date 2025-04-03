@@ -12,7 +12,7 @@
 @implementation TDPropertyValidator
 
 /// Custom attribute name format validation
-static NSString *const kTANormalTrackProperNameValidateRegularExpression = @"^[a-zA-Z][a-zA-Z\\d_]*$";
+static NSString *const kTANormalTrackProperNameValidateRegularExpression = @"^([a-zA-Z][a-zA-Z\\d_]*|\\#(ops_push_status|ops_push_id|ops_task_id|client_user_id|ops_trigger_time|ops_exp_group_id|ops_actual_push_time|ops_receipt_properties|ops_risk_type|rcc_pull_result))$";
 /// Custom attribute name regularization
 static NSRegularExpression *_regexForNormalTrackValidateKey;
 

@@ -82,12 +82,12 @@
 
 - (NSMutableDictionary *)propertiesWithPlugins:(NSArray<id<TDPropertyPluginProtocol>> *)plugins {
     NSMutableDictionary *properties = [NSMutableDictionary dictionary];
-    
-    
     for (id<TDPropertyPluginProtocol> plugin in plugins) {
-        dispatch_semaphore_t  semaphore = dispatch_semaphore_create(0);
+        if ([plugin respondsToSelector:@selector(start)]) {
+            [plugin start];
+        }
+        dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
         if ([plugin respondsToSelector:@selector(asyncGetPropertyCompletion:)]) {
-            
             [plugin asyncGetPropertyCompletion:^(NSDictionary<NSString *,id> * _Nonnull dict) {
                 [properties addEntriesFromDictionary:dict];
                 dispatch_semaphore_signal(semaphore);

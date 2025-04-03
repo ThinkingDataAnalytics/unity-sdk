@@ -1,7 +1,10 @@
 #import "TDLogging.h"
 
-#import <os/log.h>
+#if __has_include(<ThinkingDataCore/TDOSLog.h>)
+#import <ThinkingDataCore/TDOSLog.h>
+#else
 #import "TDOSLog.h"
+#endif
 
 @implementation TDLogging
 
@@ -21,13 +24,29 @@
         NSString *formattedMessage = [[NSString alloc] initWithFormat:messageFormat arguments:formatList];
         va_end(formatList);
         
-#ifdef __IPHONE_10_0
-        if (@available(iOS 10.0, *)) {
-            [TDOSLog log:NO message:formattedMessage type:type];
+        TDLogType logType = TDLogTypeOff;
+        switch (type) {
+            case TDLoggingLevelNone:
+                logType = TDLogTypeOff;
+                break;
+            case TDLoggingLevelError:
+                logType = TDLogTypeError;
+                break;
+            case TDLoggingLevelWarning:
+                logType = TDLogTypeWarning;
+                break;
+            case TDLoggingLevelInfo:
+                logType = TDLogTypeInfo;
+                break;
+            case TDLoggingLevelDebug:
+                logType = TDLogTypeDebug;
+                break;
+            default:
+                logType = TDLogTypeOff;
+                break;
         }
-#else
-        NSLog(@"[ThinkingData] %@", formattedMessage);
-#endif
+        NSString *prefix = @"ThinkingData";
+        [TDOSLog logMessage:formattedMessage prefix:prefix type:logType asynchronous:YES];
     }
 }
 

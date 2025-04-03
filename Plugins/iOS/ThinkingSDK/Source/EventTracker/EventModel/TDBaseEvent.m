@@ -7,12 +7,13 @@
 
 #import "TDBaseEvent.h"
 
-#if __has_include(<ThinkingSDK/TDLogging.h>)
-#import <ThinkingSDK/TDLogging.h>
+#if __has_include(<ThinkingDataCore/TDJSONUtil.h>)
+#import <ThinkingDataCore/TDJSONUtil.h>
 #else
-#import "TDLogging.h"
+#import "TDJSONUtil.h"
 #endif
 
+#import "TDLogging.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
 
 NSString * const TD_BACKGROUND_DURATION = @"#background_duration";
@@ -77,25 +78,7 @@ kEDEventTypeName const TD_EVENT_TYPE_USER_UNIQ_APPEND= @"user_uniq_append";
     if (dict == nil || ![dict isKindOfClass:NSDictionary.class]) {
         return nil;
     }
-    NSMutableDictionary *mutableDict = nil;
-    if ([dict isKindOfClass:NSMutableDictionary.class]) {
-        mutableDict = (NSMutableDictionary *)dict;
-    } else {
-        mutableDict = [dict mutableCopy];
-    }
-    
-    NSArray<NSString *> *keys = dict.allKeys;
-    for (NSInteger i = 0; i < keys.count; i++) {
-        id value = dict[keys[i]];
-        if ([value isKindOfClass:NSDate.class]) {
-            NSString *newValue = [self.timeFormatter stringFromDate:(NSDate *)value];
-            mutableDict[keys[i]] = newValue;
-        } else if ([value isKindOfClass:NSDictionary.class]) {
-            NSDictionary *newValue = [self formatDateWithDict:value];
-            mutableDict[keys[i]] = newValue;
-        }
-    }
-    return mutableDict;
+    return [TDJSONUtil formatDateWithFormatter:self.h5ZoneOffSet ? self.h5TimeFormatter : self.timeFormatter dict:dict];
 }
 
 - (NSString *)eventTypeString {
@@ -201,6 +184,17 @@ kEDEventTypeName const TD_EVENT_TYPE_USER_UNIQ_APPEND= @"user_uniq_append";
         _timeFormatter.timeZone = [NSTimeZone localTimeZone];
     }
     return _timeFormatter;
+}
+
+- (NSDateFormatter *)h5TimeFormatter {
+    double timeZoneNumber = [self.h5ZoneOffSet doubleValue];
+    NSString *prefix = timeZoneNumber >= 0 ? @"UTC+" : @"UTC-";
+    int hours = (int)fabs(timeZoneNumber);
+    int minutes = (int)((fabs(timeZoneNumber) - hours) * 60);
+    NSString *minutesStr = minutes == 0 ? @":00" : [NSString stringWithFormat:@":%02d", minutes];
+    NSString *result = [NSString stringWithFormat:@"%@%d%@", prefix, hours, minutesStr];
+    self.timeFormatter.timeZone = [NSTimeZone timeZoneWithName: result];
+    return self.timeFormatter;
 }
 
 - (void)setTime:(NSDate *)time {

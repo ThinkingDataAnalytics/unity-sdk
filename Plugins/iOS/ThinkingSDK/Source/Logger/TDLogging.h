@@ -15,12 +15,11 @@ if ([TDLogging sharedInstance].loggingLevel != TDLoggingLevelNone && type <= [TD
 } \
 }
 
-
-
 @interface TDLogging : NSObject
-
-@property (class, nonatomic, readonly) TDLogging *sharedInstance;
 @property (assign, nonatomic) TDLoggingLevel loggingLevel;
+
++ (instancetype)sharedInstance;
+
 - (void)logCallingFunction:(TDLoggingLevel)type format:(id)messageFormat, ...;
 
 @end

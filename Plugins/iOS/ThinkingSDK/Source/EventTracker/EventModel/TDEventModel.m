@@ -2,6 +2,12 @@
 #import "TDEventModel.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
 
+#if __has_include(<ThinkingDataCore/TDCoreDeviceInfo.h>)
+#import <ThinkingDataCore/TDCoreDeviceInfo.h>
+#else
+#import "TDCoreDeviceInfo.h"
+#endif
+
 @interface TDEventModel ()
 
 @property (nonatomic, copy) NSString *eventName;
@@ -16,7 +22,7 @@
         self.eventName = eventName ?: @"";
         self.eventType = eventType ?: @"";
         if ([self.eventType isEqualToString:TD_EVENT_TYPE_TRACK_FIRST]) {
-            _extraID = [TDDeviceInfo sharedManager].deviceId ?: @"";
+            _extraID = [TDCoreDeviceInfo deviceId] ?: @"";
         }
     }
     return self;

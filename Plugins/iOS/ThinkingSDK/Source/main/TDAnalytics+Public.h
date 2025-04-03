@@ -115,12 +115,12 @@ NS_ASSUME_NONNULL_BEGIN
  Sets the user property, replacing the original value with the new value if the property already exists.
  @param properties user properties
  */
-+ (void)userSet:(NSDictionary *)properties;
++ (void)userSet:(NSDictionary<NSString *, id> *)properties;
 /**
  Sets a single user attribute, ignoring the new attribute value if the attribute already exists.
  @param properties user properties
  */
-+ (void)userSetOnce:(NSDictionary *)properties;
++ (void)userSetOnce:(NSDictionary<NSString *, id> *)properties;
 /**
  Reset single user attribute.
  @param propertyName user properties
@@ -135,7 +135,7 @@ NS_ASSUME_NONNULL_BEGIN
  Adds the numeric type user attributes.
  @param properties user properties
  */
-+ (void)userAdd:(NSDictionary *)properties;
++ (void)userAdd:(NSDictionary<NSString *, id> *)properties;
 /**
  Adds the numeric type user attribute.
  @param propertyName  propertyName
@@ -164,7 +164,7 @@ NS_ASSUME_NONNULL_BEGIN
  Set the public event attribute, which will be included in every event uploaded after that. The public event properties are saved without setting them each time.
  @param properties super properties
  */
-+ (void)setSuperProperties:(NSDictionary *)properties;
++ (void)setSuperProperties:(NSDictionary<NSString *, id> *)properties;
 /**
  Clears a public event attribute.
  @param property property name
@@ -222,6 +222,13 @@ NS_ASSUME_NONNULL_BEGIN
  @param accountId accountId
  */
 + (void)login:(NSString *)accountId;
+
+/**
+ Get account ID: The #account_id value in the reported data.
+ 
+ @return accountId
+ */
++ (NSString *)getAccountId;
 
 /**
  Clearing the account ID will not upload user logout events.

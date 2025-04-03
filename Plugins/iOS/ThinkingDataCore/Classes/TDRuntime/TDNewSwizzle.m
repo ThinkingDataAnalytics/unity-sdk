@@ -1,10 +1,10 @@
 
 #import "TDNewSwizzle.h"
 
-#if TARGET_OS_IOS
+#if (TARGET_OS_IOS || TARGET_OS_WATCH || TARGET_OS_VISION || TARGET_OS_TV)
 	#import <objc/runtime.h>
 	#import <objc/message.h>
-#else
+#elif TARGET_OS_OSX
 	#import <objc/objc-class.h>
 #endif
 

@@ -8,11 +8,33 @@
 #import "TDAnalytics+Public.h"
 #import "TDAnalytics+Multiple.h"
 #import "ThinkingAnalyticsSDKPrivate.h"
-#import "TDCalibratedTime.h"
 #import "TDLogging.h"
 #import "TDPublicConfig.h"
-#import "NSString+TDString.h"
 #import "TDConfigPrivate.h"
+
+#if __has_include(<ThinkingDataCore/TDCalibratedTime.h>)
+#import <ThinkingDataCore/TDCalibratedTime.h>
+#else
+#import "TDCalibratedTime.h"
+#endif
+
+#if __has_include(<ThinkingDataCore/TDCoreDeviceInfo.h>)
+#import <ThinkingDataCore/TDCoreDeviceInfo.h>
+#else
+#import "TDCoreDeviceInfo.h"
+#endif
+
+#if __has_include(<ThinkingDataCore/NSString+TDCore.h>)
+#import <ThinkingDataCore/NSString+TDCore.h>
+#else
+#import "NSString+TDCore.h"
+#endif
+
+#if __has_include(<ThinkingDataCore/NSURL+TDCore.h>)
+#import <ThinkingDataCore/NSURL+TDCore.h>
+#else
+#import "NSURL+TDCore.h"
+#endif
 
 @implementation TDAnalytics (Public)
 
@@ -48,7 +70,6 @@
     if (libVersion.length > 0) {
         [TDDeviceInfo sharedManager].libVersion = libVersion;
     }
-    [[TDDeviceInfo sharedManager] td_updateData];
 }
 
 + (NSString *)getSDKVersion {
@@ -56,7 +77,7 @@
 }
 
 + (NSString *)getDeviceId {
-    return [TDDeviceInfo sharedManager].deviceId;
+    return [TDCoreDeviceInfo deviceId];
 }
 
 + (NSString *)timeStringWithDate:(NSDate *)date {
@@ -83,18 +104,13 @@
     if (appId.length == 0) {
         return;
     }
-    NSString *sdkName = config.name;
     
     NSMutableDictionary *instances = [ThinkingAnalyticsSDK _getAllInstances];
-    
-    if (instances[sdkName]) {
-        return;
-    }
-    if (instances[appId]) {
+    if ([instances objectForKey:[config innerGetMapInstanceToken]]) {
         return;
     }
     
-    config.serverUrl = [config.serverUrl ta_formatUrlString];
+    config.serverUrl = [NSURL td_baseUrlStringWithString:config.serverUrl];
     NSString *url = config.serverUrl;
     if (url.length == 0) {
         return;
@@ -152,12 +168,12 @@
 
 //MARK: user property
 
-+ (void)userSet:(NSDictionary *)properties {
++ (void)userSet:(NSDictionary<NSString *, id> *)properties {
     NSString *appId = [ThinkingAnalyticsSDK defaultAppId];
     [TDAnalytics userSet:properties withAppId:appId];
 }
 
-+ (void)userSetOnce:(NSDictionary *)properties {
++ (void)userSetOnce:(NSDictionary<NSString *, id> *)properties {
     NSString *appId = [ThinkingAnalyticsSDK defaultAppId];
     [TDAnalytics userSetOnce:properties withAppId:appId];
 }
@@ -172,7 +188,7 @@
     [TDAnalytics userUnsets:propertyNames withAppId:appId];
 }
 
-+ (void)userAdd:(NSDictionary *)properties {
++ (void)userAdd:(NSDictionary<NSString *, id> *)properties {
     NSString *appId = [ThinkingAnalyticsSDK defaultAppId];
     [TDAnalytics userAdd:properties withAppId:appId];
 }
@@ -199,7 +215,7 @@
 
 //MARK: super property & preset property
 
-+ (void)setSuperProperties:(NSDictionary *)properties {
++ (void)setSuperProperties:(NSDictionary<NSString *, id> *)properties {
     NSString *appId = [ThinkingAnalyticsSDK defaultAppId];
     [TDAnalytics setSuperProperties:properties withAppId:appId];
 }
@@ -251,6 +267,11 @@
 + (void)login:(NSString *)accountId {
     NSString *appId = [ThinkingAnalyticsSDK defaultAppId];
     [TDAnalytics login:accountId withAppId:appId];
+}
+
++ (NSString *)getAccountId {
+    NSString *appId = [ThinkingAnalyticsSDK defaultAppId];
+    return [TDAnalytics getAccountIdWithAppId:appId];
 }
 
 + (void)logout {

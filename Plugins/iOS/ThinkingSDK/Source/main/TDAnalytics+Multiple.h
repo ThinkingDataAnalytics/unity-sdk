@@ -186,8 +186,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Get distinct ID: The #distinct_id value in the reported data.
  
- @return distinctId
  @param appId appId
+ @return distinctId
  */
 + (NSString *)getDistinctIdWithAppId:(NSString * _Nullable)appId;
 
@@ -197,6 +197,14 @@ NS_ASSUME_NONNULL_BEGIN
  @param appId appId
  */
 + (void)login:(NSString *)accountId withAppId:(NSString * _Nullable)appId;
+
+/**
+ Get account ID: The #account_id value in the reported data.
+ 
+ @param appId appId
+ @return accountId
+ */
++ (NSString *)getAccountIdWithAppId:(NSString * _Nullable)appId;
 
 /**
  Clearing the account ID will not upload user logout events.

@@ -1,4 +1,4 @@
-#if ((!(UNITY_IOS) || UNITY_EDITOR) && (!(UNITY_ANDROID) || UNITY_EDITOR) && (!(UNITY_OPENHARMONY) || UNITY_EDITOR))
+#if UNITY_WEBGL && !UNITY_EDITOR
 using System.Runtime.InteropServices;
 namespace ThinkingData.Analytics.Wrapper
 {

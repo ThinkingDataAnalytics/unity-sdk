@@ -2,6 +2,10 @@
 #import "NSObject+TDDelegateProxy.h"
 #import <objc/runtime.h>
 
+#if TARGET_OS_IOS
+#import <UIKit/UIKit.h>
+#endif
+
 @implementation NSObject (TDDelegateProxy)
 
 - (NSSet<NSString *> *)thinkingdata_optionalSelectors {
@@ -24,7 +28,7 @@
     if ([self thinkingdata_respondsToSelector:aSelector]) {
         return YES;
     }
-    if ([[UIDevice currentDevice].systemVersion floatValue] >= 18.0) {
+    if (@available(iOS 18.0, *)) {
         char startOfHeader = (char)sel_getName(aSelector);
         if (startOfHeader == '\x01') {
             return NO;

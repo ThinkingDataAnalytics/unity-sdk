@@ -4,9 +4,18 @@
 #import "ThinkingAnalyticsSDKPrivate.h"
 #import "TDSecurityPolicy.h"
 #import "TDFile.h"
-#import "NSString+TDString.h"
-
 #import "TDConfigPrivate.h"
+
+#if __has_include(<ThinkingDataCore/TDCalibratedTime.h>)
+#import <ThinkingDataCore/TDCalibratedTime.h>
+#else
+#import "TDCalibratedTime.h"
+#endif
+#if __has_include(<ThinkingDataCore/NSString+TDCore.h>)
+#import <ThinkingDataCore/NSString+TDCore.h>
+#else
+#import "NSString+TDCore.h"
+#endif
 
 #define TDSDKSETTINGS_PLIST_SETTING_IMPL(TYPE, PLIST_KEY, GETTER, SETTER, DEFAULT_VALUE, ENABLE_CACHE) \
 static TYPE *g_##PLIST_KEY = nil; \
@@ -179,6 +188,13 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
         if (!error) {
             NSInteger uploadInterval = [[result objectForKey:@"sync_interval"] integerValue];
             NSInteger uploadSize = [[result objectForKey:@"sync_batch_size"] integerValue];
+            if (self.enableAutoCalibrated) {
+                NSNumber *serverTimestampNum = result[@"server_timestamp"];
+                if ([serverTimestampNum isKindOfClass:NSNumber.class]) {
+                    NSTimeInterval serverTimestamp = [serverTimestampNum doubleValue] * 0.001;
+                    [[TDCalibratedTime sharedInstance] recalibrationWithTimeInterval:serverTimestamp];
+                }
+            }
             if (uploadInterval != [self->_uploadInterval integerValue] || uploadSize != [self->_uploadSize integerValue]) {
                 TDFile *file = [[TDFile alloc] initWithAppid:self.appid];
                 if (uploadInterval > 0) {

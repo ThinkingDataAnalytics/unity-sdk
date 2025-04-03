@@ -1,14 +1,21 @@
 
 #import "TDUNUserNotificationCenterDelegateProxy.h"
+
 #if __has_include(<ThinkingDataCore/TDClassHelper.h>)
 #import <ThinkingDataCore/TDClassHelper.h>
 #else
 #import "TDClassHelper.h"
 #endif
+
+#if __has_include(<ThinkingDataCore/TDCorePresetDisableConfig.h>)
+#import <ThinkingDataCore/TDCorePresetDisableConfig.h>
+#else
+#import "TDCorePresetDisableConfig.h"
+#endif
+
 #import "NSObject+TDDelegateProxy.h"
 #import <objc/message.h>
 #import "TDAPPPushParams.h"
-#import "TDPresetProperties+TDDisProperties.h"
 #import "TDAppLaunchReason.h"
 #import "TDCommonUtil.h"
 #import "ThinkingAnalyticsSDK.h"
@@ -38,7 +45,7 @@
         return;
     }
 
-    if (![TDPresetProperties disableStartReason]) {
+    if (![TDCorePresetDisableConfig disableStartReason]) {
         NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
         NSDictionary *userInfo = __td_get_userNotificationCenterResponse(response);
         if (userInfo) {
