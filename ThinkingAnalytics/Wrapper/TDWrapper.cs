@@ -286,7 +286,8 @@ namespace ThinkingData.Analytics.Wrapper
             setSuperProperties(superProperties, appId);
         }
 
-        public static void SetSuperProperties(string superProperties,string appId) {
+        public static void SetSuperProperties(string superProperties, string appId)
+        {
             setSuperProperties(superProperties, appId);
         }
 
@@ -330,7 +331,8 @@ namespace ThinkingData.Analytics.Wrapper
             userSet(properties, appId);
         }
 
-        public static void UserSet(string properties,string appId) {
+        public static void UserSet(string properties, string appId)
+        {
             userSet(properties, appId);
         }
 

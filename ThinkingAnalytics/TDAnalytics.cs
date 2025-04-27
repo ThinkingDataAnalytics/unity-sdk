@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.1.4
+    SDK VERSION:3.2.0
  */
 
 /**    
@@ -387,23 +387,6 @@ namespace ThinkingData.Analytics
             }
         }
 
-        public static void TrackStr(string eventName, string properties = "", string appId = "")
-        {
-            if (tracking_enabled)
-            {
-                TDWrapper.TrackStr(eventName, properties, appId);
-            }
-            else
-            {
-                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
-                object[] parameters = new object[] { eventName, properties, appId };
-                eventCaches.Add(new Dictionary<string, object>() {
-                    { "method", method},
-                    { "parameters", parameters}
-                });
-            }
-        }
-
         /// <summary>
         /// Track a Event
         /// </summary>
@@ -428,6 +411,24 @@ namespace ThinkingData.Analytics
         //        });
         //    }
         //}
+
+        public static void TrackStr(string eventName, string properties = "", string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.TrackStr(eventName, properties, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { eventName, properties, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
 
         /// <summary>
         /// Track a Event
@@ -585,7 +586,8 @@ namespace ThinkingData.Analytics
             }
         }
 
-        public static void SetSuperProperties(string properties,string appId = "") {
+        public static void SetSuperProperties(string properties, string appId = "")
+        {
             if (tracking_enabled)
             {
                 TDWrapper.SetSuperProperties(properties, appId);
@@ -756,6 +758,7 @@ namespace ThinkingData.Analytics
                 });
             }
         }
+
 
         /// <summary>
         /// Sets User Properties, this will overwrite the original properties value
@@ -958,6 +961,7 @@ namespace ThinkingData.Analytics
             }
         }
 
+
         /// <summary>
         /// Accumulates the property, type of Number. If the property has not been set, it would be given a value of 0 before computing. 
         /// </summary>
@@ -1019,6 +1023,7 @@ namespace ThinkingData.Analytics
                 });
             }
         }
+
 
         /// <summary>
         /// Appends the property, type of List.
@@ -1550,8 +1555,6 @@ namespace ThinkingData.Analytics
         /// </summary>
         public string name { set { if (!string.IsNullOrEmpty(value)) sName = value.Replace(" ", ""); } get { return sName; } } // instances name
         private string sName;
-
-        public int reportingToTencentSdk;
 
         /// <summary>
         /// Construct TDConfig instance

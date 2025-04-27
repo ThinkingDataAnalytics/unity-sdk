@@ -69,26 +69,6 @@ namespace ThinkingData.Analytics.Editors
 }
 #endif
 
-#if UNITY_OPENHARMONY
-using System.IO;
-using UnityEditor;
-using UnityEditor.Callbacks;
-
-namespace ThinkingData.Analytics.Editors
-{
-    public class TD_PostProcessBuild
-    {
-        [PostProcessBuildAttribute(88)]
-        public static void OnPostProcessBuild(BuildTarget target, string targetPath)
-        {
-            string path = Path.Combine(targetPath, "entry/oh-package.json5");
-            string jsonContent = File.ReadAllText(path);
-            jsonContent = jsonContent.Replace("\"TDAnalytics\"", "\"@thinkingdata/analytics\"");
-            File.WriteAllText(path, jsonContent);
-        }
-    }
-}
-#endif
 
 #if UNITY_EDITOR && UNITY_ANDROID && UNITY_2019_1_OR_NEWER
 using UnityEditor;

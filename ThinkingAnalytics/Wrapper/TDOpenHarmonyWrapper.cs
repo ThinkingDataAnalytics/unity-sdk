@@ -15,12 +15,15 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void init(TDConfig token)
         {
+            Dictionary<string, object> configDic = new Dictionary<string, object>();
+            configDic["appId"] = token.appId;
+            configDic["serverUrl"] = token.serverUrl;
+            configDic["mode"] = (int)token.mode;
             string timeZoneId = token.getTimeZoneId();
             defaultTDTimeZone = token.timeZone;
-            string timeZone ="";
             if (null != timeZoneId && timeZoneId.Length > 0)
             {
-                timeZone = timeZoneId;
+                configDic["timeZone"] = timeZoneId;
                 if (defaultTimeZone == null)
                 {
                     try
@@ -39,7 +42,12 @@ namespace ThinkingData.Analytics.Wrapper
                     defaultTimeZone = TimeZoneInfo.Local;
                 }
             }
-            openHarmonyJsClass.CallStatic("init", token.appId,token.serverUrl,(int)token.mode,timeZone,token.encryptVersion,token.encryptPublicKey);
+            if (token.enableEncrypt == true)
+            {
+                configDic["publicKey"] = token.encryptPublicKey;
+                configDic["version"] = token.encryptVersion;
+            }
+            openHarmonyJsClass.CallStatic("init", TDMiniJson.Serialize(configDic));
         }
 
         private static string getTimeString(DateTime dateTime)
@@ -104,17 +112,24 @@ namespace ThinkingData.Analytics.Wrapper
             long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
             DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
             long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            string timeZoneId = "";
+            Dictionary<string, object> dic = new Dictionary<string, object>();
+            dic["event_name"] = eventName;
+            dic["event_properties"] = properties;
+            dic["event_time"] = currentMillis;
             if (timeZone != null)
             {
-                timeZoneId = timeZone.Id;
+                dic["event_timezone"] = timeZone.Id;
             }
-            openHarmonyJsClass.CallStatic("track", eventName,serilize(properties),currentMillis,timeZoneId, appId);
+            openHarmonyJsClass.CallStatic("track", serilize(dic), appId);
         }
 
         private static void track(string eventName, Dictionary<string, object> properties, string appId)
         {
-            openHarmonyJsClass.CallStatic("track", eventName,serilize(properties), 0,"",appId);
+            Dictionary<string, object> dic = new Dictionary<string, object>();
+            dic["event_name"] = eventName;
+            dic["event_properties"] = properties;
+            dic["event_time"] = 0;
+            openHarmonyJsClass.CallStatic("track", serilize(dic), appId);
         }
 
         private static void trackForAll(string eventName, Dictionary<string, object> properties)
@@ -124,56 +139,45 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void track(TDEventModel taEvent, string appId)
         {
-            int eventType = -1;;
+            Dictionary<string, object> finalEvent = new Dictionary<string, object>();
+            string extraId = taEvent.GetEventId();
             switch (taEvent.EventType)
             {
                 case TDEventModel.TDEventType.First:
-                    eventType = 1;
+                    finalEvent["event_type"] = 1;
                     break;
                 case TDEventModel.TDEventType.Updatable:
-                    eventType = 2;
+                    finalEvent["event_type"] = 2;
                     break;
                 case TDEventModel.TDEventType.Overwritable:
-                    eventType = 3;
+                    finalEvent["event_type"] = 3;
                     break;
             }
-            if (eventType < 0) return;
-            string jsonStr;
-            if (taEvent.Properties == null)
+
+            if (!string.IsNullOrEmpty(extraId))
             {
-                jsonStr = taEvent.StrProperties;
+                finalEvent["event_id"] = extraId;
             }
-            else {
-                jsonStr = serilize(taEvent.Properties);
-            }
-            long eventTime = 0;
+
+            finalEvent["event_name"] = taEvent.EventName;
+            finalEvent["event_properties"] = taEvent.Properties;
             if (taEvent.GetEventTime() != null && taEvent.GetEventTime() != DateTime.MinValue)
             {
                 long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(taEvent.GetEventTime()).Ticks;
                 DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-                eventTime = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+                long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+                finalEvent["event_time"] = currentMillis;
             }
-            string timeZoneId = "";
             if (taEvent.GetEventTimeZone() != null)
             {
-                timeZoneId = taEvent.GetEventTimeZone().Id;
+                finalEvent["event_timezone"] = taEvent.GetEventTimeZone().Id;
             }
-            openHarmonyJsClass.CallStatic("trackEvent", eventType,taEvent.EventName,jsonStr,taEvent.GetEventId(),eventTime,timeZoneId,appId);
-        }
-
-        private static void trackStr(string eventName, string properties, string appId)
-        {
-            openHarmonyJsClass.CallStatic("track", eventName,properties, 0,"",appId);
+            openHarmonyJsClass.CallStatic("trackEvent", serilize(finalEvent), appId);
         }
 
         private static void setSuperProperties(Dictionary<string, object> superProperties, string appId)
         {
             openHarmonyJsClass.CallStatic("setSuperProperties", serilize(superProperties), appId);
-        }
-
-        private static void setSuperProperties(string superProperties, string appId)
-        {
-            openHarmonyJsClass.CallStatic("setSuperProperties", superProperties, appId);
         }
 
         private static void unsetSuperProperty(string superPropertyName, string appId)
@@ -208,6 +212,7 @@ namespace ThinkingData.Analytics.Wrapper
             openHarmonyJsClass.CallStatic("timeEvent", eventName, "");
         }
 
+
         private static void userSet(Dictionary<string, object> properties, string appId)
         {
             userSet(properties, new DateTime(), appId);
@@ -215,15 +220,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userSet(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            openHarmonyJsClass.CallStatic("userSet", serilize(properties),currentMillis,appId);
-        }
-
-        private static void userSet(string properties, string appId)
-        {
-            openHarmonyJsClass.CallStatic("userSet", properties,0,appId);
+            openHarmonyJsClass.CallStatic("userSet", buildUserProperties(properties,dateTime), appId);
         }
 
         private static void userSetOnce(Dictionary<string, object> properties, string appId)
@@ -233,15 +230,8 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userSetOnce(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-           long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            openHarmonyJsClass.CallStatic("userSetOnce", serilize(properties),currentMillis, appId);
-        }
-
-        private static void userSetOnce(string properties, string appId)
-        {
-            openHarmonyJsClass.CallStatic("userSetOnce", properties,0, appId);
+           
+            openHarmonyJsClass.CallStatic("userSetOnce", buildUserProperties(properties,dateTime), appId);
         }
 
         private static void userUnset(List<string> properties, string appId)
@@ -267,15 +257,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userAdd(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            openHarmonyJsClass.CallStatic("userAdd", serilize(properties),currentMillis, appId);
-        }
-
-        private static void userAddStr(string properties, string appId)
-        {
-            openHarmonyJsClass.CallStatic("userAdd", properties,0, appId);
+            openHarmonyJsClass.CallStatic("userAdd", buildUserProperties(properties,dateTime), appId);
         }
 
         private static void userAppend(Dictionary<string, object> properties, string appId)
@@ -285,16 +267,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            openHarmonyJsClass.CallStatic("userAppend", serilize(properties),currentMillis, appId);
-        }
-
-
-        private static void userAppend(string properties, string appId)
-        {
-            openHarmonyJsClass.CallStatic("userAppend", properties,0, appId);
+            openHarmonyJsClass.CallStatic("userAppend", buildUserProperties(properties, dateTime), appId);
         }
 
         private static void userUniqAppend(Dictionary<string, object> properties, string appId)
@@ -304,15 +277,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userUniqAppend(Dictionary<string, object> properties, DateTime dateTime, string appId)
         {
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            openHarmonyJsClass.CallStatic("userUniqAppend", serilize(properties),currentMillis, appId);
-        }
-
-        private static void userUniqAppend(string properties, string appId)
-        {
-            openHarmonyJsClass.CallStatic("userUniqAppend",properties,0, appId);
+            openHarmonyJsClass.CallStatic("userUniqAppend", buildUserProperties(properties, dateTime), appId);
         }
 
         private static void userDelete(string appId)
@@ -322,10 +287,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static void userDelete(DateTime dateTime, string appId)
         {
-            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
-            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
-            openHarmonyJsClass.CallStatic("userDelete", currentMillis,appId);
+            openHarmonyJsClass.CallStatic("userDelete", buildUserProperties(null, dateTime),appId);
         }
 
         private static void flush(string appId)
@@ -393,6 +355,18 @@ namespace ThinkingData.Analytics.Wrapper
         {
             
         }
+
+
+        private static string buildUserProperties(Dictionary<string, object> properties, DateTime dateTime) {
+            long dateTimeTicksUTC = TimeZoneInfo.ConvertTimeToUtc(dateTime).Ticks;
+            DateTime dtFrom = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            long currentMillis = (dateTimeTicksUTC - dtFrom.Ticks) / 10000;
+            Dictionary<string, object> dic = new Dictionary<string, object>();
+            dic["user_properties"] = properties;
+            dic["event_time"] = currentMillis;
+            return serilize(dic);
+        }
+
 
     }
 }

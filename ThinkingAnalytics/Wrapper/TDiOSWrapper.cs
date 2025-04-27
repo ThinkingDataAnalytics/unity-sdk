@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ThinkingData.Analytics.Utils;
-using ThinkingSDK.PC.Main;
 
 namespace ThinkingData.Analytics.Wrapper
 {
@@ -22,7 +21,7 @@ namespace ThinkingData.Analytics.Wrapper
         [DllImport("__Internal")]
         private static extern void ta_track(string app_id, string event_name, string properties, long time_stamp_millis, string timezone);
         [DllImport("__Internal")]
-        private static extern void ta_track_event(string app_id,int type, string event_name, string properties,string event_id, long time_stamp_millis, string timezone);
+        private static extern void ta_track_event(string app_id, int type, string event_name, string properties, string event_id, long time_stamp_millis, string timezone);
         [DllImport("__Internal")]
         private static extern void ta_set_super_properties(string app_id, string properties);
         [DllImport("__Internal")]
@@ -251,7 +250,8 @@ namespace ThinkingData.Analytics.Wrapper
             ta_set_super_properties(appId, serilize(superProperties));
         }
 
-        private static void setSuperProperties(string superProperties, string appId) {
+        private static void setSuperProperties(string superProperties, string appId)
+        {
             ta_set_super_properties(appId, superProperties);
         }
 
@@ -292,7 +292,8 @@ namespace ThinkingData.Analytics.Wrapper
             ta_user_set(appId, serilize(properties));
         }
 
-        private static void userSet(string properties, string appId) {
+        private static void userSet(string properties, string appId)
+        {
             ta_user_set(appId, properties);
         }
 
@@ -328,7 +329,8 @@ namespace ThinkingData.Analytics.Wrapper
             ta_user_set_once(appId, serilize(properties));
         }
 
-        private static void userSetOnce(string properties, string appId) {
+        private static void userSetOnce(string properties, string appId)
+        {
             ta_user_set_once(appId, properties);
         }
 
@@ -345,7 +347,8 @@ namespace ThinkingData.Analytics.Wrapper
             ta_user_add(appId, serilize(properties));
         }
 
-        private static void userAddStr(string properties, string appId) {
+        private static void userAddStr(string properties, string appId)
+        {
             ta_user_add(appId, properties);
         }
 
@@ -375,7 +378,8 @@ namespace ThinkingData.Analytics.Wrapper
             ta_user_append(appId, serilize(properties));
         }
 
-        private static void userAppend(string properties, string appId) {
+        private static void userAppend(string properties, string appId)
+        {
             ta_user_append(appId, properties);
         }
 

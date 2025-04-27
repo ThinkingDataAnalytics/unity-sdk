@@ -109,7 +109,7 @@ public class ThinkingAnalyticsProxy {
             JSONObject pJson = null;
             try {
                 pJson = new JSONObject(properties);
-            } catch (Exception ignore) {
+            } catch (JSONException ignore) {
             }
             if (type == 0) {
                 TDFirstEvent firstEvent = new TDFirstEvent(eventName, pJson);
