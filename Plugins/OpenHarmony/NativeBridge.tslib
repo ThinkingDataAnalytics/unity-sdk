@@ -1,9 +1,6 @@
-﻿
-import { TDOpenHarmonyProxy } from  "./TDOpenHarmonyProxy.ts";
-import sensor from '@ohos.sensor';
+﻿import { TDOpenHarmonyProxy } from  "./TDOpenHarmonyProxy.ts";
 export function RegisterNativeBridge(){
     var register = { }
     register["TDOpenHarmonyProxy"] = TDOpenHarmonyProxy;
-    register["senor"] = sensor;
     return register
 }
