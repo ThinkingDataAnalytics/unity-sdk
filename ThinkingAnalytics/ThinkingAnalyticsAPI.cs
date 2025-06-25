@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.2.1
+    SDK VERSION:3.3.0
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -1339,7 +1339,7 @@ namespace ThinkingAnalytics
                         if (!string.IsNullOrEmpty(token.appid))
                         {
                             token.appid = token.appid.Replace(" ", "");
-                            if(TDLog.GetEnable()) TDLog.d("ThinkingAnalytics start with APPID: " + token.appid + ", SERVERURL: " + token.serverUrl + ", MODE: " + token.mode);
+                            TDLog.d("ThinkingAnalytics start with APPID: " + token.appid + ", SERVERURL: " + token.serverUrl + ", MODE: " + token.mode);
                             TDWrapper.ShareInstance(token.ToTDConfig(), sThinkingAnalyticsAPI);
                             TDWrapper.SetNetworkType((TDNetworkType)sThinkingAnalyticsAPI.networkType);
                         }
@@ -1347,7 +1347,7 @@ namespace ThinkingAnalytics
                 }
                 catch (Exception ex)
                 {
-                    if(TDLog.GetEnable()) TDLog.d("ThinkingAnalytics start Error: " + ex.Message);
+                    TDLog.d("ThinkingAnalytics start Error: " + ex.Message);
                 }
             }
 

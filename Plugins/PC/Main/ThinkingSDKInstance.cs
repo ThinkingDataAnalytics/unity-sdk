@@ -143,6 +143,10 @@ namespace ThinkingSDK.PC.Main
                 this.mAutoTrack.SetAppId(this.mAppid);
             }
             UnityEngine.Object.DontDestroyOnLoad(mThinkingSDKAutoTrack);
+            if (ThinkingSDKPublicConfig.IsPrintLog())
+            {
+                ThinkingSDKLogger.Print(string.Format("TDAnalytics SDK initialize success, AppId = {0}, ServerUrl = {1}, Mode = {2}, DeviceId = {3}, Lib = Unity, LibVersion = {4}{5}", this.mAppid, this.mConfig.Server(), this.mConfig.GetMode(), ThinkingSDKDeviceInfo.DeviceID(), ThinkingSDKPublicConfig.Version(), (this.mConfig.InstanceName() != null ? (", Name = " + this.mConfig.InstanceName()) : "")));
+            }
         }
         private void EventResponseHandle(Dictionary<string, object> result)
         {
@@ -166,7 +170,7 @@ namespace ThinkingSDK.PC.Main
             mTask.Release();
             if (eventCount > 0)
             {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
+                ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
                 Flush();
             }
         }
@@ -212,12 +216,12 @@ namespace ThinkingSDK.PC.Main
         // sets distisct ID
         public virtual void Identifiy(string distinctID)
         {
-            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Setting distinct ID, DistinctId = " + distinctID);
+            ThinkingSDKLogger.Print("Setting distinct ID, DistinctId = " + distinctID);
             if (IsPaused())
             {
                 return;
             }
-            if (!string.IsNullOrEmpty(distinctID))
+            if (!string.IsNullOrWhiteSpace(distinctID))
             {
                 this.mDistinctID = distinctID;
                 ThinkingSDKFile.SaveData(mAppid, ThinkingSDKConstant.DISTINCT_ID,distinctID);
@@ -241,8 +245,8 @@ namespace ThinkingSDK.PC.Main
             {
                 return;
             }
-            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Login SDK, AccountId = " + accountID);
-            if (!string.IsNullOrEmpty(accountID))
+            ThinkingSDKLogger.Print("Login SDK, AccountId = " + accountID);
+            if (!string.IsNullOrWhiteSpace(accountID))
             {
                 this.mAccountID = accountID;
                 ThinkingSDKFile.SaveData(mAppid, ThinkingSDKConstant.ACCOUNT_ID, accountID);
@@ -259,7 +263,7 @@ namespace ThinkingSDK.PC.Main
             {
                 return;
             }
-            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Logout SDK");
+            ThinkingSDKLogger.Print("Logout SDK");
             this.mAccountID = "";
             ThinkingSDKFile.DeleteData(this.mAppid,ThinkingSDKConstant.ACCOUNT_ID);
         }
@@ -309,6 +313,11 @@ namespace ThinkingSDK.PC.Main
         }
         private void SendData(ThinkingSDKEventData data, bool immediately)
         {
+            if (this.mConfig.IsDisabledEvent(data.EventName()))
+            {
+                ThinkingSDKLogger.Print("Disabled Event: " + data.EventName());
+                return;
+            }
             if (this.mDynamicProperties != null)
             {
                 data.SetProperties(this.mDynamicProperties.GetDynamicSuperProperties_PC(),false);
@@ -367,12 +376,6 @@ namespace ThinkingSDK.PC.Main
                 DistinctId();
             }
             data.SetDistinctID(this.mDistinctID);
-
-            if (this.mConfig.IsDisabledEvent(data.EventName()))
-            {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Disabled Event: " + data.EventName());
-                return;
-            }
             if (this.mConfig.GetMode() == Mode.NORMAL && this.mRequest.GetType() != typeof(ThinkingSDKNormalRequest))
             {
                 this.mRequest = new ThinkingSDKNormalRequest(this.mAppid, this.mConfig.NormalURL());
@@ -389,19 +392,19 @@ namespace ThinkingSDK.PC.Main
                 int count = 0;
                 if (!string.IsNullOrEmpty(this.mConfig.InstanceName()))
                 {
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Enqueue data: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppId: " + this.mAppid);
+                    ThinkingSDKLogger.PrintJson1("Enqueue data: \n", dataDic, "\n  AppId: " + this.mAppid);
                     count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic, this.mConfig.InstanceName());
                 }
                 else
                 {
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Enqueue data: \n" + ThinkingSDKJSON.Serialize(dataDic) + "\n  AppId: " + this.mAppid);
+                    ThinkingSDKLogger.PrintJson1("Enqueue data: \n", dataDic, "\n  AppId: " + this.mAppid);
                     count = ThinkingSDKFileJson.EnqueueTrackingData(dataDic, this.mAppid);
                 }
                 if (this.mConfig.GetMode() != Mode.NORMAL || count >= this.mConfig.mUploadSize)
                 {
                     if (count >= this.mConfig.mUploadSize)
                     {
-                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
+                        ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
                     }
                     Flush();
                 }
@@ -413,7 +416,7 @@ namespace ThinkingSDK.PC.Main
             while (true)
             {
                 yield return flushDelay;
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
+                ThinkingSDKLogger.Print("Flush automatically (" + this.mAppid + ")");
                 Flush();
             }
         }
@@ -694,14 +697,14 @@ namespace ThinkingSDK.PC.Main
             bool mIsPaused = !mEnableTracking || !mOptTracking;
             if (mIsPaused)
             {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("SDK Track status is Pause or Stop");
+                ThinkingSDKLogger.Print("SDK Track status is Pause or Stop");
             }
             return mIsPaused;
         }
 
         public void SetTrackStatus(TDTrackStatus status)
         {
-            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Change Status to " + status);
+            ThinkingSDKLogger.Print("Change Status to " + status);
             switch (status)
             {
                 case TDTrackStatus.Pause:

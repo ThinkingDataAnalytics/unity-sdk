@@ -48,11 +48,11 @@ namespace ThinkingSDK.PC.Config
             }
             catch (Exception)
             {
-                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("TimeZoneInfo initial failed :" + e.Message);
             }
         }
         private string VerifyUrl(string serverUrl)
         {
+            serverUrl = serverUrl.Replace(" ", "");
             Uri uri = new Uri(serverUrl);
             serverUrl = uri.Scheme + "://" + uri.Host + ":" + uri.Port;
             return serverUrl;
@@ -150,7 +150,7 @@ namespace ThinkingSDK.PC.Config
                 if (result != null && code == 0)
                 {
                     Dictionary<string, object> data = (Dictionary<string, object>)result["data"];
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config success: " + ThinkingSDKJSON.Serialize(data));
+                    ThinkingSDKLogger.PrintJson("Get remote config success: ",data);
                     foreach (KeyValuePair<string, object> kv in data)
                     {
                         if (kv.Key == "sync_interval")
@@ -172,12 +172,12 @@ namespace ThinkingSDK.PC.Config
                 }
                 else
                 {
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config failed: " + ThinkingSDKJSON.Serialize(result));
+                    ThinkingSDKLogger.PrintJson("Get remote config failed: ",result);
                 }
             }
             catch (Exception ex)
             {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config failed: " + ex.Message);
+                ThinkingSDKLogger.Print("Get remote config failed: " + ex.Message);
             }
             if (mCallback != null)
             {

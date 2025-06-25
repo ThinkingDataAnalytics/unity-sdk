@@ -140,6 +140,12 @@ const char *ta_get_distinct_id(const char *app_id) {
     return ta_strdup([distinct_id UTF8String]);
 }
 
+const char *ta_get_account_id(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    NSString *account_id = [TDAnalytics getAccountIdWithAppId:app_id_string];
+    return ta_strdup([account_id UTF8String]);
+}
+
 void ta_login(const char *app_id, const char *account_id) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *id_string = account_id != NULL ? [NSString stringWithUTF8String:account_id] : nil;

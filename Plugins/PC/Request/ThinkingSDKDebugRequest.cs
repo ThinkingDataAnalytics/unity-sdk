@@ -55,11 +55,11 @@ namespace ThinkingSDK.PC.Request
                     case UnityWebRequest.Result.ConnectionError:
                     case UnityWebRequest.Result.DataProcessingError:
                     case UnityWebRequest.Result.ProtocolError:
-                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Send event Response Error:\n " + webRequest.error);
+                        ThinkingSDKLogger.Print("Send event Response Error:\n " + webRequest.error);
                         break;
                     case UnityWebRequest.Result.Success:
                         string resultText = webRequest.downloadHandler.text;
-                        if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Send event Response:\n " + resultText);
+                        ThinkingSDKLogger.Print("Send event Response:\n " + resultText);
                         if (!string.IsNullOrEmpty(resultText))
                         {
                             resultDict = ThinkingSDKJSON.Deserialize(resultText);
@@ -69,12 +69,12 @@ namespace ThinkingSDK.PC.Request
 #else
                 if (webRequest.isHttpError || webRequest.isNetworkError)
                 {
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Send event Response Error:\n " + webRequest.error);
+                    ThinkingSDKLogger.Print("Send event Response Error:\n " + webRequest.error);
                 }
                 else
                 {
                     string resultText = webRequest.downloadHandler.text;
-                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Send event Response:\n " + resultText);
+                    ThinkingSDKLogger.Print("Send event Response:\n " + resultText);
                     if (!string.IsNullOrEmpty(resultText)) 
                     {
                         resultDict = ThinkingSDKJSON.Deserialize(resultText);

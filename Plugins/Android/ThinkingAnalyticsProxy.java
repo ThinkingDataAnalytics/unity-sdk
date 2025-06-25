@@ -109,7 +109,7 @@ public class ThinkingAnalyticsProxy {
             JSONObject pJson = null;
             try {
                 pJson = new JSONObject(properties);
-            } catch (JSONException ignore) {
+            } catch (Exception ignore) {
             }
             if (type == 0) {
                 TDFirstEvent firstEvent = new TDFirstEvent(eventName, pJson);
@@ -148,6 +148,10 @@ public class ThinkingAnalyticsProxy {
 
     public static String getDistinctId(String appId) {
         return TDAnalyticsAPI.getDistinctId(appId);
+    }
+
+    public static String getAccountId(String appId){
+        return TDAnalyticsAPI.getAccountId(appId);
     }
 
     public static void userSet(String properties, long time, String appId) {

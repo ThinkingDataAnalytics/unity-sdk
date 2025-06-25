@@ -15,7 +15,6 @@ namespace ThinkingData.Analytics.Utils
             catch (Exception)
             {
                 success = false;
-                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate - TimeSpan get failed : " + e.Message);
             }
             try
             {
@@ -28,11 +27,10 @@ namespace ThinkingData.Analytics.Utils
             catch (Exception)
             {
                 success = false;
-                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate: IsDaylightSavingTime get failed : " + e.Message);
             }
             if (success == false)
             {
-                timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
+                timeSpan = TimeZoneInfo.Local.GetUtcOffset(dateTime);
             }
             try
             {

@@ -14,7 +14,7 @@ namespace ThinkingSDK.PC.Time
             this.mSystemElapsedRealtime = Environment.TickCount;
 
             double time_offset = (ConvertDateTimeInt(dateTimeUtcNow) - timestamp) / 1000;
-            if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Time Calibration with NTP (" + timestamp + "), diff = " + time_offset.ToString("0.000s"));
+            ThinkingSDKLogger.Print("Time Calibration with NTP (" + timestamp + "), diff = " + time_offset.ToString("0.000s"));
         }
     }
 }
