@@ -101,7 +101,7 @@ NSString * const kTDMediatorTargetAnalyticsActionNativeGetSDKVersion = @"nativeG
     if (appId) {
         params[@"appId"] = appId;
     }
-    BOOL enableAutoPush = [[TDMediator sharedInstance] performTarget:kTDMediatorTargetAnalytics action:kTDMediatorTargetAnalyticsActionNativeGetEnableAutoPush params:params shouldCacheTarget:NO];
+    BOOL enableAutoPush = [[[TDMediator sharedInstance] performTarget:kTDMediatorTargetAnalytics action:kTDMediatorTargetAnalyticsActionNativeGetEnableAutoPush params:params shouldCacheTarget:NO] boolValue];
     return enableAutoPush;
 }
 

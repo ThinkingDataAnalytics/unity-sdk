@@ -1,7 +1,7 @@
 ﻿import { TDAnalytics, TDConfig, TDMode, TDNetworkType } from '@thinkingdata/analytics';
 import I18n from '@ohos.i18n';
-
 export class TDOpenHarmonyProxy {
+
     static init(appId: string, serverUrl: string, mode: number, timeZone: string, version: number, publicKey: string) {
         let config = new TDConfig()
         config.appId = appId
@@ -62,7 +62,7 @@ export class TDOpenHarmonyProxy {
             }
             TDAnalytics.track({
                 eventName: eventName,
-                properties: JSON.parse(properties),
+                properties: this.parseJsonStrict(properties),
                 time: time,
                 timeZone: timeZone
             }, appId)
@@ -88,7 +88,7 @@ export class TDOpenHarmonyProxy {
             if (eventType == 1) {
                 TDAnalytics.trackFirst({
                     eventName: eventName,
-                    properties: JSON.parse(properties),
+                    properties: this.parseJsonStrict(properties),
                     firstCheckId: eventId,
                     time: time,
                     timeZone: timeZone
@@ -96,7 +96,7 @@ export class TDOpenHarmonyProxy {
             } else if (eventType == 2) {
                 TDAnalytics.trackUpdate({
                     eventName: eventName,
-                    properties: JSON.parse(properties),
+                    properties: this.parseJsonStrict(properties),
                     eventId: eventId,
                     time: time,
                     timeZone: timeZone
@@ -104,7 +104,7 @@ export class TDOpenHarmonyProxy {
             } else if (eventType == 3) {
                 TDAnalytics.trackOverwrite({
                     eventName: eventName,
-                    properties: JSON.parse(properties),
+                    properties: this.parseJsonStrict(properties),
                     eventId: eventId,
                     time: time,
                     timeZone: timeZone
@@ -114,9 +114,10 @@ export class TDOpenHarmonyProxy {
         }
     }
 
+
     static setSuperProperties(superProperties: string, appId: string) {
         try {
-            TDAnalytics.setSuperProperties(JSON.parse(superProperties), appId)
+            TDAnalytics.setSuperProperties(this.parseJsonStrict(superProperties), appId)
         } catch (e) {
         }
     }
@@ -148,7 +149,7 @@ export class TDOpenHarmonyProxy {
                 time = new Date(timeStamp)
             }
             TDAnalytics.userSet({
-                properties: JSON.parse(properties),
+                properties: this.parseJsonStrict(properties),
                 time: time
             }, appId)
         } catch (e) {
@@ -162,7 +163,7 @@ export class TDOpenHarmonyProxy {
                 time = new Date(timeStamp)
             }
             TDAnalytics.userSetOnce({
-                properties: JSON.parse(properties),
+                properties: this.parseJsonStrict(properties),
                 time: time
             }, appId)
         } catch (e) {
@@ -187,7 +188,7 @@ export class TDOpenHarmonyProxy {
                 time = new Date(timeStamp)
             }
             TDAnalytics.userAdd({
-                properties: JSON.parse(properties),
+                properties: this.parseJsonStrict(properties),
                 time: time
             }, appId)
         } catch (e) {
@@ -201,7 +202,7 @@ export class TDOpenHarmonyProxy {
                 time = new Date(timeStamp)
             }
             TDAnalytics.userAppend({
-                properties: JSON.parse(properties),
+                properties: this.parseJsonStrict(properties),
                 time: time
             }, appId)
         } catch (e) {
@@ -215,12 +216,13 @@ export class TDOpenHarmonyProxy {
                 time = new Date(timeStamp)
             }
             TDAnalytics.userUniqAppend({
-                properties: JSON.parse(properties),
+                properties: this.parseJsonStrict(properties),
                 time: time
             }, appId)
         } catch (e) {
         }
     }
+
 
     static userDelete(timeStamp: number, appId: string) {
         let time: Date = null;
@@ -255,4 +257,17 @@ export class TDOpenHarmonyProxy {
     static calibrateTime(timestamp: number) {
         TDAnalytics.calibrateTime(timestamp)
     }
+
+    private static parseJsonStrict(jsonString: string): object {
+        try {
+            const parsed = JSON.parse(jsonString);
+            if (typeof parsed !== 'object' || parsed === null) {
+                return {};
+            }
+            return parsed;
+        } catch (error) {
+            return {};
+        }
+    }
+
 }

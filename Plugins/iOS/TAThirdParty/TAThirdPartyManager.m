@@ -16,25 +16,27 @@
 #import "TAKochavaSyncData.h"
 
 
- typedef NS_OPTIONS(NSInteger, TAInnerThirdPartyShareType) {
-     TAInnerThirdPartyShareTypeNONE               = 0,
-     TAInnerThirdPartyShareTypeAPPSFLYER          = 1 << 0,
-     TAInnerThirdPartyShareTypeIRONSOURCE         = 1 << 1,
-     TAInnerThirdPartyShareTypeADJUST             = 1 << 2,
-     TAInnerThirdPartyShareTypeBRANCH             = 1 << 3,
-     TAInnerThirdPartyShareTypeTOPON              = 1 << 4,
-     TAInnerThirdPartyShareTypeTRACKING           = 1 << 5,
-     TAInnerThirdPartyShareTypeTRADPLUS           = 1 << 6,
-     TAInnerThirdPartyShareTypeAPPLOVIN           = 1 << 7,
-     TAInnerThirdPartyShareTypeKOCHAVA            = 1 << 8,
-     TAInnerThirdPartyShareTypeTALKINGDATA        = 1 << 9,
-     TAInnerThirdPartyShareTypeFIREBASE           = 1 << 10,
-     
- };
+typedef NS_OPTIONS(NSInteger, TDThirdPartyType) {
+    TDThirdPartyTypeNone               = 0,
+    TDThirdPartyTypeAppsFlyer          = 1 << 0,
+    TDThirdPartyTypeIronSource         = 1 << 1,
+    TDThirdPartyTypeAdjust             = 1 << 2,
+    TDThirdPartyTypeBranch             = 1 << 3,
+    TDThirdPartyTypeTopOn              = 1 << 4,
+    TDThirdPartyTypeTracking           = 1 << 5,
+    TDThirdPartyTypeTradPlus           = 1 << 6,
+    TDThirdPartyTypeAppLovin           = 1 << 7,
+    TDThirdPartyTypeKochava            = 1 << 8,
+    TDThirdPartyTypeTalkingData        = 1 << 9,
+    TDThirdPartyTypeFirebase           = 1 << 10,
+};
 
 static NSMutableDictionary *_thirdPartyManagerMap;
 
-// Register a third-party data collection service, and when the APP starts, it will start from the data area
+static NSString * const KEY_THIRD_PARTY_CLASS_NAME = @"libClass";
+static NSString * const KEY_TA_PLUGIN_CLASS_NAME = @"taThirdClass";
+static NSString * const KEY_ERROR_MESSAGE = @"errorMes";
+
 char * kThinkingServices_service __attribute((used, section("__DATA, ThinkingServices"))) = "{ \"TAThirdPartyProtocol\" : \"TAThirdPartyManager\"}";
 @interface TAThirdPartyManager()<TAThirdPartyProtocol>
 
@@ -57,112 +59,117 @@ char * kThinkingServices_service __attribute((used, section("__DATA, ThinkingSer
     [self enableThirdPartySharing:type instance:instance property:@{}];
 }
 
-- (void)enableThirdPartySharing:(NSNumber *)typee instance:(id<TAThinkingTrackProtocol>)instance property:(NSDictionary *)property
+- (void)enableThirdPartySharing:(NSNumber *)type instance:(id<TAThinkingTrackProtocol>)instance property:(NSDictionary *)property
 {
-    NSDictionary *info = [self _getThridInfoWithType:typee];
+    NSArray<NSDictionary *> *thirdPartyList = [self _getThridInfoWithType:type];
     
-    NSString *libClass = info[@"libClass"];
-    NSString *taThirdClass = info[@"taThirdClass"];
-    NSString *errorMes = info[@"errorMes"];
-    
-    if (!NSClassFromString(libClass)) {
-        NSLog(@"[THINKING] %@", errorMes);
-    }else {
-        id<TAThirdPartySyncProtocol> syncData = [_thirdPartyManagerMap objectForKey:taThirdClass];
-        if (!syncData) {
-            syncData = [NSClassFromString(taThirdClass) new];
-            [_thirdPartyManagerMap setObject:syncData forKey:taThirdClass];
+    for (NSInteger i = 0; i < thirdPartyList.count; i++) {
+        NSDictionary *info = thirdPartyList[i];
+        
+        NSString *libClass = info[KEY_THIRD_PARTY_CLASS_NAME];
+        NSString *taThirdClass = info[KEY_TA_PLUGIN_CLASS_NAME];
+        NSString *errorMes = info[KEY_ERROR_MESSAGE];
+        
+        if (!NSClassFromString(libClass)) {
+            NSLog(@"[ThinkingData][Error] %@", errorMes);
+        } else {
+            id<TAThirdPartySyncProtocol> syncData = [_thirdPartyManagerMap objectForKey:taThirdClass];
+            if (!syncData) {
+                syncData = [NSClassFromString(taThirdClass) new];
+                [_thirdPartyManagerMap setObject:syncData forKey:taThirdClass];
+            }
+            [syncData syncThirdData:instance property:[property copy]];
+            NSLog(@"[ThinkingData][Info] %@ , SyncThirdData Success", NSClassFromString(libClass));
         }
-        [syncData syncThirdData:instance property:[property copy]];
-        NSLog(@"[THINKING] %@ , SyncThirdData Success", NSClassFromString(libClass));
     }
 }
 
-
-
-
-- (NSDictionary *)_getThridInfoWithType:(NSNumber *)typee {
+- (NSArray<NSDictionary *> *)_getThridInfoWithType:(NSNumber *)type {
+    NSInteger typeNum = type.integerValue;
     
-    static NSDictionary *_ta_ThridInfo;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        _ta_ThridInfo = @{
-            @(TAInnerThirdPartyShareTypeAPPSFLYER):@{
-         
-                   @"libClass": @"AppsFlyerLib",
-                   @"taThirdClass":@"TAAppsFlyerSyncData",
-                   @"errorMes":@"AppsFlyer Data synchronization exception: not installed AppsFlyer SDK"
-           
-            },
-            @(TAInnerThirdPartyShareTypeIRONSOURCE):@{
-           
-                   @"libClass": @"IronSource",
-                   @"taThirdClass":@"TAIronSourceSyncData",
-                   @"errorMes": @"IronSource Data synchronization exception: not installed IronSource SDK"
-     
-            },
-            @(TAInnerThirdPartyShareTypeADJUST):@{
-  
-                   @"libClass": @"Adjust",
-                   @"taThirdClass":@"TAAdjustSyncData",
-                   @"errorMes": @"Adjust Data synchronization exception: not installed Adjust SDK"
- 
-            },
-            @(TAInnerThirdPartyShareTypeBRANCH):@{
-  
-                   @"libClass": @"Branch",
-                   @"taThirdClass":@"TABranchSyncData",
-                   @"errorMes": @"Branch Data synchronization exception: not installed Branch SDK"
- 
-            },
-            @(TAInnerThirdPartyShareTypeTOPON):@{
-  
-                   @"libClass": @"ATAPI",
-                   @"taThirdClass":@"TATopOnSyncData",
-                   @"errorMes": @"TopOn Data synchronization exception: not installed TopOn SDK"
- 
-            },
-            @(TAInnerThirdPartyShareTypeTRACKING):@{
-  
-                   @"libClass": @"Tracking",
-                   @"taThirdClass":@"TAReYunSyncData",
-                   @"errorMes": @"ReYun Data synchronization exception:  Data synchronization exception: not installed SDK"
- 
-            },
-            @(TAInnerThirdPartyShareTypeTRADPLUS):@{
-  
-                   @"libClass": @"TradPlus",
-                   @"taThirdClass":@"TATradPlusSyncData",
-                   @"errorMes": @"TradPlus Data synchronization exception: not installed TradPlus SDK"
- 
-            },
-            @(TAInnerThirdPartyShareTypeAPPLOVIN):@{
-  
-                   @"libClass": @"ALSdk",
-                   @"taThirdClass":@"TAAppLovinSyncData",
-                   @"errorMes": @"AppLovin Data synchronization exception: not installed AppLovin SDK"
- 
-            },
-            @(TAInnerThirdPartyShareTypeKOCHAVA):@{
-  
-                   @"libClass": @"KVATracker",
-                   @"taThirdClass":@"TAKochavaSyncData",
-                   @"errorMes": @"Kochava Data synchronization exception: not installed Kochava SDK"
- 
-            },
-            @(TAInnerThirdPartyShareTypeFIREBASE):@{
-  
-                   @"libClass": @"FIRAnalytics",
-                   @"taThirdClass":@"TAFirebaseSyncData",
-                   @"errorMes": @"FIREBASE Data synchronization exception: not installed FIRAnalytics SDK"
- 
-            },
-        };
-    });
+    NSMutableArray<NSDictionary *> *mutableArray = [NSMutableArray array];
     
-    return _ta_ThridInfo[typee];
+    if (typeNum & TDThirdPartyTypeAppsFlyer) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"AppsFlyerLib",
+            KEY_TA_PLUGIN_CLASS_NAME: @"TAAppsFlyerSyncData",
+            KEY_ERROR_MESSAGE: @"AppsFlyer Data synchronization exception: not installed AppsFlyer SDK"
+        }];
+    }
     
+    if (typeNum & TDThirdPartyTypeIronSource) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"IronSource",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TAIronSourceSyncData",
+            KEY_ERROR_MESSAGE: @"IronSource Data synchronization exception: not installed IronSource SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeAdjust) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"Adjust",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TAAdjustSyncData",
+            KEY_ERROR_MESSAGE: @"Adjust Data synchronization exception: not installed Adjust SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeBranch) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"Branch",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TABranchSyncData",
+            KEY_ERROR_MESSAGE: @"Branch Data synchronization exception: not installed Branch SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeTopOn) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"ATAPI",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TATopOnSyncData",
+            KEY_ERROR_MESSAGE: @"TopOn Data synchronization exception: not installed TopOn SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeTracking) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"Tracking",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TAReYunSyncData",
+            KEY_ERROR_MESSAGE: @"ReYun Data synchronization exception:  Data synchronization exception: not installed SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeTradPlus) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"TradPlus",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TATradPlusSyncData",
+            KEY_ERROR_MESSAGE: @"TradPlus Data synchronization exception: not installed TradPlus SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeAppLovin) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"ALSdk",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TAAppLovinSyncData",
+            KEY_ERROR_MESSAGE: @"AppLovin Data synchronization exception: not installed AppLovin SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeKochava) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"KVATracker",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TAKochavaSyncData",
+            KEY_ERROR_MESSAGE: @"Kochava Data synchronization exception: not installed Kochava SDK"
+        }];
+    }
+    
+    if (typeNum & TDThirdPartyTypeFirebase) {
+        [mutableArray addObject:@{
+            KEY_THIRD_PARTY_CLASS_NAME: @"FIRAnalytics",
+            KEY_TA_PLUGIN_CLASS_NAME:@"TAFirebaseSyncData",
+            KEY_ERROR_MESSAGE: @"FIREBASE Data synchronization exception: not installed FIRAnalytics SDK"
+        }];
+    }
+    
+    return [mutableArray copy];
 }
-
 
 @end

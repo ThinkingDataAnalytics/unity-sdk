@@ -23,7 +23,7 @@
     static dispatch_once_t onceToken;
     Class cls = NSClassFromString(@"ALSdk");
     SEL sel1 = NSSelectorFromString(@"shared");
-    SEL sel2 = NSSelectorFromString(@"setUserIdentifier");
+    SEL sel2 = NSSelectorFromString(@"setUserIdentifier:");
     __block id instance;
     dispatch_once(&onceToken, ^{
         if (cls && [cls respondsToSelector:sel1]) {

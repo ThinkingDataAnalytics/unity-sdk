@@ -15,8 +15,6 @@ namespace ThinkingData.Analytics.Wrapper
         [DllImport("__Internal")]
         private static extern string ta_get_distinct_id(string app_id);
         [DllImport("__Internal")]
-        private static extern string ta_get_account_id(string app_id);
-        [DllImport("__Internal")]
         private static extern void ta_login(string app_id, string account_id);
         [DllImport("__Internal")]
         private static extern void ta_logout(string app_id);
@@ -144,11 +142,6 @@ namespace ThinkingData.Analytics.Wrapper
             return ta_get_distinct_id(appId);
         }
 
-        private static string getAccountId(string appId)
-        {
-            return ta_get_account_id(appId);
-        }
-
         private static void login(string accountId, string appId)
         {
             ta_login(appId, accountId);
@@ -195,7 +188,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             else
             {
-                jsonStr = getJsonStr(getFinalEventProperties(taEvent.Properties));
+                jsonStr = serilize(taEvent.Properties);
             }
             long currentMillis = 0;
             if (taEvent.GetEventTime() != null && taEvent.GetEventTime() != DateTime.MinValue)

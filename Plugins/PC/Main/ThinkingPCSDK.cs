@@ -49,7 +49,7 @@ namespace ThinkingSDK.PC.Main
         {
             if (ThinkingSDKUtil.IsEmptyString(appId))
             {
-                ThinkingSDKLogger.Print("appId is empty");
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("appId is empty");
                 return null;
             }
             ThinkingSDKInstance instance = null;

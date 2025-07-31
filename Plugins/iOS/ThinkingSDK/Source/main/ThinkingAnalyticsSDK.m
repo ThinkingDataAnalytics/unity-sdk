@@ -174,13 +174,13 @@ static dispatch_queue_t td_trackQueue;
         self.file = [[TDFile alloc] initWithAppid:instanceAliasName];
         [self retrievePersistedData];
         
+        self.superProperty = [[TDSuperProperty alloc] initWithToken:instanceAliasName isLight:NO];
+
         dispatch_async(td_trackQueue, ^{
             self.dataQueue = [TDSqliteDataQueue sharedInstanceWithAppid:instanceAliasName];
             if (self.dataQueue == nil) {
                 TDLogError(@"SqliteException: init SqliteDataQueue failed");
             }
-            
-            self.superProperty = [[TDSuperProperty alloc] initWithToken:instanceAliasName isLight:NO];
             
             self.propertyPluginManager = [[TDPropertyPluginManager alloc] init];
             TDPresetPropertyPlugin *presetPlugin = [[TDPresetPropertyPlugin alloc] init];

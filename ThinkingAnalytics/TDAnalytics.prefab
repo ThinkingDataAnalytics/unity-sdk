@@ -53,6 +53,9 @@ MonoBehaviour:
     mode: 0
     timeZone: 0
     timeZoneId: 
+    enableEncrypt: 0
+    encryptVersion: 0
+    encryptPublicKey: 
     pinningMode: 0
     allowInvalidCertificates: 0
     validatesDomainName: 0

@@ -48,11 +48,11 @@ namespace ThinkingSDK.PC.Config
             }
             catch (Exception)
             {
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("TimeZoneInfo initial failed :" + e.Message);
             }
         }
         private string VerifyUrl(string serverUrl)
         {
-            serverUrl = serverUrl.Replace(" ", "");
             Uri uri = new Uri(serverUrl);
             serverUrl = uri.Scheme + "://" + uri.Host + ":" + uri.Port;
             return serverUrl;
@@ -146,11 +146,11 @@ namespace ThinkingSDK.PC.Config
         {
             try
             {
-                int code = int.Parse(result["code"].ToString());
-                if (result != null && code == 0)
+                if (result != null && result["code"] != null
+                                   && int.Parse(result["code"].ToString()) == 0)
                 {
                     Dictionary<string, object> data = (Dictionary<string, object>)result["data"];
-                    ThinkingSDKLogger.PrintJson("Get remote config success: ",data);
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config success: " + ThinkingSDKJSON.Serialize(data));
                     foreach (KeyValuePair<string, object> kv in data)
                     {
                         if (kv.Key == "sync_interval")
@@ -172,12 +172,12 @@ namespace ThinkingSDK.PC.Config
                 }
                 else
                 {
-                    ThinkingSDKLogger.PrintJson("Get remote config failed: ",result);
+                    if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config failed: " + ThinkingSDKJSON.Serialize(result));
                 }
             }
             catch (Exception ex)
             {
-                ThinkingSDKLogger.Print("Get remote config failed: " + ex.Message);
+                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("Get remote config failed: " + ex.Message);
             }
             if (mCallback != null)
             {

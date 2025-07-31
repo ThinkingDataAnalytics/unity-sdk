@@ -122,6 +122,7 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("ZoneOffset: TimeSpan get failed : " + e.Message);
             }
             try
             {
@@ -134,10 +135,11 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("ZoneOffset: IsDaylightSavingTime get failed : " + e.Message);
             }
             if (success == false)
             {
-                timeSpan = TimeZoneInfo.Local.GetUtcOffset(dateTime);
+                timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
             }
             return timeSpan.TotalHours;
         }
@@ -154,6 +156,7 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate - TimeSpan get failed : " + e.Message);
             }
             try
             {
@@ -166,10 +169,11 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
+                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate: IsDaylightSavingTime get failed : " + e.Message);
             }
             if (success == false)
             {
-                timeSpan = TimeZoneInfo.Local.GetUtcOffset(dateTime);
+                timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
             }
             DateTime dateNew = univDateTime + timeSpan;
             return dateNew.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
