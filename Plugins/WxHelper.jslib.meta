@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: DnkY5nj4Vn5da8T6mlK69v20t7RGUgxmMe0USCNJwsT6YXhC8rcmwLQ=
+guid: 6cfcdb72b7a8940b08bcd1e84254e567
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -23,7 +23,7 @@ PluginImporter:
       settings:
         DefaultValueInitialized: true
   - first:
-      OpenHarmony: OpenHarmony
+      WebGL: WebGL
     second:
       enabled: 1
       settings: {}

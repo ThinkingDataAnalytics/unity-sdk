@@ -28,8 +28,18 @@ namespace ThinkingData.Analytics.Wrapper
                 }
             }
         }
+        
+        private static string getJsonStr(Dictionary<string, object> data) {
+            if (data == null)
+            {
+                return "";
+            }
 
-        private static string serilize<T>(Dictionary<string, T> data) {
+            return serilize(data);
+        }
+
+        private static string serilize<T>(Dictionary<string, T> data)
+        {
             return TDMiniJson.Serialize(data, getTimeString);
         }
 
@@ -58,6 +68,10 @@ namespace ThinkingData.Analytics.Wrapper
         public static string GetDistinctId(string appId)
         {
             return getDistinctId(appId);
+        }
+
+        public static string GetAccountId(string appId) {
+            return getAccountId(appId);
         }
 
         public static void Login(string accountId, string appId)

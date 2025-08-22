@@ -13,15 +13,6 @@ namespace ThinkingData.Analytics.Wrapper
         private static TimeZoneInfo defaultTimeZone = null;
         private static TDTimeZone defaultTDTimeZone = TDTimeZone.Local;
 
-        private static string getJsonStr(Dictionary<string, object> data) {
-            if (data == null)
-            {
-                return "";
-            }
-
-            return serilize(data);
-        }
-
         private static string getTimeString(DateTime dateTime) {
             if (defaultTimeZone == null)
             {
@@ -87,7 +78,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -105,7 +96,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }    
         }
 
@@ -157,7 +148,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -169,7 +160,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -181,7 +172,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -193,7 +184,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -216,7 +207,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
             return result;
         }
@@ -230,7 +221,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
             return result;
         }
@@ -255,6 +246,11 @@ namespace ThinkingData.Analytics.Wrapper
             return sdkClass.CallStatic<string>("getDistinctId", appId);
         }
 
+        private static string getAccountId(string appId)
+        {
+            return sdkClass.CallStatic<string>("getAccountId", appId);
+        }
+
         private static void login(string uniqueId, string appId)
         {
             sdkClass.CallStatic("login", uniqueId, appId);
@@ -268,7 +264,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -280,7 +276,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -292,7 +288,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -304,7 +300,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -316,7 +312,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -328,7 +324,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -350,7 +346,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -362,7 +358,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -374,7 +370,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -386,7 +382,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -398,7 +394,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -410,7 +406,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -422,7 +418,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -434,7 +430,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -446,7 +442,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -458,7 +454,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 
@@ -475,7 +471,7 @@ namespace ThinkingData.Analytics.Wrapper
             }
             catch (Exception e)
             {
-                if (TDLog.GetEnable()) TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
+                TDLog.w("ThinkingAnalytics: unexpected exception: " + e);
             }
         }
 

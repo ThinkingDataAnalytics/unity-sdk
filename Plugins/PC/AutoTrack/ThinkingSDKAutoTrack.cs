@@ -34,7 +34,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
                 }
                 if (mEventCallback_PC != null)
                 {
-                    ThinkingSDKUtil.AddDictionary(properties, mEventCallback_PC.AutoTrackEventCallback_PC((int) TDAutoTrackEventType.AppStart, properties));
+                    ThinkingSDKUtil.AddDictionary(properties, mEventCallback_PC.AutoTrackEventCallback_PC((int)TDAutoTrackEventType.AppStart, properties));
                 }
                 ThinkingPCSDK.Track(ThinkingSDKConstant.START_EVENT, properties, this.mAppId);
             }
@@ -45,7 +45,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
 
             ThinkingPCSDK.PauseTimeEvent(false, appId: this.mAppId);
         }
-        else 
+        else
         {
             if ((mAutoTrackEvents & TDAutoTrackEventType.AppEnd) != 0)
             {
@@ -56,7 +56,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
                 }
                 if (mEventCallback_PC != null)
                 {
-                    ThinkingSDKUtil.AddDictionary(properties, mEventCallback_PC.AutoTrackEventCallback_PC((int) TDAutoTrackEventType.AppEnd, properties));
+                    ThinkingSDKUtil.AddDictionary(properties, mEventCallback_PC.AutoTrackEventCallback_PC((int)TDAutoTrackEventType.AppEnd, properties));
                 }
                 ThinkingPCSDK.Track(ThinkingSDKConstant.END_EVENT, properties, this.mAppId);
             }
@@ -96,7 +96,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
                 }
                 ThinkingPCSDK.Track(ThinkingSDKConstant.INSTALL_EVENT, mProperties, this.mAppId);
                 ThinkingPCSDK.Flush(this.mAppId);
-            } 
+            }
         }
         if ((events & TDAutoTrackEventType.AppStart) != 0 && mStarted == false)
         {
@@ -141,7 +141,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
                 }
                 ThinkingPCSDK.Track(ThinkingSDKConstant.INSTALL_EVENT, properties, this.mAppId);
                 ThinkingPCSDK.Flush(this.mAppId);
-            } 
+            }
         }
         if ((events & TDAutoTrackEventType.AppStart) != 0 && mStarted == false)
         {
@@ -156,7 +156,7 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
             }
             if (mEventCallback_PC != null)
             {
-                ThinkingSDKUtil.AddDictionary(properties, mEventCallback_PC.AutoTrackEventCallback_PC((int) TDAutoTrackEventType.AppStart, properties));
+                ThinkingSDKUtil.AddDictionary(properties, mEventCallback_PC.AutoTrackEventCallback_PC((int)TDAutoTrackEventType.AppStart, properties));
             }
             ThinkingPCSDK.Track(ThinkingSDKConstant.START_EVENT, properties, this.mAppId);
             ThinkingPCSDK.Flush(this.mAppId);
@@ -208,6 +208,28 @@ public class ThinkingSDKAutoTrack : MonoBehaviour
             else
                 mAutoTrackProperties[TDAutoTrackEventType_APP_CRASH] = properties;
         }
+    }
+
+    public Dictionary<string, object> GetAutoTrackProperties(TDAutoTrackEventType events)
+    {
+        if ((events & TDAutoTrackEventType.AppInstall) != 0)
+        {
+            return mAutoTrackProperties[TDAutoTrackEventType_APP_INSTALL];
+        }
+        if ((events & TDAutoTrackEventType.AppStart) != 0)
+        {
+            return mAutoTrackProperties[TDAutoTrackEventType_APP_START];
+        }
+        if ((events & TDAutoTrackEventType.AppEnd) != 0)
+        {
+            if (mAutoTrackProperties.ContainsKey(TDAutoTrackEventType_APP_END))
+                return mAutoTrackProperties[TDAutoTrackEventType_APP_END];
+        }
+        if ((events & TDAutoTrackEventType.AppCrash) != 0)
+        {
+            return mAutoTrackProperties[TDAutoTrackEventType_APP_CRASH];
+        }
+        return null;
     }
 
 }

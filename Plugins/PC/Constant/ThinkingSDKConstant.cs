@@ -106,11 +106,9 @@ namespace ThinkingSDK.PC.Constant
         // scene unload
         public static readonly string APP_SCENE_UNLOAD = "ta_scene_unloaded";
 
-
-
-
-
-
-
+        // ta_mg_show
+        public static readonly string TA_MG_SHOW = "ta_mg_show";
+        // ta_mg_hide
+        public static readonly string TA_MG_HIDE = "ta_mg_hide";
     }
 }

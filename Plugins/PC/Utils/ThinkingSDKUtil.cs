@@ -122,7 +122,6 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
-                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("ZoneOffset: TimeSpan get failed : " + e.Message);
             }
             try
             {
@@ -135,11 +134,10 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
-                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("ZoneOffset: IsDaylightSavingTime get failed : " + e.Message);
             }
             if (success == false)
             {
-                timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
+                timeSpan = TimeZoneInfo.Local.GetUtcOffset(dateTime);
             }
             return timeSpan.TotalHours;
         }
@@ -156,7 +154,6 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
-                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate - TimeSpan get failed : " + e.Message);
             }
             try
             {
@@ -169,11 +166,10 @@ namespace ThinkingSDK.PC.Utils
             catch (Exception)
             {
                 success = false;
-                //if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("FormatDate: IsDaylightSavingTime get failed : " + e.Message);
             }
             if (success == false)
             {
-                timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
+                timeSpan = TimeZoneInfo.Local.GetUtcOffset(dateTime);
             }
             DateTime dateNew = univDateTime + timeSpan;
             return dateNew.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
@@ -181,6 +177,7 @@ namespace ThinkingSDK.PC.Utils
         // add Dictionary to Dictionary
         public static void AddDictionary(Dictionary<string, object> originalDic, Dictionary<string, object> subDic)
         {
+            if (subDic == null || originalDic == null) return;
             if (originalDic != subDic)
             {
                 foreach (KeyValuePair<string, object> kv in subDic)

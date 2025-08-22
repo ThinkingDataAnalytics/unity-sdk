@@ -5,10 +5,8 @@ using System.Collections.Generic;
 using System;
 using System.Threading;
 using System.Collections;
-using ThinkingAnalytics;
 public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, TDAutoTrackEventHandler
 {
-
 
     public GUISkin skin;
     private Vector2 scrollPosition = Vector2.zero;
@@ -123,7 +121,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         if (GUILayout.Button("ManualInitialization", GUILayout.Height(Height)))
         {
             // 1. Manual initialization (ThinkingAnalytics prefab loaded)
-            //TDAnalytics.Init();
+            TDAnalytics.Init();
 
 
             // 2. Manual initialization (dynamically loading TDAnalytics script)
@@ -136,16 +134,16 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
 
 
             // 2.1 Set personalized instance parameters
-            string appId = "1b1c1fef65e3482bad5c9d0e6a823356";
-            string serverUrl = "https://receiver.ta.thinkingdata.cn";
+            string appId = "1b1c1fef65e3482bad 5c9d0e6a823356";
+            string serverUrl = "https://receiver.ta. thinkingdata.cn/asd";
             TDConfig tDConfig = new TDConfig(appId, serverUrl);
             //tDConfig.mode = TDMode.Normal;
-            tDConfig.timeZone = TDTimeZone.Asia_Shanghai;
+            tDConfig.timeZone = TDTimeZone.America_New_York;
             //Enable encrypted transmission(only iOS / Android)
             int encryptVersion = 0;
             string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
             tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
-            TDAnalytics.Init(tDConfig);
+            //TDAnalytics.Init(tDConfig);
             //TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
             TDAnalytics.SetDynamicSuperProperties(this);
             //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppEnd);

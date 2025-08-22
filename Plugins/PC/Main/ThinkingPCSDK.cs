@@ -49,7 +49,7 @@ namespace ThinkingSDK.PC.Main
         {
             if (ThinkingSDKUtil.IsEmptyString(appId))
             {
-                if (ThinkingSDKPublicConfig.IsPrintLog()) ThinkingSDKLogger.Print("appId is empty");
+                ThinkingSDKLogger.Print("appId is empty");
                 return null;
             }
             ThinkingSDKInstance instance = null;
@@ -152,7 +152,12 @@ namespace ThinkingSDK.PC.Main
             GetInstance(appId).SetAutoTrackProperties(events, properties);
         }
 
-        public static void Track(string eventName,string appId = "")
+        public static Dictionary<string, object> GetAutoTrackProperties(TDAutoTrackEventType events, string appId = "")
+        {
+            return GetInstance(appId).GetAutoTrackProperties(events);
+        }
+
+        public static void Track(string eventName, string appId = "")
         {
             GetInstance(appId).Track(eventName);
         }

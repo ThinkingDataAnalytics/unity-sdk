@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.2.2
+    SDK VERSION:3.4.0-beta.3
  */
 
 /**    
@@ -201,6 +201,14 @@ namespace ThinkingData.Analytics
             if (tracking_enabled)
             {
                 return TDWrapper.GetDistinctId(appId);
+            }
+            return null;
+        }
+
+        public static string GetAccountId(string appId = "") {
+            if (tracking_enabled)
+            {
+                return TDWrapper.GetAccountId(appId);
             }
             return null;
         }
@@ -1413,6 +1421,28 @@ namespace ThinkingData.Analytics
 
             if (tracking_enabled)
             {
+                if (sThinkingData == null && configs == null)
+                {
+                    new GameObject("ThinkingData", typeof(TDAnalytics));
+                    TDAnalyticSetting setting = TDAnalyticSetting.GetSerializedObject();
+                    if (setting != null)
+                    {
+                        if (!string.IsNullOrEmpty(setting.appId) && !string.IsNullOrEmpty(setting.serverUrl))
+                        {
+                            configs = new TDConfig[1];
+                            TDConfig config = new TDConfig(setting.appId, setting.serverUrl);
+                            EnableLog(setting.enableLog);
+                            SetNetworkType(setting.networkType);
+                            config.mode = setting.mode;
+                            config.timeZone = setting.timeZone;
+                            if (!string.IsNullOrEmpty(setting.encryptPublicKey))
+                            {
+                                config.EnableEncrypt(setting.encryptPublicKey, setting.encryptVersion);
+                            }
+                            configs[0] = config;
+                        }
+                    }
+                }
                 TDPublicConfig.GetPublicConfig();
                 TDLog.EnableLog(sThinkingData.enableLog);
                 TDWrapper.EnableLog(sThinkingData.enableLog);
@@ -1431,13 +1461,12 @@ namespace ThinkingData.Analytics
                             config.appId = config.appId.Replace(" ", "");
                             TDWrapper.ShareInstance(config, sThinkingData);
                             TDWrapper.SetNetworkType(sThinkingData.networkType);
-                            if (TDLog.GetEnable()) TDLog.i(string.Format("TDAnalytics SDK initialize success, AppId = {0}, ServerUrl = {1}, Mode = {2}, TimeZone = {3}, DeviceId = {4}, Lib = Unity, LibVersion = {5}{6}", config.appId, config.serverUrl, config.mode, config.timeZone, GetDeviceId(), GetSDKVersion(), (config.name != null ? (", Name = " + config.name) : "")));
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    if(TDLog.GetEnable()) TDLog.i("ThinkingAnalytics start Error: " + ex.Message);
+                    TDLog.i("ThinkingAnalytics start Error: " + ex.Message);
                 }
             }
 
@@ -1555,6 +1584,8 @@ namespace ThinkingData.Analytics
         /// </summary>
         public string name { set { if (!string.IsNullOrEmpty(value)) sName = value.Replace(" ", ""); } get { return sName; } } // instances name
         private string sName;
+
+        public int reportingToTencentSdk;
 
         /// <summary>
         /// Construct TDConfig instance
