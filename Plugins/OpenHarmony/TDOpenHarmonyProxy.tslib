@@ -1,4 +1,4 @@
-﻿import { TDAnalytics, TDConfig, TDMode, TDNetworkType } from 'TDAnalytics';
+﻿import { TDAnalytics, TDConfig, TDMode, TDNetworkType } from 'TDAnalytics'; // 首行位置不能改变!!，编译后名称需更改为 @thinkingdata/analytics
 import I18n from '@ohos.i18n';
 
 export class TDOpenHarmonyProxy {
@@ -255,4 +255,10 @@ export class TDOpenHarmonyProxy {
     static calibrateTime(timestamp: number) {
         TDAnalytics.calibrateTime(timestamp)
     }
+}
+
+export function RegisterTDOpenHarmonyProxy(){
+    var register = { }
+    register["TDOpenHarmonyProxy"] = TDOpenHarmonyProxy;
+    return register
 }
