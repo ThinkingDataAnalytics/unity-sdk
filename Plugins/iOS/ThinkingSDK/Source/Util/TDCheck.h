@@ -30,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSDictionary *)td_checkToJSONObjectRecursive:(NSDictionary *)properties timeFormatter:(NSDateFormatter *)timeFormatter;
 
++ (void)safelyAddEntriesFromDictionary:(NSDictionary *)sourceDict toDictionary:(NSMutableDictionary *)targetDict;
+
 @end
 
 

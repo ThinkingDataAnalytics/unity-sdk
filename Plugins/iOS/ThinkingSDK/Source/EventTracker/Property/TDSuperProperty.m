@@ -14,11 +14,12 @@
 ///multi-instance identifier
 @property (nonatomic, copy) NSString *token;
 /// static public property
-@property (atomic, strong) NSDictionary *superProperties;
+@property (nonatomic, strong) NSDictionary *superProperties;
 /// dynamic public properties
 @property (nonatomic, copy) NSDictionary<NSString *, id> *(^dynamicSuperProperties)(void);
 @property (nonatomic, strong) TDFile *file;
 @property (nonatomic, assign) BOOL isLight;
+@property (nonatomic, strong) NSLock *lock;
 
 @end
 
@@ -26,11 +27,11 @@
 
 - (instancetype)initWithToken:(NSString *)token isLight:(BOOL)isLight {
     if (self = [super init]) {
+        self.lock = [[NSLock alloc] init];
         NSAssert(token.length > 0, @"token cant empty");
         self.token = token;
         self.isLight = isLight;
         if (!isLight) {
-            
             self.file = [[TDFile alloc] initWithAppid:token];
             self.superProperties = [self.file unarchiveSuperProperties];
         }
@@ -45,15 +46,13 @@
         TDLogError(@"%@ propertieDict error.", properties);
         return;
     }
-
-    
+    [self.lock lock];
     NSMutableDictionary *tmp = [NSMutableDictionary dictionaryWithDictionary:self.superProperties];
-    
     [tmp addEntriesFromDictionary:properties];
     self.superProperties = [NSDictionary dictionaryWithDictionary:tmp];
-
-    
     [self.file archiveSuperProperties:self.superProperties];
+    [self.lock unlock];
+    
     TDLogInfo(@"set super properties success");
 }
 
@@ -64,44 +63,48 @@
         return;
     }
 
+    [self.lock lock];
     NSMutableDictionary *tmp = [NSMutableDictionary dictionaryWithDictionary:self.superProperties];
     tmp[property] = nil;
     self.superProperties = [NSDictionary dictionaryWithDictionary:tmp];
-    
     [self.file archiveSuperProperties:self.superProperties];
+    [self.lock unlock];
+    
     TDLogInfo(@"unset super properties success");
 }
 
 - (void)clearSuperProperties {
+    [self.lock lock];
     self.superProperties = @{};
     [self.file archiveSuperProperties:self.superProperties];
+    [self.lock unlock];
     TDLogInfo(@"clear super properties success");
 }
 
 - (NSDictionary *)currentSuperProperties {
-    if (self.superProperties) {
-        return [TDPropertyValidator validateProperties:[self.superProperties copy]];
-    } else {
-        return @{};
-    }
+    NSDictionary *result = nil;
+    [self.lock lock];
+    result = [self.superProperties copy] ?: @{};
+    [self.lock unlock];
+    return result;
 }
 
 - (void)registerDynamicSuperProperties:(NSDictionary<NSString *, id> *(^ _Nullable)(void))dynamicSuperProperties {
-    @synchronized (self) {
-        self.dynamicSuperProperties = dynamicSuperProperties;
-    }
+    [self.lock lock];
+    self.dynamicSuperProperties = dynamicSuperProperties;
+    [self.lock unlock];
 }
 
 
 - (NSDictionary *)obtainDynamicSuperProperties {
-    @synchronized (self) {
-        if (self.dynamicSuperProperties) {
-            NSDictionary *properties = self.dynamicSuperProperties();
-            NSDictionary *validProperties = [TDPropertyValidator validateProperties:[properties copy]];
-            return validProperties;
-        }
-        return nil;
+    NSDictionary *result = nil;
+    [self.lock lock];
+    if (self.dynamicSuperProperties) {
+        NSDictionary *properties = self.dynamicSuperProperties();
+        result = [TDPropertyValidator validateProperties:[properties copy]];
     }
+    [self.lock unlock];
+    return result;
 }
 
 @end

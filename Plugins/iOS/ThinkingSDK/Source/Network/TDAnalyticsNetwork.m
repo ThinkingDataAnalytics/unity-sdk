@@ -279,11 +279,15 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
 - (NSMutableURLRequest *)buildRequestWithJSONString:(NSString *)jsonString {
     NSData *zippedData = [NSData td_gzipData:[jsonString dataUsingEncoding:NSUTF8StringEncoding]];
     NSString *postBody = [zippedData base64EncodedStringWithOptions:0];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[self formatURLWithOriginalUrl:self.serverURL]];
+    NSURL *requestUrl = [self formatURLWithOriginalUrl:self.serverURL];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:requestUrl];
     [request setHTTPMethod:@"POST"];
     [request setHTTPBody:[postBody dataUsingEncoding:NSUTF8StringEncoding]];
     NSString *contentType = [NSString stringWithFormat:@"text/plain"];
     [request addValue:contentType forHTTPHeaderField:@"Content-Type"];
+    if([TDAnalyticsNetwork isEnableDNS] && requestUrl.host){
+        [request addValue:requestUrl.host forHTTPHeaderField:@"Host"];
+    }
     [request setTimeoutInterval:60.0];
     return request;
 }
@@ -320,8 +324,12 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
     NSString *appendParams = [NSString stringWithFormat:@"appid=%@&source=client&dryRun=%d&deviceId=%@", appid, dryRun, deviceId];
     TDLogDebug(@"RequestAppendParams: %@", appendParams);
     NSString *postData = [NSString stringWithFormat:@"%@&data=%@", appendParams, [self URLEncode:jsonString]];
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[self formatURLWithOriginalUrl:self.serverDebugURL]];
+    NSURL *requestUrl = [self formatURLWithOriginalUrl:self.serverDebugURL];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:requestUrl];
     [request setHTTPMethod:@"POST"];
+    if([TDAnalyticsNetwork isEnableDNS] && requestUrl.host){
+        [request addValue:requestUrl.host forHTTPHeaderField:@"Host"];
+    }
     request.HTTPBody = [postData dataUsingEncoding:NSUTF8StringEncoding];
     return request;
 }

@@ -61,25 +61,22 @@
 #pragma mark - EnableTracking
 
 - (void)innerSetTrackStatus: (TDTrackStatus)status {
+    self.sdkStatus = status;
     switch (status) {
         case TDTrackStatusPause: {
             TDLogInfo(@"light instance [%@] change status to Pause", self.config.name)
-            self.isEnabled = NO;
             break;
         }
         case TDTrackStatusStop: {
             TDLogInfo(@"light instance [%@] change status to Stop", self.config.name)
-            self.isEnabled = NO;
             break;
         }
         case TDTrackStatusSaveOnly: {
             TDLogInfo(@"light instance [%@] change status to SaveOnly", self.config.name)
-            self.isEnabled = YES;
             break;
         }
         case TDTrackStatusNormal: {
             TDLogInfo(@"light instance [%@] change status to Normal", self.config.name)
-            self.isEnabled = YES;
             break;
         }
         default:

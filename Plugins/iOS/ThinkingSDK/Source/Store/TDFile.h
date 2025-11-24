@@ -7,17 +7,13 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "TDConstant.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface TDFile : NSObject
 
-@property(strong,nonatomic) NSString* appid;
-
 - (instancetype)initWithAppid:(NSString*)appid;
-
-- (void)archiveSessionID:(long long)sessionid;
-- (long long)unarchiveSessionID ;
 
 - (void)archiveIdentifyId:(nullable NSString *)identifyId;
 - (NSString*)unarchiveIdentifyID ;
@@ -31,18 +27,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)archiveUploadInterval:(NSNumber *)uploadInterval;
 - (NSNumber*)unarchiveUploadInterval;
 
-
 - (void)archiveSuperProperties:(nullable NSDictionary *)superProperties;
 - (NSDictionary*)unarchiveSuperProperties;
 
-- (void)archiveTrackPause:(BOOL)trackPause;
+// Read old information. Starting with version 3.2.0, the function 'archiveTrackStatus' is used
 - (BOOL)unarchiveTrackPause;
-
-- (void)archiveOptOut:(BOOL)optOut;
 - (BOOL)unarchiveOptOut;
-
-- (void)archiveIsEnabled:(BOOL)isEnabled;
 - (BOOL)unarchiveEnabled;
+
+- (void)archiveTrackStatus:(TDTrackStatus)trackStatus;
+- (nullable NSNumber *)unarchiveTrackStatus;
 
 - (void)archiveDeviceId:(NSString *)deviceId;
 - (NSString *)unarchiveDeviceId;
@@ -53,10 +47,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)archiveObject:(id)object withFilePath:(NSString *)filePath;
 
 - (BOOL)addSkipBackupAttributeToItemAtPath:(NSString *)filePathString;
-// Compatible with old versions
-- (NSString*)unarchiveOldLoginId;
-// Compatible with old versions
-- (void)deleteOldLoginId;
 
 @end;
 

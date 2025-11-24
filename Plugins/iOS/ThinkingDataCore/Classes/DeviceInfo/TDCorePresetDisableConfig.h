@@ -32,8 +32,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(class, nonatomic, readonly) BOOL disableOs;
 @property(class, nonatomic, readonly) BOOL disableInstallTime;
 @property(class, nonatomic, readonly) BOOL disableDeviceType;
-@property(class, nonatomic, readonly) BOOL disableSessionID;
-@property(class, nonatomic, readonly) BOOL disableCalibratedTime;
 
 @property(class, nonatomic, readonly) BOOL disableNetworkType;
 @property(class, nonatomic, readonly) BOOL disableZoneOffset;

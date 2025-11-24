@@ -16,12 +16,25 @@
 #import "TDCoreKeychainHelper.h"
 #endif
 
+#if __has_include(<ThinkingDataCore/TDUserDefaults.h>)
+#import <ThinkingDataCore/TDUserDefaults.h>
+#else
+#import "TDUserDefaults.h"
+#endif
+
 #import "ThinkingAnalyticsSDKPrivate.h"
 
+static NSString * kInstallEventFlagSeparator = @"&td&";
+static NSString * kUserDefaultFirstOpenFlag = @"thinking_isfirst";
+static NSString * kUserDefaultInstallTimes = @"thinking_data_install_times";
+static NSString * kUserDefaultTrackInstallSuccess = @"thinking_data_install_track_success";
 
 @interface TDDeviceInfo ()
+@property (atomic, copy) NSString *installTimes;
+@property (atomic, copy) NSString *deviceId;
 @property (nonatomic, copy, readwrite) NSString *uniqueId;
 @property (nonatomic, assign, readwrite) BOOL isFirstOpen;
+@property (atomic, assign, readwrite) BOOL isInstallTrackSuccess;
 
 @end
 
@@ -41,6 +54,33 @@
     if (self) {
         self.libName = @"iOS";
         self.libVersion = [TDPublicConfig version];
+        [self configInstallTimes];
+        self.deviceId = [TDCoreDeviceInfo deviceId];
+        
+        if (self.isFirstOpen) {
+            NSString *installEventFlag = [NSString stringWithFormat:@"%@%@0", [TDCoreDeviceInfo appVersion], kInstallEventFlagSeparator];
+            [[TDUserDefaults standardUserDefaults] setString:installEventFlag forKey:kUserDefaultTrackInstallSuccess];
+        }
+        NSString *installEventFlag = [[TDUserDefaults standardUserDefaults] objectForKey:kUserDefaultTrackInstallSuccess];
+        if ([installEventFlag isKindOfClass:NSString.class]) {
+            NSArray<NSString *> *values = [installEventFlag componentsSeparatedByString:kInstallEventFlagSeparator];
+            if (values.count == 2) {
+                NSString *appVersion = values.firstObject;
+                BOOL isInstallTrackSuccess = [values.lastObject boolValue];
+                if ([[TDCoreDeviceInfo appVersion] isEqualToString:appVersion]) {
+                    self.isInstallTrackSuccess = isInstallTrackSuccess;
+                } else {
+                    // Event 'td_app_install' is not reported when the app version is upgraded. Regardless of whether installation events have been reported
+                    self.isInstallTrackSuccess = YES;
+                }
+            } else {
+                // default is YES.
+                self.isInstallTrackSuccess = YES;
+            }
+        } else {
+            // default is YES.
+            self.isInstallTrackSuccess = YES;
+        }
     }
     return self;
 }
@@ -50,14 +90,14 @@
 }
 
 - (NSString *)uniqueId {
-    static dispatch_once_t onceToken;
-    static NSString *uniqueId = nil;
-    dispatch_once(&onceToken, ^{
-        uniqueId = [self getDeviceUniqueId];
-    });
-    return uniqueId;
+    return [self getDeviceUniqueId];
 }
 
+- (void)setAppInstallFlag {
+    self.isInstallTrackSuccess = YES;
+    NSString *installEventFlag = [NSString stringWithFormat:@"%@%@1", [TDCoreDeviceInfo appVersion], kInstallEventFlagSeparator];
+    [[TDUserDefaults standardUserDefaults] setString:installEventFlag forKey:kUserDefaultTrackInstallSuccess];
+}
 
 #if TARGET_OS_OSX
 
@@ -75,23 +115,25 @@
 }
 
 - (NSString *)getDeviceUniqueId {
-    NSString *keyExistFirstRecord = @"thinking_isfirst";
-    BOOL isExistFirstRecord = [[[NSUserDefaults standardUserDefaults] objectForKey:keyExistFirstRecord] boolValue];
-    if (!isExistFirstRecord) {
-        self.isFirstOpen = YES;
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:keyExistFirstRecord];
-    } else {
-        self.isFirstOpen = NO;
-    }
-    
     NSString *keyDefaultDistinctId = @"thinking_data_default_distinct_id";
-    NSString *defaultDistinctId = [[NSUserDefaults standardUserDefaults] stringForKey:keyDefaultDistinctId];
+    NSString *defaultDistinctId = [[TDUserDefaults standardUserDefaults] stringForKey:keyDefaultDistinctId];
     if (!defaultDistinctId) {
         defaultDistinctId = [TDCoreDeviceInfo deviceId];
-        [[NSUserDefaults standardUserDefaults] setObject:defaultDistinctId forKey:keyDefaultDistinctId];
+        [[TDUserDefaults standardUserDefaults] setObject:defaultDistinctId forKey:keyDefaultDistinctId];
     }
     
     return defaultDistinctId;
+}
+
+- (void)configInstallTimes {
+    NSString *keyExistFirstRecord = kUserDefaultFirstOpenFlag;
+    BOOL isExistFirstRecord = [[[TDUserDefaults standardUserDefaults] objectForKey:keyExistFirstRecord] boolValue];
+    if (!isExistFirstRecord) {
+        self.isFirstOpen = YES;
+        [[TDUserDefaults standardUserDefaults] setBool:YES forKey:kUserDefaultFirstOpenFlag];
+    } else {
+        self.isFirstOpen = NO;
+    }
 }
 
 #endif
@@ -100,51 +142,41 @@
 
 - (NSString *)getDeviceUniqueId {
     NSString *uniqueId = nil;
+    if ([self.installTimes isEqualToString:@"1"]) {
+        uniqueId = self.deviceId;
+    } else {
+        uniqueId = [NSString stringWithFormat:@"%@_%@", self.deviceId, self.installTimes];
+    }
+    return uniqueId;
+}
+
+- (void)configInstallTimes {
     @synchronized (self) {
-        NSString *deviceId = [TDCoreDeviceInfo deviceId];
-        NSString *installTimes = [TDKeychainHelper readInstallTimes];
-        BOOL isExistFirstRecord = [[[NSUserDefaults standardUserDefaults] objectForKey:@"thinking_isfirst"] boolValue];
+        BOOL isExistFirstRecord = [[[TDUserDefaults standardUserDefaults] objectForKey:kUserDefaultFirstOpenFlag] boolValue];
         if (!isExistFirstRecord) {
             self.isFirstOpen = YES;
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"thinking_isfirst"];
+            [[TDUserDefaults standardUserDefaults] setBool:YES forKey:kUserDefaultFirstOpenFlag];
         } else {
             self.isFirstOpen = NO;
         }
         
-        TDFile *file = [[TDFile alloc] initWithAppid:[ThinkingAnalyticsSDK defaultInstance].config.appid];
-        if (deviceId.length == 0) {
-            deviceId = [file unarchiveDeviceId];
-            if (deviceId.length > 0) {
-                [TDCoreKeychainHelper saveDeviceId:deviceId];
-            }
+        NSString *installTimes = [TDKeychainHelper readInstallTimes];
+        if (installTimes == nil || [installTimes isKindOfClass:NSString.class] == NO || installTimes.length == 0) {
+            installTimes = [[TDUserDefaults standardUserDefaults] stringForKey:kUserDefaultInstallTimes];
         }
-        if (installTimes.length == 0) {
-            installTimes = [file unarchiveInstallTimes];
-            if (installTimes.length > 0) {
-                [TDKeychainHelper saveInstallTimes:installTimes];
-            }
+        if (!isExistFirstRecord) {
+            int setup_int = [installTimes intValue];
+            setup_int += 1;
+            installTimes = [NSString stringWithFormat:@"%d", setup_int];
         }
-        if (installTimes.length == 0) {
+        if (installTimes == nil || installTimes.length == 0) {
             installTimes = @"1";
-            [file archiveInstallTimes:installTimes];
-            [TDKeychainHelper saveInstallTimes:installTimes];
-        } else {
-            if (!isExistFirstRecord) {
-                int setup_int = [installTimes intValue];
-                setup_int++;
-                installTimes = [NSString stringWithFormat:@"%d", setup_int];
-                [file archiveInstallTimes:installTimes];
-                [TDKeychainHelper saveInstallTimes:installTimes];
-            }
         }
-        
-        if ([installTimes isEqualToString:@"1"]) {
-            uniqueId = deviceId;
-        } else {
-            uniqueId = [NSString stringWithFormat:@"%@_%@",deviceId, installTimes];
-        }
+        [[TDUserDefaults standardUserDefaults] setString:installTimes forKey:kUserDefaultInstallTimes];
+        [TDKeychainHelper saveInstallTimes:installTimes];
+
+        self.installTimes = installTimes;
     }
-    return uniqueId;
 }
 
 #endif

@@ -9,80 +9,98 @@
 #import "TDCoreDeviceInfo.h"
 #import "TDCorePresetDisableConfig.h"
 
+static NSString *g_bundleId = nil;
+static NSDate *g_installTime = nil;
+static NSString *g_deviceId = nil;
+static NSString *g_appVersion = nil;
+static NSString *g_os = nil;
+static NSString *g_osVersion = nil;
+static NSString *g_deviceModel = nil;
+static NSString *g_deviceType = nil;
+static NSString *g_manufacturer = nil;
+static NSNumber *g_isSimulator = nil;
+#if TARGET_OS_IOS
+static NSNumber *g_screenWidth = nil;
+static NSNumber *g_screenHeight = nil;
+#endif
+
 @implementation TDCorePresetProperty
 
 + (NSDictionary *)staticProperties {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     if (![TDCorePresetDisableConfig disableBundleId]) {
-        NSString *value = [TDCoreDeviceInfo bundleId];
-        if (value) {
-            dict[@"#bundle_id"] = value;
+        if (g_bundleId == nil) {
+            g_bundleId = [TDCoreDeviceInfo bundleId];
         }
+        dict[@"#bundle_id"] = g_bundleId;
     }
     if (![TDCorePresetDisableConfig disableInstallTime]) {
-        NSDate *value = [TDCoreDeviceInfo installTime];
-        if (value) {
-            dict[@"#install_time"] = value;
+        if (g_installTime == nil) {
+            g_installTime = [TDCoreDeviceInfo installTime];
         }
+        dict[@"#install_time"] = g_installTime;
     }
     if (![TDCorePresetDisableConfig disableDeviceId]) {
-        NSString *value = [TDCoreDeviceInfo deviceId];
-        if (value) {
-            dict[@"#device_id"] = value;
+        if (g_deviceId == nil) {
+            g_deviceId = [TDCoreDeviceInfo deviceId];
         }
+        dict[@"#device_id"] = g_deviceId;
     }
     if (![TDCorePresetDisableConfig disableAppVersion]) {
-        NSString *value = [TDCoreDeviceInfo appVersion];
-        if (value) {
-            dict[@"#app_version"] = value;
+        if (g_appVersion == nil) {
+            g_appVersion = [TDCoreDeviceInfo appVersion];
         }
+        dict[@"#app_version"] = g_appVersion;
     }
     if (![TDCorePresetDisableConfig disableOs]) {
-        NSString *value = [TDCoreDeviceInfo os];
-        if (value) {
-            dict[@"#os"] = value;
+        if (g_os == nil) {
+            g_os = [TDCoreDeviceInfo os];
         }
+        dict[@"#os"] = g_os;
     }
     if (![TDCorePresetDisableConfig disableOsVersion]) {
-        NSString *value = [TDCoreDeviceInfo osVersion];
-        if (value) {
-            dict[@"#os_version"] = value;
+        if (g_osVersion == nil) {
+            g_osVersion = [TDCoreDeviceInfo osVersion];
         }
+        dict[@"#os_version"] = g_osVersion;
     }
     if (![TDCorePresetDisableConfig disableDeviceModel]) {
-        NSString *value = [TDCoreDeviceInfo deviceModel];
-        if (value) {
-            dict[@"#device_model"] = value;
+        if (g_deviceModel == nil) {
+            g_deviceModel = [TDCoreDeviceInfo deviceModel];
         }
+        dict[@"#device_model"] = g_deviceModel;
     }
     if (![TDCorePresetDisableConfig disableDeviceType]) {
-        NSString *value = [TDCoreDeviceInfo deviceType];
-        if (value) {
-            dict[@"#device_type"] = value;
+        if (g_deviceType == nil) {
+            g_deviceType = [TDCoreDeviceInfo deviceType];
         }
+        dict[@"#device_type"] = g_deviceType;
     }
     if (![TDCorePresetDisableConfig disableManufacturer]) {
-        NSString *value = [TDCoreDeviceInfo manufacturer];
-        if (value) {
-            dict[@"#manufacturer"] = value;
+        if (g_manufacturer == nil) {
+            g_manufacturer = [TDCoreDeviceInfo manufacturer];
         }
+        dict[@"#manufacturer"] = g_manufacturer;
     }
     if (![TDCorePresetDisableConfig disableSimulator]) {
-        dict[@"#simulator"] = [TDCoreDeviceInfo isSimulator] ? @(YES) : @(NO);
+        if (g_isSimulator == nil) {
+            g_isSimulator = [TDCoreDeviceInfo isSimulator] ? @(YES) : @(NO);
+        }
+        dict[@"#simulator"] = g_isSimulator;
     }
 #if TARGET_OS_IOS
     
     if (![TDCorePresetDisableConfig disableScreenWidth]) {
-        NSNumber *value = [TDCoreDeviceInfo screenWidth];
-        if (value) {
-            dict[@"#screen_width"] = value;
+        if (g_screenWidth == nil) {
+            g_screenWidth = [TDCoreDeviceInfo screenWidth];
         }
+        dict[@"#screen_width"] = g_screenWidth;
     }
     if (![TDCorePresetDisableConfig disableScreenHeight]) {
-        NSNumber *value = [TDCoreDeviceInfo screenHeight];
-        if (value) {
-            dict[@"#screen_height"] = value;
+        if (g_screenHeight == nil) {
+            g_screenHeight = [TDCoreDeviceInfo screenHeight];
         }
+        dict[@"#screen_height"] = g_screenHeight;
     }
 #endif
     return dict;

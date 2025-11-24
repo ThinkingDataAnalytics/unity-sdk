@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface TDAESEncryptor : NSObject <TDEncryptAlgorithm>
 
-@property (nonatomic, copy, readonly) NSData *key;
+@property (nonatomic, copy) NSString *key;
 
 @end
 

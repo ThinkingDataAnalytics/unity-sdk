@@ -27,6 +27,8 @@ FOUNDATION_EXTERN NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION;
 
 - (void)trackWithEvent:(TDAutoTrackEvent *)event withProperties:(NSDictionary *)properties;
 
+- (void)flush;
+
 + (UIViewController *)topPresentedViewController;
 
 #pragma mark - UNAVAILABLE

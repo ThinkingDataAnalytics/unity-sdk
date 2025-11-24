@@ -23,6 +23,7 @@
 #import "TDNetworkReachability.h"
 #import "TDCoreFPSMonitor.h"
 #endif
+#import "TDUserDefaults.h"
 
 @implementation TDCoreDeviceInfo
 
@@ -68,22 +69,23 @@
 }
 
 #if (TARGET_OS_IOS || TARGET_OS_WATCH || TARGET_OS_VISION || TARGET_OS_TV)
-
+static NSString *g_device_id;
 + (NSString *)deviceId {
-    NSString *deviceId = nil;
     @synchronized (self) {
-        NSString *keyDeviceId = @"thinking_data_device_id";
-        deviceId = [TDCoreKeychainHelper readDeviceId];
-        if (!([deviceId isKindOfClass:NSString.class] && deviceId.length > 0)) {
-            deviceId = [[NSUserDefaults standardUserDefaults] stringForKey:keyDeviceId];
+        if (g_device_id == nil) {
+            NSString *keyDeviceId = @"thinking_data_device_id";
+            g_device_id = [TDCoreKeychainHelper readDeviceId];
+            if (!([g_device_id isKindOfClass:NSString.class] && g_device_id.length > 0)) {
+                g_device_id = [[TDUserDefaults standardUserDefaults] stringForKey:keyDeviceId];
+            }
+            if (!g_device_id) {
+                g_device_id = [self defaultIdentifier];
+            }
+            [[TDUserDefaults standardUserDefaults] setObject:g_device_id forKey:keyDeviceId];
+            [TDCoreKeychainHelper saveDeviceId:g_device_id];
         }
-        if (!deviceId) {
-            deviceId = [self defaultIdentifier];
-        }
-        [[NSUserDefaults standardUserDefaults] setObject:deviceId forKey:keyDeviceId];
-        [TDCoreKeychainHelper saveDeviceId:deviceId];
     }
-    return deviceId;
+    return g_device_id;
 }
 
 #define kDeviceClass @"XY2HU4AX3JI2JJW5MDhjm6wea2x6ymvm28ylmiyh7jkc8axy9mw3em8w"
@@ -123,13 +125,13 @@
 
 + (NSString *)deviceId {
     NSString *keyDeviceId = @"thinking_data_device_id";
-    NSString *deviceId = [[NSUserDefaults standardUserDefaults] stringForKey:keyDeviceId];
+    NSString *deviceId = [[TDUserDefaults standardUserDefaults] stringForKey:keyDeviceId];
     if (!deviceId) {
         deviceId = [self getSystemSerialNumber];
         if (deviceId == nil) {
             deviceId = [[NSUUID UUID] UUIDString];
         }
-        [[NSUserDefaults standardUserDefaults] setObject:deviceId forKey:keyDeviceId];
+        [[TDUserDefaults standardUserDefaults] setObject:deviceId forKey:keyDeviceId];
     }
     return deviceId;
 }
@@ -164,15 +166,15 @@
     return [NSDate date];
 }
 
-#define TD_PM_UNIT_KB 1024.0
-#define TD_PM_UNIT_MB (1024.0 * TD_PM_UNIT_KB)
-#define TD_PM_UNIT_GB (1024.0 * TD_PM_UNIT_MB)
 + (NSString *)ram {
-    NSString *ram = [NSString stringWithFormat:@"%.1f/%.1f", [self td_pm_func_getFreeMemory]*1.0/TD_PM_UNIT_GB, [self td_pm_func_getRamSize]*1.0/TD_PM_UNIT_GB];
+    NSUInteger ramUnitGB = 1024 * 1024 * 1024;
+    NSString *ram = [NSString stringWithFormat:@"%.1f/%.1f", [self td_pm_func_getFreeMemory]*1.0/ramUnitGB, [self td_pm_func_getRamSize]*1.0/ramUnitGB];
     return ram;
 }
+
 + (NSString *)disk {
-    NSString *disk = [NSString stringWithFormat:@"%.1f/%.1f", [self td_get_disk_free_size]*1.0/TD_PM_UNIT_GB, [self td_get_storage_size]*1.0/TD_PM_UNIT_GB];
+    NSUInteger diskUnitGB = 1000 * 1000 * 1000;
+    NSString *disk = [NSString stringWithFormat:@"%.1f/%.1f", [self td_get_disk_free_size]*1.0/diskUnitGB, [self td_get_storage_size]*1.0/diskUnitGB];
     return disk;
 }
 

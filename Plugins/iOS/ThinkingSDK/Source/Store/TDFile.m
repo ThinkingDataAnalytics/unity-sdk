@@ -8,37 +8,44 @@
 
 #import "TDFile.h"
 #import "TDLogging.h"
+
+#if TARGET_OS_IOS
+#if __has_include(<ThinkingDataCore/TDStorageEncryptPlugin.h>)
+#import <ThinkingDataCore/TDStorageEncryptPlugin.h>
+#else
+#import "TDStorageEncryptPlugin.h"
+#endif
+#endif
+
 #if __has_include(<ThinkingDataCore/TDJSONUtil.h>)
 #import <ThinkingDataCore/TDJSONUtil.h>
 #else
 #import "TDJSONUtil.h"
 #endif
 
+#if __has_include(<ThinkingDataCore/TDUserDefaults.h>)
+#import <ThinkingDataCore/TDUserDefaults.h>
+#else
+#import "TDUserDefaults.h"
+#endif
+
+@interface TDFile()
+
+@property (strong, nonatomic) NSString* appid;
+
+@end
+
 @implementation TDFile
 
-- (instancetype)initWithAppid:(NSString*)appid
-{
+- (instancetype)initWithAppid:(NSString*)appid {
     self = [super init];
-    if(self)
-    {
+    if (self) {
         self.appid = appid;
     }
     return self;
 }
 
-- (void)archiveSessionID:(long long)sessionid {
-    NSString *filePath = [self sessionIdFilePath];
-    if (![self archiveObject:@(sessionid) withFilePath:filePath]) {
-        TDLogError(@"%@ unable to archive identifyId", self);
-    }
-}
-- (long long)unarchiveSessionID {
-    return [[self unarchiveFromFile:[self sessionIdFilePath] asClass:[NSNumber class]] longLongValue];
-}
-
-
 - (void)archiveIdentifyId:(NSString *)identifyId {
-    
     NSString *filePath = [self identifyIdFilePath];
     if (![self archiveObject:[identifyId copy] withFilePath:filePath]) {
         TDLogError(@"%@ unable to archive identifyId", self);
@@ -167,6 +174,12 @@
         if (![NSKeyedArchiver archiveRootObject:object toFile:filePath]) {
             return NO;
         }
+#if TARGET_OS_IOS
+        filePath = [[TDStorageEncryptPlugin sharedInstance] encryptFileAtPathIfNeed:filePath];
+        if (filePath == nil) {
+            return NO;
+        }
+#endif
     } @catch (NSException *exception) {
         TDLogError(@"Got exception: %@, reason: %@. You can only send to Thinking values that inherit from NSObject and implement NSCoding.", exception.name, exception.reason);
         return NO;
@@ -192,10 +205,31 @@
 - (id)unarchiveFromFile:(NSString *)filePath asClass:(Class)class {
     id unarchivedData = nil;
     @try {
+#if TARGET_OS_IOS
+        if ([[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
+            unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithFile:filePath];
+            if (![unarchivedData isKindOfClass:class]) {
+                unarchivedData = nil;
+            }
+            filePath = [[TDStorageEncryptPlugin sharedInstance] encryptFileAtPathIfNeed:filePath];
+            if (filePath != nil) {
+                [self addSkipBackupAttributeToItemAtPath:filePath];
+            }
+        } else {
+            NSData *data = [[TDStorageEncryptPlugin sharedInstance] decryptFileAtPath:filePath];
+            if (data) {
+                unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+                if (![unarchivedData isKindOfClass:class]) {
+                    unarchivedData = nil;
+                }
+            }
+        }
+#else
         unarchivedData = [NSKeyedUnarchiver unarchiveObjectWithFile:filePath];
         if (![unarchivedData isKindOfClass:class]) {
             unarchivedData = nil;
         }
+#endif
     }
     @catch (NSException *exception) {
         TDLogError(@"Error unarchive in %@", filePath);
@@ -259,13 +293,24 @@
             stringByAppendingPathComponent:filename];
 }
 
-- (NSString*)unarchiveOldLoginId {
-    return [[NSUserDefaults standardUserDefaults] objectForKey:@"thinkingdata_accountId"];
+- (void)archiveTrackStatus:(TDTrackStatus)trackStatus {
+    NSString *filePath = [self trackStatusFilePath];
+    if (![self archiveObject:@(trackStatus) withFilePath:filePath]) {
+        TDLogError(@"%@ unable to archive track status", self);
+    }
+}
+
+- (NSNumber *)unarchiveTrackStatus {
+    return [self unarchiveFromFile:[self trackStatusFilePath] asClass:[NSNumber class]];
+}
+
+- (NSString *)trackStatusFilePath {
+    return [self persistenceFilePath:@"track_status"];
 }
 
 - (void)deleteOldLoginId {
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"thinkingdata_accountId"];
-    [[NSUserDefaults standardUserDefaults] synchronize];
+    [[TDUserDefaults standardUserDefaults] removeObjectForKey:@"thinkingdata_accountId"];
+    [[TDUserDefaults standardUserDefaults] synchronize];
 }
 
 - (NSString *)description {

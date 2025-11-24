@@ -9,8 +9,10 @@ FOUNDATION_EXTERN NSString *const VERSION;
 @property (nonatomic, assign, readonly) BOOL isFirstOpen;
 @property (nonatomic, copy) NSString *libName;
 @property (nonatomic, copy) NSString *libVersion;
+@property (atomic, assign, readonly) BOOL isInstallTrackSuccess;
 
 + (TDDeviceInfo *)sharedManager;
+- (void)setAppInstallFlag;
 
 @end
 

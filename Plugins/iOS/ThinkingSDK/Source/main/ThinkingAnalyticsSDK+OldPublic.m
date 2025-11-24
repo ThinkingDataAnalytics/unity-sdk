@@ -18,7 +18,7 @@
 #pragma mark - Logging
 
 + (void)setLogLevel:(TDLoggingLevel)level {
-    [TDLogging sharedInstance].loggingLevel = level;
+    [TDLogging sharedInstance].enableLog = (level != TDLoggingLevelNone);
 }
 
 #pragma mark - Calibrate time

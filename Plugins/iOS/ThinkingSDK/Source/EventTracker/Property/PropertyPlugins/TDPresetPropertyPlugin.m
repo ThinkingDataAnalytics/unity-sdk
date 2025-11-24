@@ -22,7 +22,7 @@
 
 @interface TDPresetPropertyPlugin ()
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id> *properties;
-
+@property (nonatomic, strong) id lockObject;
 @end
 
 @implementation TDPresetPropertyPlugin
@@ -31,14 +31,23 @@
 {
     self = [super init];
     if (self) {
-        self.properties = [NSMutableDictionary dictionary];
+        _properties = [NSMutableDictionary dictionary];
+        self.lockObject = [[NSObject alloc] init];
     }
     return self;
 }
 
 - (void)start {
-    NSDictionary *staticProperties = [TDCorePresetProperty staticProperties];
-    [self.properties addEntriesFromDictionary:staticProperties];
+    @synchronized(self.lockObject) {
+        NSDictionary *staticProperties = [TDCorePresetProperty staticProperties];
+        [_properties addEntriesFromDictionary:staticProperties];
+    }
+}
+
+- (NSDictionary *)properties {
+    @synchronized(self.lockObject) {
+        return [_properties copy];
+    }
 }
 
 /// The properties here are dynamically updated

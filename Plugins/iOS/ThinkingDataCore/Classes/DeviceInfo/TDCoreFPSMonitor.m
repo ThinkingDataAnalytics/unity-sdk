@@ -8,6 +8,9 @@
 #import "TDCoreFPSMonitor.h"
 #import <QuartzCore/CADisplayLink.h>
 #import "TDCoreWeakProxy.h"
+#if TARGET_OS_IOS
+#import <UIKit/UIKit.h>
+#endif
 
 @interface TDCoreFPSMonitor ()
 @property (nonatomic, strong) CADisplayLink *link;
@@ -18,6 +21,33 @@
 @end
 
 @implementation TDCoreFPSMonitor
+
+#if TARGET_OS_IOS
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidEnterBackground:)
+                                                     name:UIApplicationDidEnterBackgroundNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationWillEnterForeground:)
+                                                     name:UIApplicationWillEnterForegroundNotification
+                                                   object:nil];
+    }
+    return self;
+}
+
+- (void)applicationDidEnterBackground:(NSNotification *)notification {
+    [self stopDisplay];
+    _count = 0;
+    _lastTime = 0;
+}
+
+- (void)applicationWillEnterForeground:(NSNotification *)notification {
+    [self startDisplay];
+}
+#endif
 
 - (void)setEnable:(BOOL)enable {
     _enable = enable;

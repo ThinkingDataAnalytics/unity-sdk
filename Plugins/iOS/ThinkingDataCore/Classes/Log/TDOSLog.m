@@ -21,6 +21,8 @@ static void *const GlobalLoggingQueueIdentityKey = (void *)&GlobalLoggingQueueId
 @property (atomic, strong) NSMutableArray<id<TDLogChannleProtocol>> *logConsumers;
 @property (nonatomic, strong) dispatch_queue_t consoleLogQueue;
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
+@property (nonatomic, assign) BOOL enableLogFromFile;
+
 @end
 
 @implementation TDOSLog
@@ -58,8 +60,17 @@ static void *const GlobalLoggingQueueIdentityKey = (void *)&GlobalLoggingQueueId
         const char *loggerQueueName = [@"cn.thinkingdata.analytics.osLogger" UTF8String];
         dispatch_queue_t loggerQueue = dispatch_queue_create(loggerQueueName, NULL);
         self.consoleLogQueue = loggerQueue;
+        
+        [self readLogFlagFromFile];
     }
     return self;
+}
+
+- (void)readLogFlagFromFile {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *path = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+    path = [path stringByAppendingPathComponent:@"ta_log_enable.txt"];
+    self.enableLogFromFile = [fileManager fileExistsAtPath:path];
 }
 
 // MARK: - Public method
@@ -73,8 +84,14 @@ static void *const GlobalLoggingQueueIdentityKey = (void *)&GlobalLoggingQueueId
 }
 
 + (void)logMessage:(NSString *)message prefix:(NSString *)prefix type:(TDLogType)type asynchronous:(BOOL)asynchronous {
+    if ([self sharedInstance].enableLogFromFile) {
+        type = TDLogTypeDebug;
+    }
+    if (type == TDLogTypeOff) {
+        return;
+    }
     TDLogMessage *logMessage = [[TDLogMessage alloc] initWithMessage:message prefix:prefix type:type];
-    [self.sharedInstance queueLogMessage:logMessage asynchronously:asynchronous];
+    [[self sharedInstance] queueLogMessage:logMessage asynchronously:asynchronous];
 }
 
 //MARK: - Private method

@@ -15,6 +15,7 @@
 #import "TDColdStartTracker.h"
 #import "TDInstallTracker.h"
 #import "TDAppState.h"
+#import "ThinkingSDK.h"
 
 #if __has_include(<ThinkingDataCore/TDJSONUtil.h>)
 #import <ThinkingDataCore/TDJSONUtil.h>
@@ -289,6 +290,9 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
         TDAutoTrackEvent *event = [[TDAutoTrackEvent alloc] initWithName:TD_APP_INSTALL_EVENT];
         event.time = [[NSDate date] dateByAddingTimeInterval: -1];
         [self.appInstallTracker trackWithInstanceTag:appid event:event params:nil];
+        if (self.appInstallTracker.additionalCondition) {
+            [[TDDeviceInfo sharedManager] setAppInstallFlag];
+        }
     }
     
     if (type & ThinkingAnalyticsEventTypeAppEnd) {
@@ -298,7 +302,8 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
 
     if (type & ThinkingAnalyticsEventTypeAppStart) {
         dispatch_block_t mainThreadBlock = ^(){
-            NSString *eventName = [TDAppState shareInstance].relaunchInBackground ? TD_APP_START_BACKGROUND_EVENT : TD_APP_START_EVENT;
+            BOOL isLaunchInBackground = [TDAppState shareInstance].relaunchInBackground;
+            NSString *eventName = isLaunchInBackground ? TD_APP_START_BACKGROUND_EVENT : TD_APP_START_EVENT;
             TDAppStartEvent *event = [[TDAppStartEvent alloc] initWithName:eventName];
             event.resumeFromBackground = NO;
             if (![TDCorePresetDisableConfig disableStartReason]) {
@@ -307,7 +312,7 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
                     event.startReason = reason;
                 }
             }
-            [self.appColdStartTracker trackWithInstanceTag:appid event:event params:nil];
+            [self.appColdStartTracker trackWithInstanceTag:appid event:event params: @{@"#relaunched_in_background": @(isLaunchInBackground)}];
         };
         dispatch_async(dispatch_get_main_queue(), mainThreadBlock);
     }
@@ -326,6 +331,12 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
             ThinkingAnalyticsSDK *instance = [ThinkingAnalyticsSDK instanceWithAppid:appid];
             [instance autoTrackWithEvent:event properties:properties];
         }
+    }
+}
+
+- (void)flush {
+    for (NSString *appid in self.autoTrackOptions.allKeys) {
+        [TDAnalytics flushWithAppId:appid];
     }
 }
 
@@ -718,24 +729,22 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     if (newState == TDAppLifeCycleStateStart) {
         for (NSString *appid in self.autoTrackOptions.allKeys) {
             TDAutoTrackEventType type = (TDAutoTrackEventType)[self.autoTrackOptions[appid] integerValue];
-            
             // Only open the start event of collecting hot start. Cold start event, reported when automatic collection is turned on
             if ((type & ThinkingAnalyticsEventTypeAppStart) && oldState != TDAppLifeCycleStateInit) {
-                NSString *eventName = [TDAppState shareInstance].relaunchInBackground ? TD_APP_START_BACKGROUND_EVENT : TD_APP_START_EVENT;
+                BOOL isLaunchInBackground = [TDAppState shareInstance].relaunchInBackground;
+                NSString *eventName = isLaunchInBackground ? TD_APP_START_BACKGROUND_EVENT : TD_APP_START_EVENT;
                 TDAppStartEvent *event = [[TDAppStartEvent alloc] initWithName:eventName];
                 event.resumeFromBackground = YES;
-    
                 if (![TDCorePresetDisableConfig disableStartReason]) {
                     NSString *reason = [TDRunTime getAppLaunchReason];
                     if (reason && reason.length) {
                         event.startReason = reason;
                     }
                 }
-                [self.appHotStartTracker trackWithInstanceTag:appid event:event params:@{}];
+                [self.appHotStartTracker trackWithInstanceTag:appid event:event params:@{@"#relaunched_in_background": @(isLaunchInBackground)}];
             }
             
             if (type & ThinkingAnalyticsEventTypeAppEnd) {
-            
                 ThinkingAnalyticsSDK *instance = [ThinkingAnalyticsSDK instanceWithAppid:appid];
                 [instance innerTimeEvent:TD_APP_END_EVENT];
             }
@@ -746,7 +755,6 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
             if (type & ThinkingAnalyticsEventTypeAppEnd) {
                 TDAppEndEvent *event = [[TDAppEndEvent alloc] initWithName:TD_APP_END_EVENT];
                 td_dispatch_main_sync_safe(^{
-     
                     NSString *screenName = NSStringFromClass([[TDAutoTrackManager topPresentedViewController] class]);
                     event.screenName = screenName;
                     [self.appEndTracker trackWithInstanceTag:appid event:event params:@{}];

@@ -6,6 +6,7 @@
 //
 
 #import "TDPropertyPluginManager.h"
+#import "TDCheck.h"
 
 @interface TDPropertyPluginManager ()
 @property (nonatomic, strong) NSMutableArray<id<TDPropertyPluginProtocol>> *plugins;
@@ -82,6 +83,7 @@
 
 - (NSMutableDictionary *)propertiesWithPlugins:(NSArray<id<TDPropertyPluginProtocol>> *)plugins {
     NSMutableDictionary *properties = [NSMutableDictionary dictionary];
+    id syncObject = properties;
     for (id<TDPropertyPluginProtocol> plugin in plugins) {
         if ([plugin respondsToSelector:@selector(start)]) {
             [plugin start];
@@ -89,21 +91,26 @@
         dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
         if ([plugin respondsToSelector:@selector(asyncGetPropertyCompletion:)]) {
             [plugin asyncGetPropertyCompletion:^(NSDictionary<NSString *,id> * _Nonnull dict) {
-                [properties addEntriesFromDictionary:dict];
+                @synchronized(syncObject) {
+                    [TDCheck safelyAddEntriesFromDictionary:dict toDictionary:properties];
+                }
                 dispatch_semaphore_signal(semaphore);
             }];
+        }else{
+            dispatch_semaphore_signal(semaphore);
         }
-        
         NSDictionary *pluginProperties = [plugin respondsToSelector:@selector(properties)] ? plugin.properties : nil;
         if (pluginProperties) {
-            [properties addEntriesFromDictionary:pluginProperties];
+            @synchronized(syncObject) {
+                [TDCheck safelyAddEntriesFromDictionary:pluginProperties toDictionary:properties];
+            }
         }
         if (semaphore) {
             dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)));
         }
     
     }
-    return properties;
+    return [properties copy];
 }
 
 - (BOOL)isMatchedWithPlugin:(id<TDPropertyPluginProtocol>)plugin eventType:(TDEventType)type {

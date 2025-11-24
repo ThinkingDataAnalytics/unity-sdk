@@ -36,12 +36,20 @@
 #import "NSURL+TDCore.h"
 #endif
 
+#if TARGET_OS_IOS
+#if __has_include(<ThinkingDataCore/TDStorageEncryptPlugin.h>)
+#import <ThinkingDataCore/TDStorageEncryptPlugin.h>
+#else
+#import "TDStorageEncryptPlugin.h"
+#endif
+#endif
+
 @implementation TDAnalytics (Public)
 
 #pragma mark - Logging
 
 + (void)enableLog:(BOOL)enable {
-    [TDLogging sharedInstance].loggingLevel = enable ? TDLoggingLevelDebug : TDLoggingLevelNone;
+    [TDLogging sharedInstance].enableLog = enable;
 }
 
 #pragma mark - Calibrate time
@@ -98,24 +106,23 @@
     if (!config) {
         return;
     }
-    config.appid = [config.appid td_trim];
-    
-    NSString *appId = config.appid;
+    NSString *appId = [config.appid td_trim];
     if (appId.length == 0) {
         return;
     }
+    config.appid = appId;
     
     NSMutableDictionary *instances = [ThinkingAnalyticsSDK _getAllInstances];
     if ([instances objectForKey:[config innerGetMapInstanceToken]]) {
         return;
     }
     
-    config.serverUrl = [NSURL td_baseUrlStringWithString:config.serverUrl];
-    NSString *url = config.serverUrl;
+    NSString *url = [NSURL td_baseUrlStringWithString:config.serverUrl];
     if (url.length == 0) {
         return;
     }
-    
+    config.serverUrl = url;
+
     ThinkingAnalyticsSDK *sdk = [[ThinkingAnalyticsSDK alloc] initWithConfig:config];
     TDLogInfo(@"instance token: %@", [sdk.config innerGetMapInstanceToken]);
 }
@@ -284,9 +291,15 @@
     [TDAnalytics setUploadingNetworkType:type withAppId:appId];
 }
 
-// MARK: auto track
-
 #if TARGET_OS_IOS
+
+// MARK: - Local storage encrypt
+
++ (void)encryptLocalStorage {
+    [[TDStorageEncryptPlugin sharedInstance] enableEncrypt];
+}
+
+// MARK: - auto track
 
 + (void)enableAutoTrack:(TDAutoTrackEventType)eventType API_UNAVAILABLE(macos){
     NSString *appId = [ThinkingAnalyticsSDK defaultAppId];

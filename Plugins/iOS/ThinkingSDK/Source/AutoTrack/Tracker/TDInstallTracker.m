@@ -16,7 +16,7 @@
 }
 
 - (BOOL)additionalCondition {
-    return [TDDeviceInfo sharedManager].isFirstOpen;
+    return [TDDeviceInfo sharedManager].isInstallTrackSuccess == NO;
 }
 
 @end

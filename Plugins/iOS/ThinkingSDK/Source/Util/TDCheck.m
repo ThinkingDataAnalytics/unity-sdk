@@ -43,6 +43,28 @@
     }
 }
 
++ (void)safelyAddEntriesFromDictionary:(NSDictionary *)sourceDict toDictionary:(NSMutableDictionary *)targetDict {
+    if (!sourceDict || ![sourceDict isKindOfClass:[NSDictionary class]]) {
+        return;
+    }
+    NSMutableDictionary *safeEntries = [NSMutableDictionary dictionary];
+    for (id key in sourceDict) {
+        if (![key isKindOfClass:[NSString class]]) {
+            continue;
+        }
+        id value = sourceDict[key];
+        if (value == nil) {
+            continue;
+        }
+        if (value == [NSNull null]) {
+            continue;
+        }
+        [safeEntries setObject:value forKey:key];
+    }
+    if (safeEntries.count > 0) {
+        [targetDict addEntriesFromDictionary:safeEntries];
+    }
+}
 // old method
 //inline static NSDictionary *_td_old_checkToJSONObject(NSDictionary *properties, NSDateFormatter *timeFormatter) {
 //    NSMutableDictionary<NSString *, id> *propertiesDic = [NSMutableDictionary dictionaryWithDictionary:properties];

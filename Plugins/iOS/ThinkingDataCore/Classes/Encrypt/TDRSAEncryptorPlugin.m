@@ -39,15 +39,19 @@
 
 
 - (NSString *)encryptEvent:(NSData *)event {
-    return [_aesEncryptor encryptData:event];
+    NSData *encryptData = [_aesEncryptor encryptData:event];
+    NSString *result = [encryptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithCarriageReturn];
+    return result;
 }
-
 
 - (NSString *)encryptSymmetricKeyWithPublicKey:(NSString *)publicKey {
     if (![_rsaEncryptor.key isEqualToString:publicKey]) {
         _rsaEncryptor.key = publicKey;
     }
-    return [_rsaEncryptor encryptData:_aesEncryptor.key];
+    NSData *aesKeyData = [self.aesEncryptor.key dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *encryptData = [_rsaEncryptor encryptData:aesKeyData];
+    NSString *result = [encryptData base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithCarriageReturn];
+    return result;
 }
 
 @end

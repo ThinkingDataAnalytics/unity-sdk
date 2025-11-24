@@ -6,6 +6,7 @@
 //
 
 #import "TDRSAEncryptor.h"
+#import <Security/Security.h>
 
 @implementation TDRSAEncryptor
 
@@ -25,7 +26,12 @@
     return @"RSA";
 }
 
-- (NSString *)encryptData:(NSData *)data {
+
+- (NSData *)decryptData:(NSData *)data {
+    return nil;
+}
+
+- (NSData *)encryptData:(NSData *)data {
     if (!data) {
         return nil;
     }
@@ -73,8 +79,7 @@
     }
     free(outbuf);
     CFRelease(keyRef);
-    
-    return [ret base64EncodedStringWithOptions:NSDataBase64EncodingEndLineWithCarriageReturn];
+    return ret;
 }
 
 #pragma mark – Private Methods

@@ -17,16 +17,15 @@ static BOOL _logOn = YES;
 }
 
 + (void)printLog:(NSString *)format, ... NS_FORMAT_FUNCTION(1,2) {
-    if (_logOn == YES) {
-        if (format) {
-            va_list args;
-            va_start(args, format);
-            NSString *output = [[NSString alloc] initWithFormat:format arguments:args];
-            va_end(args);
-            
-            NSString *prefix = @"TDCore";
-            [TDOSLog logMessage:output prefix:prefix type:TDLogTypeInfo asynchronous:YES];
-        }
+    TDLogType type = _logOn ? TDLogTypeInfo : TDLogTypeOff;
+    if (format) {
+        va_list args;
+        va_start(args, format);
+        NSString *output = [[NSString alloc] initWithFormat:format arguments:args];
+        va_end(args);
+        
+        NSString *prefix = @"TDCore";
+        [TDOSLog logMessage:output prefix:prefix type:type asynchronous:YES];
     }
 }
 

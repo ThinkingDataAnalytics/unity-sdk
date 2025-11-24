@@ -129,9 +129,16 @@ static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *cont
     TDAutoTrackEvent *appEndEvent = [[TDAutoTrackEvent alloc] initWithName:TD_APP_END_EVENT];
     [[TDAutoTrackManager sharedManager] trackWithEvent:appEndEvent withProperties:nil];
     
+    [[TDAutoTrackManager sharedManager] flush];
     dispatch_sync([ThinkingAnalyticsSDK sharedTrackQueue], ^{});
-    dispatch_sync([ThinkingAnalyticsSDK sharedNetworkQueue], ^{});
-
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    dispatch_queue_t networkQueue = [TDEventTracker td_networkQueue];
+    dispatch_async(networkQueue, ^{
+        dispatch_semaphore_signal(semaphore);
+    });
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)));
+    
     NSSetUncaughtExceptionHandler(NULL);
     for (int i = 0; i < sizeof(TDSignals) / sizeof(int); i++) {
         signal(TDSignals[i], SIG_DFL);

@@ -16,6 +16,7 @@
     }
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setTimeZone:timeZone];
+    [dateFormatter setLocale:[[NSLocale alloc] initWithLocaleIdentifier:@"en_US"]];
     NSDate *date = nil;
     if (![NSString td_isEmpty:formatter]) {
         [dateFormatter setDateFormat:formatter];

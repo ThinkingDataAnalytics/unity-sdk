@@ -60,6 +60,7 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
     if (self) {
         self.reportingNetworkType = TDReportingNetworkTypeALL;
         self.mode = TDModeNormal;
+        self.flushBeforeTerminate = YES;
         
         _trackRelaunchedInBackgroundEvents = NO;
         _autoTrackEventType = ThinkingAnalyticsEventTypeNone;
@@ -200,8 +201,6 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
                 if (uploadInterval > 0) {
                     self.uploadInterval = [NSNumber numberWithInteger:uploadInterval];
                     [file archiveUploadInterval:self.uploadInterval];
-                    NSString *name = self.getInstanceName ? self.getInstanceName() : self.appid;
-                    [[ThinkingAnalyticsSDK instanceWithAppid:name] startFlushTimer];
                 }
                 if (uploadSize > 0) {
                     self.uploadSize = [NSNumber numberWithInteger:uploadSize];

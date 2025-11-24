@@ -46,6 +46,9 @@
                 break;
         }
         NSString *prefix = @"ThinkingData";
+        if (self.enableLog == NO) {
+            logType = TDLogTypeOff;
+        }
         [TDOSLog logMessage:formattedMessage prefix:prefix type:logType asynchronous:YES];
     }
 }
