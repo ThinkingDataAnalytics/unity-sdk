@@ -439,8 +439,8 @@ static dispatch_queue_t td_trackQueue;
 #pragma mark - Private
 
 - (void)asyncTrackEventObject:(TDTrackEvent *)event properties:(NSDictionary * _Nullable)properties isH5:(BOOL)isH5 {
-    event.accountId = self.accountId;
-    event.distinctId = self.identifyId;
+    event.accountId = [self innerAccountId];
+    event.distinctId = [self innerDistinctId];
     [self handleTimeEvent:event];
     [self calibratedTimeWithEvent:event];
     
@@ -459,8 +459,8 @@ static dispatch_queue_t td_trackQueue;
 }
 
 - (void)asyncUserEventObject:(TDUserEvent *)event properties:(NSDictionary * _Nullable)properties isH5:(BOOL)isH5 {
-    event.accountId = self.accountId;
-    event.distinctId = self.identifyId;
+    event.accountId = [self innerAccountId];
+    event.distinctId = [self innerDistinctId];
     [self calibratedTimeWithEvent:event];
     
     if ([properties isKindOfClass:NSDictionary.class]) {
@@ -633,8 +633,8 @@ static dispatch_queue_t td_trackQueue;
 
 /// Add event to event queue
 - (void)asyncAutoTrackEventObject:(TDAutoTrackEvent *)event properties:(NSDictionary *)properties {
-    event.accountId = self.accountId;
-    event.distinctId = self.identifyId;
+    event.accountId = [self innerAccountId];
+    event.distinctId = [self innerDistinctId];
         
     [self calibratedTimeWithEvent:event];
     

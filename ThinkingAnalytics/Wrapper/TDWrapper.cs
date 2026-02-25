@@ -88,7 +88,7 @@ namespace ThinkingData.Analytics.Wrapper
         {
             if (string.IsNullOrEmpty(appId)) appId = default_appId;
             UpdateAutoTrackSceneInfos(events, appId);
-            SetAutoTrackProperties(events, properties, appId);
+            SetAutoTrackProperties(events, properties, appId, false);
             enableAutoTrack(events, properties, appId);
             if ((events & TDAutoTrackEventType.AppSceneLoad) != 0)
             {
@@ -111,7 +111,7 @@ namespace ThinkingData.Analytics.Wrapper
 
         private static string TDAutoTrackEventType_APP_SCENE_LOAD = "AppSceneLoad";
         private static string TDAutoTrackEventType_APP_SCENE_UNLOAD = "AppSceneUnload";
-        public static void SetAutoTrackProperties(TDAutoTrackEventType events, Dictionary<string, object> properties, string appId)
+        public static void SetAutoTrackProperties(TDAutoTrackEventType events, Dictionary<string, object> properties, string appId, bool setInner = true)
         {
             if ((events & TDAutoTrackEventType.AppSceneLoad) != 0)
             {
@@ -131,7 +131,11 @@ namespace ThinkingData.Analytics.Wrapper
                 else
                     mAutoTrackProperties[TDAutoTrackEventType_APP_SCENE_UNLOAD] = properties;
             }
+#if (UNITY_IOS && !TE_DISABLE_IOS_OC) || (UNITY_ANDROID && !TE_DISABLE_ANDROID_JAVA) || UNITY_OPENHARMONY
+            if(setInner) SetAutoTrackProperties(events, properties, appId);
+#else
             setAutoTrackProperties(events, properties, appId);
+#endif
         }
 
         public static void TrackSceneLoad(Scene scene, string appId = "")

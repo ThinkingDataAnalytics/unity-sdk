@@ -286,7 +286,7 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
     NSString *contentType = [NSString stringWithFormat:@"text/plain"];
     [request addValue:contentType forHTTPHeaderField:@"Content-Type"];
     if([TDAnalyticsNetwork isEnableDNS] && requestUrl.host){
-        [request addValue:requestUrl.host forHTTPHeaderField:@"Host"];
+        [request addValue:self.serverURL.host forHTTPHeaderField:@"Host"];
     }
     [request setTimeoutInterval:60.0];
     return request;
@@ -328,7 +328,7 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:requestUrl];
     [request setHTTPMethod:@"POST"];
     if([TDAnalyticsNetwork isEnableDNS] && requestUrl.host){
-        [request addValue:requestUrl.host forHTTPHeaderField:@"Host"];
+        [request addValue:self.serverDebugURL.host forHTTPHeaderField:@"Host"];
     }
     request.HTTPBody = [postData dataUsingEncoding:NSUTF8StringEncoding];
     return request;

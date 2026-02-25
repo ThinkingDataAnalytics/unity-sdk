@@ -344,6 +344,32 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     [self trackViewController:controller];
 }
 
++ (UIViewController *)findTopmostControllerInContainer:(UIViewController *)controller {
+    if ([controller isKindOfClass:[UINavigationController class]]) {
+        UINavigationController *nav = (UINavigationController *)controller;
+        return [self findTopmostControllerInContainer:nav.topViewController ?: nav];
+    }
+    if ([controller isKindOfClass:[UITabBarController class]]) {
+        UITabBarController *tab = (UITabBarController *)controller;
+        return [self findTopmostControllerInContainer:tab.selectedViewController ?: tab];
+    }
+    
+    if ([controller isKindOfClass:[UISplitViewController class]]) {
+        UISplitViewController *split = (UISplitViewController *)controller;
+        UIViewController *primary = split.viewControllers.firstObject;
+        return [self findTopmostControllerInContainer:primary ?: split];
+    }
+    
+    if (controller.childViewControllers.count > 0) {
+        UIViewController *lastChild = controller.childViewControllers.lastObject;
+        if (!lastChild.view.hidden && lastChild.view.superview) {
+            return [self findTopmostControllerInContainer:lastChild];
+        }
+    }
+    
+    return controller;
+}
+
 + (UIViewController *)topPresentedViewController {
     UIWindow *keyWindow = [self findWindow];
     if (keyWindow != nil && !keyWindow.isKeyWindow) {
@@ -351,12 +377,14 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     }
     
     UIViewController *topController = keyWindow.rootViewController;
-    if ([topController isKindOfClass:[UINavigationController class]]) {
-        topController = [(UINavigationController *)topController topViewController];
-    }
+    if (!topController) return nil;
+        
+    topController = [self findTopmostControllerInContainer:topController];
+        
     while (topController.presentedViewController) {
-        topController = topController.presentedViewController;
+        topController = [self findTopmostControllerInContainer:topController.presentedViewController];
     }
+    
     return topController;
 }
 
