@@ -132,7 +132,7 @@ namespace ThinkingData.Analytics.Wrapper
                     mAutoTrackProperties[TDAutoTrackEventType_APP_SCENE_UNLOAD] = properties;
             }
 #if (UNITY_IOS && !TE_DISABLE_IOS_OC) || (UNITY_ANDROID && !TE_DISABLE_ANDROID_JAVA) || UNITY_OPENHARMONY
-            if(setInner) SetAutoTrackProperties(events, properties, appId);
+            if(setInner) setAutoTrackProperties(events, properties, appId);
 #else
             setAutoTrackProperties(events, properties, appId);
 #endif
