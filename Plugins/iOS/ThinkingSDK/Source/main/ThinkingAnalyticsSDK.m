@@ -289,9 +289,7 @@ static dispatch_queue_t td_trackQueue;
 
 - (void)closeAndResetSDK {
 #if TARGET_OS_IOS
-    @synchronized (self.autoTrackSuperProperty) {
-        [self.autoTrackSuperProperty clearSuperProperties];
-    }
+    [self.autoTrackSuperProperty clearSuperProperties];
 #endif
 
     [self.superProperty registerDynamicSuperProperties:nil];
@@ -677,10 +675,12 @@ static dispatch_queue_t td_trackQueue;
 }
 
 - (TDAutoTrackSuperProperty *)autoTrackSuperProperty {
-    if (!_autoTrackSuperProperty) {
-        _autoTrackSuperProperty = [[TDAutoTrackSuperProperty alloc] init];
+    @synchronized(self) {
+        if (!_autoTrackSuperProperty) {
+            _autoTrackSuperProperty = [[TDAutoTrackSuperProperty alloc] init];
+        }
+        return _autoTrackSuperProperty;
     }
-    return _autoTrackSuperProperty;
 }
 
 #endif

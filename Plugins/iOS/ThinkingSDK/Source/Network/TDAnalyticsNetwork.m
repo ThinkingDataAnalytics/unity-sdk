@@ -357,6 +357,7 @@ static NSMutableDictionary<NSString *, NSString *> *g_dnsIpMap = nil;
     NSString *urlStr = [NSString stringWithFormat:@"%@?appid=%@", self.serverURL, appid];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:urlStr]];
     [request setHTTPMethod:@"Get"];
+    request.cachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
     NSURLSessionDataTask *task = [[self sharedURLSession] dataTaskWithRequest:request completionHandler:block];
     [task resume];
 }

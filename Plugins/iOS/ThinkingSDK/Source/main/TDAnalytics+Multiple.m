@@ -223,9 +223,7 @@
         if (properties == nil) {
             return;
         }
-        @synchronized (teSDK.autoTrackSuperProperty) {
-            [teSDK.autoTrackSuperProperty registerSuperProperties:[properties copy] withType:eventType];
-        }
+        [teSDK.autoTrackSuperProperty registerSuperProperties:[properties copy] withType:eventType];
     });
 #endif
 }
@@ -233,13 +231,10 @@
 + (void)innerEnableAutoTrack:(TDAutoTrackEventType)eventType properties:(NSDictionary * _Nullable)properties callback:(NSDictionary *(^ _Nullable)(TDAutoTrackEventType eventType, NSDictionary *properties))callback withAppId:(NSString * _Nullable)appId API_UNAVAILABLE(macos){
 #if TARGET_OS_IOS
     ThinkingAnalyticsSDK *teSDK = [ThinkingAnalyticsSDK instanceWithAppid:appId];
-    
-    if (teSDK.autoTrackSuperProperty == nil) {
-        teSDK.autoTrackSuperProperty = [[TDAutoTrackSuperProperty alloc] init];
-    }
-    [teSDK.autoTrackSuperProperty registerSuperProperties:properties withType:eventType];
-    [teSDK.autoTrackSuperProperty registerDynamicSuperProperties:callback];
-    
+    dispatch_async([ThinkingAnalyticsSDK sharedTrackQueue], ^{
+        [teSDK.autoTrackSuperProperty registerSuperProperties:properties withType:eventType];
+        [teSDK.autoTrackSuperProperty registerDynamicSuperProperties:callback];
+    });
     NSString *instanceToken = [teSDK.config innerGetMapInstanceToken];
     [[TDAutoTrackManager sharedManager] trackWithAppid:instanceToken withOption:eventType];
 #endif
@@ -252,9 +247,7 @@
         if ([teSDK hasDisabled]) {
             return;
         }
-        @synchronized (teSDK.autoTrackSuperProperty) {
-            [teSDK.autoTrackSuperProperty registerAutoTrackDynamicProperties:dynamicSuperProperties];
-        }
+        [teSDK.autoTrackSuperProperty registerAutoTrackDynamicProperties:dynamicSuperProperties];
     });
 #endif
 }

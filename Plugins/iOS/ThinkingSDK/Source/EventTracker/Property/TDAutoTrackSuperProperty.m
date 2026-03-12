@@ -43,6 +43,9 @@
         TDAutoTrackEventType eventType = key.integerValue;
         if ((type & eventType) == eventType) {
             NSString *eventName = autoTypes[key];
+            if (!eventName) {
+                continue;
+            }
             if (properties) {
                 
                 NSDictionary *oldProperties = self.eventProperties[eventName];
