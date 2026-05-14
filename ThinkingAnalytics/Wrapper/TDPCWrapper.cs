@@ -998,12 +998,19 @@ namespace ThinkingData.Analytics.Wrapper
                 ThinkingSDKUtil.AddDictionary(properties, eventCallback.GetAutoTrackEventProperties((int)TDAutoTrackEventType.AppStart, properties));
             }
             ThinkingSDKUtil.AddDictionary(properties, selfProperties);
+            LaunchOptionsGame launchOptionsSync = WX.GetLaunchOptionsSync();
+            Dictionary<string, object> start_reason_properties = new Dictionary<string, object>();
+            start_reason_properties["#start_reason"] = JsonUtility.ToJson(launchOptionsSync);
+            ThinkingSDKUtil.AddDictionary(properties, start_reason_properties);
+            ThinkingPCSDK.Track("ta_mg_show", properties, appId);
+            ThinkingPCSDK.TimeEvent("ta_mg_hide", appId);
             WX.OnShow((result =>
             {
                 Dictionary<string, object> start_reason_properties = new Dictionary<string, object>();
                 start_reason_properties["#start_reason"] = JsonUtility.ToJson(result);
                 ThinkingSDKUtil.AddDictionary(properties, start_reason_properties);
                 ThinkingPCSDK.Track("ta_mg_show", properties, appId);
+                ThinkingPCSDK.TimeEvent("ta_mg_hide", appId);
             }));
             return true;
 #else
