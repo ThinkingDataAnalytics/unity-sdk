@@ -22,6 +22,19 @@
 
 @implementation TDCoreFPSMonitor
 
+// CADisplayLink 与主线程 RunLoop / CoreAnimation 强绑定，其创建、addToRunLoop:、
+// invalidate 必须在主线程执行。采集链路可能在后台串行队列触发启停，故统一收敛到主线程。
+static void td_fps_runOnMainThread(dispatch_block_t block) {
+    if (!block) {
+        return;
+    }
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
+}
+
 #if TARGET_OS_IOS
 - (instancetype)init {
     self = [super init];
@@ -59,30 +72,43 @@
 }
 
 - (NSNumber *)getPFS {
-    return [NSNumber numberWithInt:[NSString stringWithFormat:@"%d", _thinkingdata_fps].intValue];
+    // _thinkingdata_fps 为 int，原子读安全；仅返回快照，不触发任何 link 操作
+    return @(_thinkingdata_fps);
 }
 
 - (void)dealloc {
-    if (_link) {
-        [_link invalidate];
+    // 确保 link 在对象销毁前从主线程 RunLoop 摘除；仅捕获局部指针，不强引用 self，避免悬垂
+    CADisplayLink *link = _link;
+    _link = nil;
+    if (link) {
+        if ([NSThread isMainThread]) {
+            [link invalidate];
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [link invalidate];
+            });
+        }
     }
 }
 
 - (void)startDisplay {
-    
-    if (_link) return;
-    
-    _thinkingdata_fps = 60;
-    _link = [CADisplayLink displayLinkWithTarget:[TDCoreWeakProxy proxyWithTarget:self] selector:@selector(tick:)];
-//    _link.preferredFrameRateRange = CAFrameRateRangeMake(60, 120, 120);
-    [_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    td_fps_runOnMainThread(^{
+        if (self->_link) return;
+
+        self->_thinkingdata_fps = 60;
+        self->_link = [CADisplayLink displayLinkWithTarget:[TDCoreWeakProxy proxyWithTarget:self] selector:@selector(tick:)];
+    //    _link.preferredFrameRateRange = CAFrameRateRangeMake(60, 120, 120);
+        [self->_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    });
 }
 
 - (void)stopDisplay {
-    if (_link) {
-        [_link invalidate];
-        _link= nil;
-    }
+    td_fps_runOnMainThread(^{
+        if (self->_link) {
+            [self->_link invalidate];
+            self->_link = nil;
+        }
+    });
 }
 
 - (void)tick:(CADisplayLink *)link {

@@ -94,10 +94,10 @@ static void TDHandleException(NSException *exception) {
 
 static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *context) {
     ThinkingExceptionHandler *handler = [ThinkingExceptionHandler sharedHandler];
-    NSMutableDictionary *crashInfo;
+    NSMutableDictionary *crashInfo = [NSMutableDictionary dictionary];
     NSString *reason;
     NSException *exception;
-    
+
     atomic_int_fast32_t exceptionCount = atomic_fetch_add_explicit(&TDExceptionCount, 1, memory_order_relaxed);
     if (exceptionCount <= TDExceptionMaximum) {
         [crashInfo setObject:[NSNumber numberWithInt:signalNumber] forKey:TDUncaughtExceptionHandlerSignalKey];
@@ -105,8 +105,13 @@ static void TDSignalHandler(int signalNumber, struct __siginfo *info, void *cont
         exception = [NSException exceptionWithName:TDUncaughtExceptionHandlerSignalExceptionName reason:reason userInfo:crashInfo];
         [handler td_handleUncaughtException:exception];
     }
-    
+
     struct sigaction prev_action = handler.td_signalHandlers[signalNumber];
+    // SIG_IGN 显式忽略：其值为 (void(*)(int))1，若落进 else if (prev_action.sa_handler) 分支
+    // 会被当作函数指针调用，导致 PC=0x1 崩溃（Unity/libdispatch 场景下 SIGPIPE 常处于 SIG_IGN）。
+    if (prev_action.sa_handler == SIG_IGN) {
+        return;
+    }
     if (prev_action.sa_handler == SIG_DFL) {
         signal(signalNumber, SIG_DFL);
         raise(signalNumber);

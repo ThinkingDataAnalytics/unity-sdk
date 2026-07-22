@@ -101,54 +101,53 @@ static NSMutableArray *__td_disPresetProperties;
         
         NSArray *disPresetProperties = (NSArray *)[[[NSBundle mainBundle] infoDictionary] objectForKey:TD_MAIM_INFO_PLIST_DISPRESTPRO_KEY];
 
-        if (disPresetProperties && disPresetProperties.count) {
-            // If a configuration file is set, we will use the values in the configuration file. So the default value is restored to NO
-            _td_disableFPS = NO;
-            
-            __td_disPresetProperties = [NSMutableArray arrayWithArray:disPresetProperties];
-            
-            if ([__td_disPresetProperties containsObject:kTDPresentZONEOFFSET]) {
-                [__td_disPresetProperties removeObject:kTDPresentZONEOFFSET];
+        if (disPresetProperties) {
+            if(disPresetProperties.count > 0){
+                __td_disPresetProperties = [NSMutableArray arrayWithArray:disPresetProperties];
+                
+                if ([__td_disPresetProperties containsObject:kTDPresentZONEOFFSET]) {
+                    [__td_disPresetProperties removeObject:kTDPresentZONEOFFSET];
+                }
+                
+                _td_disableStartReason = [__td_disPresetProperties containsObject:kTDStartReason];
+                _td_disableDisk        = [__td_disPresetProperties containsObject:kTDPerformanceDISK];
+                _td_disableRAM         = [__td_disPresetProperties containsObject:kTDPerformanceRAM];
+                _td_disableFPS         = [__td_disPresetProperties containsObject:kTDPerformanceFPS];
+                _td_disableSimulator   = [__td_disPresetProperties containsObject:kTDPerformanceSIM];
+                
+                _td_disableAppVersion  = [__td_disPresetProperties containsObject:kTDPresentAppVersion];
+                _td_disableOsVersion   = [__td_disPresetProperties containsObject:kTDPresentOsVersion];
+                _td_disableManufacturer = [__td_disPresetProperties containsObject:kTDPresentManufacturer];
+                _td_disableDeviceModel = [__td_disPresetProperties containsObject:kTDPresentDeviceModel];
+                _td_disableScreenHeight = [__td_disPresetProperties containsObject:kTDPresentScreenHeight];
+                _td_disableScreenWidth = [__td_disPresetProperties containsObject:kTDPresentScreenWidth];
+                _td_disableCarrier = [__td_disPresetProperties containsObject:kTDPresentCarrier];
+                _td_disableDeviceId = [__td_disPresetProperties containsObject:kTDPresentDeviceId];
+                _td_disableSystemLanguage = [__td_disPresetProperties containsObject:kTDPresentSystemLanguage];
+                _td_disableLib = [__td_disPresetProperties containsObject:kTDPresentLib];
+                _td_disableLibVersion = [__td_disPresetProperties containsObject:kTDPresentLibVersion];
+                _td_disableBundleId = [__td_disPresetProperties containsObject:kTDPresentBundleId];
+                _td_disableOs = [__td_disPresetProperties containsObject:kTDPresentOs];
+                _td_disableInstallTime = [__td_disPresetProperties containsObject:kTDPresentInstallTime];
+                _td_disableDeviceType = [__td_disPresetProperties containsObject:kTDPresentDeviceType];
+                
+                _td_disableNetworkType = [__td_disPresetProperties containsObject:kTDPresentNETWORKTYPE];
+                _td_disableZoneOffset = [__td_disPresetProperties containsObject:kTDPresentZONEOFFSET];
+                _td_disableDuration = [__td_disPresetProperties containsObject:kTDPresentDURATION];
+                _td_disableBackgroundDuration = [__td_disPresetProperties containsObject:kTDPresentBACKGROUNDDURATION];
+                _td_disableAppCrashedReason = [__td_disPresetProperties containsObject:kTDPresentCRASHREASON];
+                _td_disableResumeFromBackground = [__td_disPresetProperties containsObject:kTDPresentRESUMEFROMBACKGROUND];
+                _td_disableElementId = [__td_disPresetProperties containsObject:kTDPresentELEMENTID];
+                _td_disableElementType = [__td_disPresetProperties containsObject:kTDPresentELEMENTTYPE];
+                _td_disableElementContent = [__td_disPresetProperties containsObject:kTDPresentELEMENTCONTENT];
+                _td_disableElementPosition = [__td_disPresetProperties containsObject:kTDPresentELEMENTPOSITION];
+                _td_disableElementSelector = [__td_disPresetProperties containsObject:kTDPresentELEMENTSELECTOR];
+                _td_disableScreenName = [__td_disPresetProperties containsObject:kTDPresentSCREENNAME];
+                _td_disableTitle = [__td_disPresetProperties containsObject:kTDPresentTITLE];
+                _td_disableUrl = [__td_disPresetProperties containsObject:kTDPresentURL];
+                _td_disableReferrer = [__td_disPresetProperties containsObject:kTDPresentREFERRER];
+                _td_disableOpsReceiptProperties = [__td_disPresetProperties containsObject:kTDPresentOpsReceiptProperties];
             }
-
-            _td_disableStartReason = [__td_disPresetProperties containsObject:kTDStartReason];
-            _td_disableDisk        = [__td_disPresetProperties containsObject:kTDPerformanceDISK];
-            _td_disableRAM         = [__td_disPresetProperties containsObject:kTDPerformanceRAM];
-            _td_disableFPS         = [__td_disPresetProperties containsObject:kTDPerformanceFPS];
-            _td_disableSimulator   = [__td_disPresetProperties containsObject:kTDPerformanceSIM];
-            
-            _td_disableAppVersion  = [__td_disPresetProperties containsObject:kTDPresentAppVersion];
-            _td_disableOsVersion   = [__td_disPresetProperties containsObject:kTDPresentOsVersion];
-            _td_disableManufacturer = [__td_disPresetProperties containsObject:kTDPresentManufacturer];
-            _td_disableDeviceModel = [__td_disPresetProperties containsObject:kTDPresentDeviceModel];
-            _td_disableScreenHeight = [__td_disPresetProperties containsObject:kTDPresentScreenHeight];
-            _td_disableScreenWidth = [__td_disPresetProperties containsObject:kTDPresentScreenWidth];
-            _td_disableCarrier = [__td_disPresetProperties containsObject:kTDPresentCarrier];
-            _td_disableDeviceId = [__td_disPresetProperties containsObject:kTDPresentDeviceId];
-            _td_disableSystemLanguage = [__td_disPresetProperties containsObject:kTDPresentSystemLanguage];
-            _td_disableLib = [__td_disPresetProperties containsObject:kTDPresentLib];
-            _td_disableLibVersion = [__td_disPresetProperties containsObject:kTDPresentLibVersion];
-            _td_disableBundleId = [__td_disPresetProperties containsObject:kTDPresentBundleId];
-            _td_disableOs = [__td_disPresetProperties containsObject:kTDPresentOs];
-            _td_disableInstallTime = [__td_disPresetProperties containsObject:kTDPresentInstallTime];
-            _td_disableDeviceType = [__td_disPresetProperties containsObject:kTDPresentDeviceType];
-
-            _td_disableNetworkType = [__td_disPresetProperties containsObject:kTDPresentNETWORKTYPE];
-            _td_disableZoneOffset = [__td_disPresetProperties containsObject:kTDPresentZONEOFFSET];
-            _td_disableDuration = [__td_disPresetProperties containsObject:kTDPresentDURATION];
-            _td_disableBackgroundDuration = [__td_disPresetProperties containsObject:kTDPresentBACKGROUNDDURATION];
-            _td_disableAppCrashedReason = [__td_disPresetProperties containsObject:kTDPresentCRASHREASON];
-            _td_disableResumeFromBackground = [__td_disPresetProperties containsObject:kTDPresentRESUMEFROMBACKGROUND];
-            _td_disableElementId = [__td_disPresetProperties containsObject:kTDPresentELEMENTID];
-            _td_disableElementType = [__td_disPresetProperties containsObject:kTDPresentELEMENTTYPE];
-            _td_disableElementContent = [__td_disPresetProperties containsObject:kTDPresentELEMENTCONTENT];
-            _td_disableElementPosition = [__td_disPresetProperties containsObject:kTDPresentELEMENTPOSITION];
-            _td_disableElementSelector = [__td_disPresetProperties containsObject:kTDPresentELEMENTSELECTOR];
-            _td_disableScreenName = [__td_disPresetProperties containsObject:kTDPresentSCREENNAME];
-            _td_disableTitle = [__td_disPresetProperties containsObject:kTDPresentTITLE];
-            _td_disableUrl = [__td_disPresetProperties containsObject:kTDPresentURL];
-            _td_disableReferrer = [__td_disPresetProperties containsObject:kTDPresentREFERRER];
-            _td_disableOpsReceiptProperties = [__td_disPresetProperties containsObject:kTDPresentOpsReceiptProperties];
         } else {
             // If a configuration file is not set. default value is YES
             _td_disableFPS = YES;

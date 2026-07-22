@@ -16,6 +16,7 @@
 #import "TDInstallTracker.h"
 #import "TDAppState.h"
 #import "ThinkingSDK.h"
+#import "UIViewController+TDScreenName.h"
 
 #if __has_include(<ThinkingDataCore/TDJSONUtil.h>)
 #import <ThinkingDataCore/TDJSONUtil.h>
@@ -113,7 +114,7 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     properties[TD_EVENT_PROPERTY_ELEMENT_TYPE] = NSStringFromClass([view class]);
     UIViewController *viewController = [self viewControllerForView:view];
     if (viewController != nil) {
-        NSString *screenName = NSStringFromClass([viewController class]);
+        NSString *screenName = [UIViewController td_screenNameForViewController:viewController];
         properties[TD_EVENT_PROPERTY_SCREEN_NAME] = screenName;
         
         elementScreenName = screenName;
@@ -344,30 +345,35 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     [self trackViewController:controller];
 }
 
-+ (UIViewController *)findTopmostControllerInContainer:(UIViewController *)controller {
++ (UIViewController *)findTopmostControllerInContainer:(UIViewController *)controller depth:(NSInteger)depth {
+    if (depth <= 0) return controller;
+
     if ([controller isKindOfClass:[UINavigationController class]]) {
         UINavigationController *nav = (UINavigationController *)controller;
-        return [self findTopmostControllerInContainer:nav.topViewController ?: nav];
+        UIViewController *top = nav.topViewController;
+        return top ? [self findTopmostControllerInContainer:top depth:depth - 1] : nav;
     }
     if ([controller isKindOfClass:[UITabBarController class]]) {
         UITabBarController *tab = (UITabBarController *)controller;
-        return [self findTopmostControllerInContainer:tab.selectedViewController ?: tab];
+        UIViewController *selected = tab.selectedViewController;
+        return selected ? [self findTopmostControllerInContainer:selected depth:depth - 1] : tab;
     }
-    
     if ([controller isKindOfClass:[UISplitViewController class]]) {
         UISplitViewController *split = (UISplitViewController *)controller;
         UIViewController *primary = split.viewControllers.firstObject;
-        return [self findTopmostControllerInContainer:primary ?: split];
+        return primary ? [self findTopmostControllerInContainer:primary depth:depth - 1] : split;
     }
-    
     if (controller.childViewControllers.count > 0) {
         UIViewController *lastChild = controller.childViewControllers.lastObject;
-        if (!lastChild.view.hidden && lastChild.view.superview) {
-            return [self findTopmostControllerInContainer:lastChild];
+        if (lastChild && lastChild != controller && !lastChild.view.hidden && lastChild.view.superview) {
+            return [self findTopmostControllerInContainer:lastChild depth:depth - 1];
         }
     }
-    
     return controller;
+}
+
++ (UIViewController *)findTopmostControllerInContainer:(UIViewController *)controller {
+    return [self findTopmostControllerInContainer:controller depth:10];
 }
 
 + (UIViewController *)topPresentedViewController {
@@ -380,8 +386,11 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     if (!topController) return nil;
         
     topController = [self findTopmostControllerInContainer:topController];
-        
+
+    NSMutableSet *visited = [NSMutableSet set];
     while (topController.presentedViewController) {
+        if ([visited containsObject:topController]) break;
+        [visited addObject:topController];
         topController = [self findTopmostControllerInContainer:topController.presentedViewController];
     }
     
@@ -431,9 +440,22 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
     NSMutableDictionary *customProperties = [NSMutableDictionary dictionary];
     
     NSMutableDictionary *properties = [[NSMutableDictionary alloc] init];
-    [properties setValue:NSStringFromClass([controller class]) forKey:TD_EVENT_PROPERTY_SCREEN_NAME];
-    
-    pageScreenName = NSStringFromClass([controller class]);
+    pageScreenName = [UIViewController td_screenNameForViewController:controller];
+
+    // Skip internal SwiftUI VCs whose screen names resolve to SwiftUI-internal types:
+    // (a) Non-HostingController SwiftUI VCs: screen name starts with "SwiftUI." (module prefix).
+    // (b) Swift-mangled HostingControllers wrapping only SwiftUI infrastructure: screen name
+    //     falls back to "UIHostingController" because no user-defined view was found.
+    //     (User-created hosting controllers always resolve to the actual root view type name.)
+    if ([pageScreenName hasPrefix:@"SwiftUI."]) {
+        return;
+    }
+    NSString *tdClassName = NSStringFromClass([controller class]);
+    if ([tdClassName hasPrefix:@"_Tt"] && [pageScreenName isEqualToString:@"UIHostingController"]) {
+        return;
+    }
+
+    [properties setValue:pageScreenName forKey:TD_EVENT_PROPERTY_SCREEN_NAME];
     
     NSString *controllerTitle = [self titleFromViewController:controller];
     if (controllerTitle) {
@@ -523,7 +545,13 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
 }
 
 - (BOOL)shouldTrackViewContrller:(Class)aClass {
-    return ![TDPublicConfig.controllers containsObject:NSStringFromClass(aClass)];
+    NSString *className = NSStringFromClass(aClass);
+    // Filter SwiftUI framework VCs exposed with module-qualified ObjC names,
+    // e.g. SwiftUI.NotifyingMulticolumnSplitViewController created by NavigationView on iOS 16+.
+    if ([className hasPrefix:@"SwiftUI."]) {
+        return NO;
+    }
+    return ![TDPublicConfig.controllers containsObject:className];
 }
 
 - (TDAutoTrackEventType)autoTrackOptionForAppid:(NSString *)appid {
@@ -783,8 +811,8 @@ NSString * const TD_EVENT_PROPERTY_ELEMENT_POSITION = @"#element_position";
             if (type & ThinkingAnalyticsEventTypeAppEnd) {
                 TDAppEndEvent *event = [[TDAppEndEvent alloc] initWithName:TD_APP_END_EVENT];
                 td_dispatch_main_sync_safe(^{
-                    NSString *screenName = NSStringFromClass([[TDAutoTrackManager topPresentedViewController] class]);
-                    event.screenName = screenName;
+                    UIViewController *topViewController = [TDAutoTrackManager topPresentedViewController];
+                    event.screenName = [UIViewController td_screenNameForViewController:topViewController];
                     [self.appEndTracker trackWithInstanceTag:appid event:event params:@{}];
                 });
             }

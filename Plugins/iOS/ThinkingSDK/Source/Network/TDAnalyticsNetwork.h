@@ -10,6 +10,9 @@ typedef void (^TDFlushConfigBlock)(NSDictionary *result, NSError * _Nullable err
 
 @property (nonatomic, copy) NSString *appid;
 @property (nonatomic, strong) NSURL *serverURL;
+@property (nonatomic, strong) NSArray<NSURL *> *serverUrlList;
+@property (nonatomic, assign) NSUInteger currentServerUrlIndex;
+@property (nonatomic, strong) NSURL *mainServerURL;
 
 @property (nonatomic, strong) NSURL *serverDebugURL;
 @property (nonatomic, strong) TDSecurityPolicy *securityPolicy;

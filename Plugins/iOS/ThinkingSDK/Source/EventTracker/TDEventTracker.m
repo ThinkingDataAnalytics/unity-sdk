@@ -62,9 +62,38 @@ static NSURLSessionTask *g_currentTask = nil;
     TDAnalyticsNetwork *network = [[TDAnalyticsNetwork alloc] init];
     network.appid = config.appid;
     network.sessionDidReceiveAuthenticationChallenge = config.securityPolicy.sessionDidReceiveAuthenticationChallenge;
-    network.serverURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/sync", config.serverUrl]];
+    NSMutableArray<NSURL *> *mutableUrlList = [NSMutableArray array];
+    NSURL *firstServerUrl = [NSURL URLWithString:[NSString stringWithFormat:@"%@/sync", config.serverUrl]];
+    if (firstServerUrl) {
+        [mutableUrlList addObject:firstServerUrl];
+    }
+    if (config.backupUrlList && config.backupUrlList.count > 0) {
+        for (NSString *urlStr in config.backupUrlList) {
+            //备份地址最多只有5个+1个serverUrl
+            if(mutableUrlList.count >= 6){
+                break;
+            }
+            if (!urlStr || urlStr.length == 0) {
+                continue;
+            }
+            NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@/sync", urlStr]];
+            if (!url) {
+                continue;
+            }
+            if (![mutableUrlList containsObject:url]) {
+                [mutableUrlList addObject:url];
+            }
+        }
+    }
+    network.serverUrlList = [mutableUrlList copy];
+    if(network.serverUrlList.count > 0){
+        network.currentServerUrlIndex = 0;
+        network.serverURL = network.serverUrlList[network.currentServerUrlIndex];
+        network.mainServerURL = network.serverURL;
+    }
     network.serverDebugURL = [NSURL URLWithString:[NSString stringWithFormat:@"%@/data_debug", config.serverUrl]];
     network.securityPolicy = config.securityPolicy;
+    [network fetchIPMap];
     return network;
 }
 

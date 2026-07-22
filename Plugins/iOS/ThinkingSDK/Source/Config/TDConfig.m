@@ -180,6 +180,12 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
 }
 
 - (void)innerUpdateConfig:(void (^)(NSDictionary *))block {
+    if(self.disableRConfig){
+        if (block) {
+            block(nil);
+        }
+        return;
+    }
     NSString *serverUrlStr = [NSString stringWithFormat:@"%@/config",self.serverUrl];
     TDAnalyticsNetwork *network = [[TDAnalyticsNetwork alloc] init];
     network.serverURL = [NSURL URLWithString:serverUrlStr];
