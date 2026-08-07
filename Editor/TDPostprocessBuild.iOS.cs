@@ -3,13 +3,16 @@ using System.IO;
 using ThinkingData.Analytics.Utils;
 using UnityEditor;
 using UnityEditor.Callbacks;
+#if UNITY_IOS
 using UnityEditor.iOS.Xcode;
+#endif
 using UnityEngine;
 
 namespace ThinkingData.Analytics.Editors
 {
     public static class TD_PostProcessBuildIOS
     {
+#if UNITY_IOS
         [PostProcessBuildAttribute(88)]
         public static void OnPostProcessBuild(BuildTarget target, string targetPath)
         {
@@ -57,6 +60,7 @@ namespace ThinkingData.Analytics.Editors
             }
             plist.WriteToFile(plistPath);
         }
+#endif
     }
 }
 #endif
