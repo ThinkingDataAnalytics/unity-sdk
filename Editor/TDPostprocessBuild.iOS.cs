@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.IO;
+using System.Text.RegularExpressions;
 using ThinkingData.Analytics.Utils;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -55,7 +56,78 @@ namespace ThinkingData.Analytics.Editors
             {
                 plist.root["TDDisPresetProperties"].AsArray().AddString(item);
             }
+            if (HasEnableDNSServiceCallInProject())
+            {
+                PlistElementDict atsDict;
+                if (plist.root.values.ContainsKey("NSAppTransportSecurity"))
+                {
+                    atsDict = plist.root["NSAppTransportSecurity"].AsDict();
+                }
+                else
+                {
+                    atsDict = plist.root.CreateDict("NSAppTransportSecurity");
+                }
+                atsDict.SetBoolean("NSAllowsArbitraryLoads", true);
+            }
             plist.WriteToFile(plistPath);
+        }
+
+        // ATS must be written at export time. Runtime EnableDNSService cannot change Info.plist.
+        // iOS export relaxes ATS only when game scripts call EnableDNSService.
+        private static bool HasEnableDNSServiceCallInProject()
+        {
+            string assetsRoot = Application.dataPath;
+            if (!Directory.Exists(assetsRoot))
+            {
+                return false;
+            }
+            string[] files = Directory.GetFiles(assetsRoot, "*.cs", SearchOption.AllDirectories);
+            for (int i = 0; i < files.Length; i++)
+            {
+                string normalized = files[i].Replace("\\", "/");
+                if (ShouldSkipDnsScanPath(normalized))
+                {
+                    continue;
+                }
+                string content = File.ReadAllText(files[i]);
+                if (content.IndexOf("EnableDNSService(") < 0)
+                {
+                    continue;
+                }
+                if (ContainsEnableDNSServiceCall(content))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private static bool ShouldSkipDnsScanPath(string normalizedPath)
+        {
+            return normalizedPath.Contains("/ThinkingAnalytics/")
+                || normalizedPath.Contains("/Assets/Editor/")
+                || normalizedPath.Contains("/Assets/Tests/");
+        }
+
+        private static bool ContainsEnableDNSServiceCall(string content)
+        {
+            content = Regex.Replace(content, @"/\*.*?\*/", "", RegexOptions.Singleline);
+            string[] lines = content.Split('\n');
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string trimmed = lines[i].Trim();
+                if (trimmed.StartsWith("//"))
+                {
+                    continue;
+                }
+                int commentIndex = trimmed.IndexOf("//");
+                string code = commentIndex >= 0 ? trimmed.Substring(0, commentIndex) : trimmed;
+                if (code.IndexOf("EnableDNSService(") >= 0 && code.IndexOf("void EnableDNSService") < 0)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

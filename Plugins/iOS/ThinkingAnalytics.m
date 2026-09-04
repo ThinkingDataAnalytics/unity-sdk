@@ -73,7 +73,7 @@ char* ta_strdup(const char* string) {
 }
 
 
-void ta_start(const char *app_id, const char *url, int mode, const char *timezone_id, bool enable_encrypt, int encrypt_version, const char *encrypt_public_key, int pinning_mode, bool allow_invalid_certificates, bool validates_domain_name, const char *instance_name) {
+void ta_start(const char *app_id, const char *url, int mode, const char *timezone_id, bool enable_encrypt, int encrypt_version, const char *encrypt_public_key, int pinning_mode, bool allow_invalid_certificates, bool validates_domain_name, const char *instance_name, const char *dns_services) {
     NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
     NSString *url_string = url != NULL ? [NSString stringWithUTF8String:url] : nil;
     NSString *instance_name_string = instance_name != NULL ? [NSString stringWithUTF8String:instance_name] : nil;
@@ -101,6 +101,23 @@ void ta_start(const char *app_id, const char *url, int mode, const char *timezon
         config.enableEncrypt = YES; 
         // Set public key and version
         config.secretKey = [[TDSecretKey alloc] initWithVersion:encrypt_version publicKey:encrypt_public_key_string];
+    }
+    if (dns_services != NULL) {
+        NSString *dns_services_string = [NSString stringWithUTF8String:dns_services];
+        if (dns_services_string.length > 0) {
+            NSArray<TDDNSService> *allServices = @[TDDNSServiceCloudFlare, TDDNSServiceCloudALi, TDDNSServiceCloudGoogle];
+            NSMutableArray<TDDNSService> *filterServices = [NSMutableArray array];
+            NSArray *ordinals = [dns_services_string componentsSeparatedByString:@","];
+            for (NSString *ordinalString in ordinals) {
+                NSInteger ordinal = [ordinalString integerValue];
+                if (ordinal >= 0 && ordinal < (NSInteger)allServices.count) {
+                    [filterServices addObject:allServices[ordinal]];
+                }
+            }
+            if (filterServices.count > 0) {
+                [config enableDNSServcie:filterServices];
+            }
+        }
     }
 
     [ThinkingAnalyticsSDK startWithConfig:config];
@@ -517,4 +534,26 @@ void ta_enable_third_party_sharing(const char *app_id, int share_type, const cha
     } else {
         [ta_getInstance(app_id_string) enableThirdPartySharing:share_type];
     }
+}
+
+void ta_register_error_callback(const char *app_id) {
+    NSString *app_id_string = app_id != NULL ? [NSString stringWithUTF8String:app_id] : nil;
+    __block NSString *w_app_id_string = app_id_string ?: @"";
+    [TDAnalytics registerErrorCallback:^(NSInteger code, NSString * _Nullable errorMsg, NSString * _Nullable ext) {
+        if (resultHandler == NULL) {
+            return;
+        }
+        NSDictionary *dict = @{
+            @"code": @(code),
+            @"errorMsg": errorMsg ?: @"",
+            @"ext": ext ?: @"",
+            @"AppID": w_app_id_string
+        };
+        NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:0 error:nil];
+        if (!jsonData) {
+            return;
+        }
+        NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+        resultHandler("ErrorCallback", [jsonString UTF8String]);
+    } withAppId:app_id_string];
 }

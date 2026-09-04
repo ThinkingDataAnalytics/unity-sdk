@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.5.0
+    SDK VERSION:3.5.1
  */
 
 /**    
@@ -1375,6 +1375,29 @@ namespace ThinkingData.Analytics
         }
 
         /// <summary>
+        /// Register SDK error callback (Android / iOS only).
+        /// Must be called after Init. Later registration for the same appId replaces the previous handler.
+        /// </summary>
+        /// <param name="handler">error callback handler</param>
+        /// <param name="appId">project ID (optional)</param>
+        public static void RegisterErrorCallback(TDErrorCallbackHandler handler, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.RegisterErrorCallback(handler, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { handler, appId };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
+        /// <summary>
         /// Gets the Local Country/Region Code
         /// the two-letter code defined in ISO 3166 for the country/region
         /// </summary>
@@ -1586,6 +1609,10 @@ namespace ThinkingData.Analytics
         private string sName;
 
         public int reportingToTencentSdk;
+        /// <summary>
+        /// DNS-over-HTTPS service list, default is disabled (iOS/Android only). Call EnableDNSService before Init.
+        /// </summary>
+        public TDDNSService[] dnsServices;
 
         /// <summary>
         /// Construct TDConfig instance
@@ -1607,6 +1634,7 @@ namespace ThinkingData.Analytics
             this.pinningMode = TDSSLPinningMode.NONE;
             this.allowInvalidCertificates = false;
             this.validatesDomainName = true;
+            this.dnsServices = null;
         }
 
         public void EnableEncrypt(string publicKey, int version = 0, string symType = "", string asymType = "")
@@ -1616,6 +1644,46 @@ namespace ThinkingData.Analytics
             this.encryptPublicKey = publicKey;
             this.symType = symType;
             this.asymType = asymType;
+        }
+
+        /// <summary>
+        /// Enable DNS-over-HTTPS resolution of the analytics server host (Android / iOS only).
+        /// Must be called before Init. Empty or null list leaves DNS disabled.
+        /// On iOS, exporting the Xcode project scans game scripts for this call and relaxes ATS when found.
+        /// </summary>
+        /// <param name="services">ordered DNS service providers, see TDDNSService</param>
+        public void EnableDNSService(params TDDNSService[] services)
+        {
+            this.dnsServices = services;
+        }
+
+        internal int[] GetDNSServiceOrdinals()
+        {
+            if (dnsServices == null || dnsServices.Length == 0)
+            {
+                return new int[0];
+            }
+            int[] ordinals = new int[dnsServices.Length];
+            for (int i = 0; i < dnsServices.Length; i++)
+            {
+                ordinals[i] = (int)dnsServices[i];
+            }
+            return ordinals;
+        }
+
+        internal string GetDNSServiceOrdinalsString()
+        {
+            int[] ordinals = GetDNSServiceOrdinals();
+            if (ordinals.Length == 0)
+            {
+                return "";
+            }
+            string[] parts = new string[ordinals.Length];
+            for (int i = 0; i < ordinals.Length; i++)
+            {
+                parts[i] = ordinals[i].ToString();
+            }
+            return string.Join(",", parts);
         }
 
         /// <summary>

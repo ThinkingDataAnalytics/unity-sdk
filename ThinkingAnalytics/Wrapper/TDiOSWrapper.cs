@@ -9,7 +9,7 @@ namespace ThinkingData.Analytics.Wrapper
     public partial class TDWrapper
     {
         [DllImport("__Internal")]
-        private static extern void ta_start(string app_id, string url, int mode, string timezone_id, bool enable_encrypt, int encrypt_version, string encrypt_public_key, int pinning_mode, bool allow_invalid_certificates, bool validates_domain_name, string instance_name);
+        private static extern void ta_start(string app_id, string url, int mode, string timezone_id, bool enable_encrypt, int encrypt_version, string encrypt_public_key, int pinning_mode, bool allow_invalid_certificates, bool validates_domain_name, string instance_name, string dns_services);
         [DllImport("__Internal")]
         private static extern void ta_identify(string app_id, string unique_id);
         [DllImport("__Internal")]
@@ -102,6 +102,8 @@ namespace ThinkingData.Analytics.Wrapper
         private static extern void ta_config_custom_lib_info(string lib_name, string lib_version);
         [DllImport("__Internal")]
         private static extern void ta_enable_third_party_sharing(string app_id, int share_type, string properties);
+        [DllImport("__Internal")]
+        private static extern void ta_register_error_callback(string app_id);
 
         private static TimeZoneInfo defaultTimeZone = null;
         private static TDTimeZone defaultTDTimeZone = TDTimeZone.Local;
@@ -109,7 +111,7 @@ namespace ThinkingData.Analytics.Wrapper
         private static void init(TDConfig token)
         {
             registerRecieveGameCallback();
-            ta_start(token.appId, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.name);
+            ta_start(token.appId, token.serverUrl, (int)token.mode, token.getTimeZoneId(), token.enableEncrypt, token.encryptVersion, token.encryptPublicKey, (int) token.pinningMode, token.allowInvalidCertificates, token.validatesDomainName, token.name, token.GetDNSServiceOrdinalsString());
             string timeZoneId = token.getTimeZoneId();
             defaultTDTimeZone = token.timeZone;
             if (null != timeZoneId && timeZoneId.Length > 0)
@@ -509,6 +511,11 @@ namespace ThinkingData.Analytics.Wrapper
             ta_enable_third_party_sharing(appId, (int) shareType, serilize(properties));
         }
 
+        private static void registerErrorCallback(TDErrorCallbackHandler handler, string appId)
+        {
+            ta_register_error_callback(appId);
+        }
+
         private static void registerRecieveGameCallback()
         {
             ResultHandler handler = new ResultHandler(resultHandler);
@@ -550,6 +557,34 @@ namespace ThinkingData.Analytics.Wrapper
                     //return TDMiniJson.Serialize(dynamicSuperProperties);
                     return serilize(dynamicSuperProperties);
                 }
+            }
+            else if (type == "ErrorCallback")
+            {
+                Dictionary<string, object> data = TDMiniJson.Deserialize(jsonData);
+                string appId = "";
+                int code = 0;
+                string errorMsg = "";
+                string ext = "";
+                if (data != null)
+                {
+                    if (data.ContainsKey("AppID") && data["AppID"] != null)
+                    {
+                        appId = data["AppID"].ToString();
+                    }
+                    if (data.ContainsKey("code") && data["code"] != null)
+                    {
+                        code = Convert.ToInt32(data["code"]);
+                    }
+                    if (data.ContainsKey("errorMsg") && data["errorMsg"] != null)
+                    {
+                        errorMsg = data["errorMsg"].ToString();
+                    }
+                    if (data.ContainsKey("ext") && data["ext"] != null)
+                    {
+                        ext = data["ext"].ToString();
+                    }
+                }
+                DispatchErrorCallback(appId, code, errorMsg, ext);
             }
             return "{}";
         }

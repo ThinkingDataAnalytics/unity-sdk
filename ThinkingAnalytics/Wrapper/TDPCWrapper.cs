@@ -1105,6 +1105,11 @@ namespace ThinkingData.Analytics.Wrapper
 #endif
             ThinkingSDKLogger.Print("Sharing data is not support on PC: " + shareType + ", " + properties + ", " + appId);
         }
+
+        private static void registerErrorCallback(TDErrorCallbackHandler handler, string appId)
+        {
+            ThinkingSDKLogger.Print("registerErrorCallback is not support on PC: " + appId);
+        }
     }
 }
 #endif

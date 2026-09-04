@@ -399,6 +399,11 @@ namespace ThinkingData.Analytics.Wrapper
             
         }
 
+        private static void registerErrorCallback(TDErrorCallbackHandler handler, string appId)
+        {
+            TDLog.w("registerErrorCallback is not support on OpenHarmony: " + appId);
+        }
+
     }
 }
 

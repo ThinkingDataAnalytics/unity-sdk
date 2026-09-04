@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System;
 using System.Threading;
 using System.Collections;
-public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, TDAutoTrackEventHandler
+public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, TDAutoTrackEventHandler, TDErrorCallbackHandler
 {
 
     public GUISkin skin;
@@ -38,6 +38,10 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         {
             {"auto_track_dynamic", DateTime.Today}
         };
+    }
+    public void OnSDKErrorCallback(int code, string errorMsg, string ext)
+    {
+        Debug.Log("TDAnalytics error callback, code=" + code + ", errorMsg=" + errorMsg + ", ext=" + ext);
     }
 
     private void Awake()
@@ -121,7 +125,7 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
         if (GUILayout.Button("ManualInitialization", GUILayout.Height(Height)))
         {
             // 1. Manual initialization (ThinkingAnalytics prefab loaded)
-            TDAnalytics.Init();
+            // TDAnalytics.Init();
 
 
             // 2. Manual initialization (dynamically loading TDAnalytics script)
@@ -134,16 +138,19 @@ public class TDAnalyticsDemo : MonoBehaviour, TDDynamicSuperPropertiesHandler, T
 
 
             // 2.1 Set personalized instance parameters
-            string appId = "1b1c1fef65e3482bad 5c9d0e6a823356";
-            string serverUrl = "https://receiver.ta. thinkingdata.cn/asd";
+            string appId = "1b1c1fef65e3482bad5c9d0e6a823356";
+            string serverUrl = "https://receiver.ta.thinkingdata.cn/";
             TDConfig tDConfig = new TDConfig(appId, serverUrl);
             //tDConfig.mode = TDMode.Normal;
-            tDConfig.timeZone = TDTimeZone.America_New_York;
+            // tDConfig.timeZone = TDTimeZone.America_New_York;
             //Enable encrypted transmission(only iOS / Android)
             int encryptVersion = 0;
             string encryptPublicKey = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIPi6aHymT1jdETRci6f1ck535n13IX3p9XNLFu5xncfzNFl6kFVMiMSXMIwWSW2lF6ELtIlDJ0B00qE9C02n6YbIAV+VvVkchydbWrm8VdnEJk/6tIydoUxGyM9pDT6U/PaoEiItl/BawDj3/+KW6U7AejYPij9uTQ4H3bQqj1wIDAQAB";
-            tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
-            //TDAnalytics.Init(tDConfig);
+            // tDConfig.EnableEncrypt(encryptPublicKey, encryptVersion);
+            // Enable DNS-over-HTTPS (only iOS / Android). Call before Init.
+            tDConfig.EnableDNSService(TDDNSService.CloudAli, TDDNSService.CloudFlare, TDDNSService.CloudGoogle);
+            TDAnalytics.Init(tDConfig);
+            TDAnalytics.RegisterErrorCallback(this);
             //TDAnalytics.SetNetworkType(TDNetworkType.Wifi);
             TDAnalytics.SetDynamicSuperProperties(this);
             //TDAnalytics.EnableAutoTrack(TDAutoTrackEventType.AppInstall | TDAutoTrackEventType.AppStart | TDAutoTrackEventType.AppEnd);
