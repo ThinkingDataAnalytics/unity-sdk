@@ -52,6 +52,25 @@
 #import <ThinkingDataCore/TDNTPServer.h>
 #import <ThinkingDataCore/TDNTPTypes.h>
 #import <ThinkingDataCore/TDSettingsPrivate.h>
+#import <ThinkingDataCore/TDNotificationManager.h>
+#import <ThinkingDataCore/TDUserDefaults.h>
+// iOS-only public headers (excluded on macOS/watchOS/tvOS/visionOS)
+#if __has_include(<ThinkingDataCore/TDEncryptProtocol.h>)
+#import <ThinkingDataCore/TDEncryptProtocol.h>
+#import <ThinkingDataCore/TDRSAEncryptorPlugin.h>
+#import <ThinkingDataCore/TDRSAEncryptor.h>
+#import <ThinkingDataCore/TDAESEncryptor.h>
+#import <ThinkingDataCore/TDEncryptAlgorithm.h>
+#endif
+#if __has_include(<ThinkingDataCore/TDStorageEncryptPlugin.h>)
+#import <ThinkingDataCore/TDStorageEncryptPlugin.h>
+#endif
+#if __has_include(<ThinkingDataCore/TDNetworkReachability.h>)
+#import <ThinkingDataCore/TDNetworkReachability.h>
+#endif
+#if __has_include(<ThinkingDataCore/TDCoreFPSMonitor.h>)
+#import <ThinkingDataCore/TDCoreFPSMonitor.h>
+#endif
 #else
 #import "TDCoreInfo.h"
 #import "TDJSONUtil.h"
@@ -95,6 +114,24 @@
 #import "TDNTPServer.h"
 #import "TDNTPTypes.h"
 #import "TDSettingsPrivate.h"
+#import "TDNotificationManager.h"
+#import "TDUserDefaults.h"
+#if __has_include("TDEncryptProtocol.h")
+#import "TDEncryptProtocol.h"
+#import "TDRSAEncryptorPlugin.h"
+#import "TDRSAEncryptor.h"
+#import "TDAESEncryptor.h"
+#import "TDEncryptAlgorithm.h"
+#endif
+#if __has_include("TDStorageEncryptPlugin.h")
+#import "TDStorageEncryptPlugin.h"
+#endif
+#if __has_include("TDNetworkReachability.h")
+#import "TDNetworkReachability.h"
+#endif
+#if __has_include("TDCoreFPSMonitor.h")
+#import "TDCoreFPSMonitor.h"
+#endif
 #endif
 
 

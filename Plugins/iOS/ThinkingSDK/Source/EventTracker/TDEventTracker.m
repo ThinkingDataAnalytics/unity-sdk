@@ -162,7 +162,7 @@ static NSURLSessionTask *g_currentTask = nil;
     NSInteger count = 0;
     @synchronized (TDSqliteDataQueue.class) {
 
-        if (self.config.innerEnableEncrypt) {
+        if (self.config.innerEnableEncrypt && [self.config isEncryptGcmSupported]) {
 #if TARGET_OS_IOS
             NSDictionary *encryptData = [[ThinkingAnalyticsSDK instanceWithAppid:[self.config innerGetMapInstanceToken]].encryptManager encryptJSONObject:event];
             if (encryptData == nil) {
@@ -327,7 +327,7 @@ static NSURLSessionTask *g_currentTask = nil;
     
     TDEncryptManager *encryptManager = [ThinkingAnalyticsSDK instanceWithAppid:[self.config innerGetMapInstanceToken]].encryptManager;
     
-    if (self.config.innerEnableEncrypt && encryptManager.isValid) {
+    if (self.config.innerEnableEncrypt && [self.config isEncryptGcmSupported] && encryptManager.isValid) {
         for (TDEventRecord *record in records) {
             
             if (record.encrypted) {

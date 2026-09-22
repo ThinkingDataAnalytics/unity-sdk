@@ -197,6 +197,8 @@
         secretObj[@"pkv"] = @(self.secretKey.version);
         secretObj[@"ekey"] = self.encryptedSymmetricKey;
         secretObj[@"payload"] = encryptedString;
+        // Mark AES-GCM so receivers can mix with legacy ciphertext in one batch.
+        secretObj[@"mode"] = @"gcm";
         return [NSDictionary dictionaryWithDictionary:secretObj];
     } @catch (NSException *exception) {
         TDLogDebug(@"%@ error: %@", self, exception);

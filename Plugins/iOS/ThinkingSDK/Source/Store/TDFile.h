@@ -27,6 +27,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)archiveUploadInterval:(NSNumber *)uploadInterval;
 - (NSNumber*)unarchiveUploadInterval;
 
+/// Tri-state AES-GCM support from remote config: -1 unknown, 0 unsupported, 1 supported.
+- (void)archiveEncryptSupportGcm:(NSNumber *)encryptSupportGcm;
+- (NSNumber *)unarchiveEncryptSupportGcm;
+
 - (void)archiveSuperProperties:(nullable NSDictionary *)superProperties;
 - (NSDictionary*)unarchiveSuperProperties;
 

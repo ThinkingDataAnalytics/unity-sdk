@@ -25,7 +25,16 @@ static NSString * const TD_APNS_TOKEN = @"apns_token";
 static NSString * const TD_JPUSH_TOKEN = @"jiguang_id";
 static NSMutableSet<NSString *> * _pushAppIds;
 
+typedef NS_ENUM(NSUInteger, TDAutoPushTokenKind) {
+    TDAutoPushTokenKindFCM = 0,
+    TDAutoPushTokenKindJPush,
+    TDAutoPushTokenKindAPNS,
+};
+
 @interface TDAutoPushPlugin ()
+
++ (void)td_reportStoredToken:(NSString *)token kind:(TDAutoPushTokenKind)kind key:(NSString *)key;
++ (void)td_reportPendingTokenForKind:(TDAutoPushTokenKind)kind appId:(NSString *)appId key:(NSString *)key;
 
 @end
 
@@ -34,12 +43,72 @@ static NSMutableSet<NSString *> * _pushAppIds;
 + (void)load {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        _pushAppIds = [NSMutableSet set];
         [TDAutoPushPlugin monitorFIRMessagingToken];
         [TDAutoPushPlugin monitorJPUSHServiceToken];
         [TDAutoPushPlugin registerAnalyticsListener];
         [TDAutoPushPlugin registerAppLifeCycleListener];
-        _pushAppIds = [NSMutableSet set];
     });
+}
+
++ (NSString *)td_tokenForKind:(TDAutoPushTokenKind)kind {
+    switch (kind) {
+        case TDAutoPushTokenKindFCM:
+            return _fcm_token;
+        case TDAutoPushTokenKindJPush:
+            return _jpush_token;
+        case TDAutoPushTokenKindAPNS:
+            return _apns_token;
+    }
+    return nil;
+}
+
++ (void)td_setToken:(NSString *)token forKind:(TDAutoPushTokenKind)kind {
+    switch (kind) {
+        case TDAutoPushTokenKindFCM:
+            _fcm_token = token;
+            break;
+        case TDAutoPushTokenKindJPush:
+            _jpush_token = token;
+            break;
+        case TDAutoPushTokenKindAPNS:
+            _apns_token = token;
+            break;
+    }
+}
+
++ (NSArray<NSString *> *)td_storeToken:(NSString *)token kind:(TDAutoPushTokenKind)kind {
+    @synchronized (TDAutoPushPlugin.class) {
+        [self td_setToken:token forKind:kind];
+        return [_pushAppIds allObjects];
+    }
+}
+
++ (NSString *)td_preparedTokenForKind:(TDAutoPushTokenKind)kind appId:(NSString *)appId {
+    @synchronized (TDAutoPushPlugin.class) {
+        NSString *token = [self td_tokenForKind:kind];
+        if (token.length > 0) {
+            return token;
+        }
+        if (appId.length > 0) {
+            [_pushAppIds addObject:appId];
+        }
+        return nil;
+    }
+}
+
++ (void)td_reportStoredToken:(NSString *)token kind:(TDAutoPushTokenKind)kind key:(NSString *)key {
+    NSArray<NSString *> *appIds = [self td_storeToken:token kind:kind];
+    for (NSString *appId in appIds) {
+        [self tdUserSetValue:token forKey:key appid:appId];
+    }
+}
+
++ (void)td_reportPendingTokenForKind:(TDAutoPushTokenKind)kind appId:(NSString *)appId key:(NSString *)key {
+    NSString *token = [self td_preparedTokenForKind:kind appId:appId];
+    if (token.length > 0) {
+        [self tdUserSetValue:token forKey:key appid:appId];
+    }
 }
 
 + (void)enableLog:(BOOL)enable {
@@ -49,10 +118,7 @@ static NSMutableSet<NSString *> * _pushAppIds;
 void (*td_fcm_imp_original)(id, SEL, id);
 void td_fcm_imp_final(id self, SEL _cmd, id token) {
     [TDAutoPushPlugin printLog:@"FCM token: %@", token];
-    _fcm_token = token;
-    for (NSString *appId in _pushAppIds) {
-        [TDAutoPushPlugin tdUserSetValue:token forKey:TD_FCM_TOKEN appid:appId];
-    }
+    [TDAutoPushPlugin td_reportStoredToken:token kind:TDAutoPushTokenKindFCM key:TD_FCM_TOKEN];
     if(td_fcm_imp_original) {
         td_fcm_imp_original(self, _cmd, token);
     }
@@ -74,10 +140,7 @@ void td_fcm_imp_final(id self, SEL _cmd, id token) {
     Class desClass = NSClassFromString(@"JPUSHService");
     void(^_handler)(int resCode, NSString *registrationID) = ^(int resCode, NSString *registrationID) {
         [TDAutoPushPlugin printLog:@"JPush registrationID: %@, resCode: %d", registrationID, resCode];
-        _jpush_token = registrationID;
-        for (NSString *appId in _pushAppIds) {
-            [TDAutoPushPlugin tdUserSetValue:registrationID forKey:TD_JPUSH_TOKEN appid:appId];
-        }
+        [TDAutoPushPlugin td_reportStoredToken:registrationID kind:TDAutoPushTokenKindJPush key:TD_JPUSH_TOKEN];
     };
     SEL _sel = NSSelectorFromString(@"registrationIDCompletionHandler:");
     if ([desClass respondsToSelector:_sel]) {
@@ -105,23 +168,9 @@ void td_fcm_imp_final(id self, SEL _cmd, id token) {
 + (void)pushTokenNotification:(NSNotification *)notification {
     NSDictionary *userInfo = notification.userInfo;
     NSString *appId = userInfo[kAnalyticsNotificationParamsAppId];
-    if (_fcm_token.length) {
-        [TDAutoPushPlugin tdUserSetValue:_fcm_token forKey:TD_FCM_TOKEN appid:appId];
-    } else {
-        [_pushAppIds addObject:appId];
-    }
-    
-    if (_jpush_token.length) {
-        [TDAutoPushPlugin tdUserSetValue:_jpush_token forKey:TD_JPUSH_TOKEN appid:appId];
-    } else {
-        [_pushAppIds addObject:appId];
-    }
-    
-    if (_apns_token.length) {
-        [TDAutoPushPlugin tdUserSetValue:_apns_token forKey:TD_APNS_TOKEN appid:appId];
-    } else {
-        [_pushAppIds addObject:appId];
-    }
+    [self td_reportPendingTokenForKind:TDAutoPushTokenKindFCM appId:appId key:TD_FCM_TOKEN];
+    [self td_reportPendingTokenForKind:TDAutoPushTokenKindJPush appId:appId key:TD_JPUSH_TOKEN];
+    [self td_reportPendingTokenForKind:TDAutoPushTokenKindAPNS appId:appId key:TD_APNS_TOKEN];
 }
 
 + (void)registerAppLifeCycleListener {
@@ -149,10 +198,7 @@ static void (*original_didRegisterForRemoteNotificationsWithDeviceToken)(id, SEL
 + (void)td_application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
     NSString *tokenStr = [TDAutoPushPlugin formatDeviceTokenToHexStr:deviceToken];
     [TDAutoPushPlugin printLog:@"apns token: %@", tokenStr];
-    _apns_token = tokenStr;
-    for (NSString *appId in _pushAppIds) {
-        [TDAutoPushPlugin tdUserSetValue:tokenStr forKey:TD_APNS_TOKEN appid:appId];
-    }
+    [TDAutoPushPlugin td_reportStoredToken:tokenStr kind:TDAutoPushTokenKindAPNS key:TD_APNS_TOKEN];
     original_didRegisterForRemoteNotificationsWithDeviceToken(self, _cmd, application, deviceToken);
 }
 
