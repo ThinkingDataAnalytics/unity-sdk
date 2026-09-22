@@ -61,15 +61,4 @@ namespace ThinkingData.Analytics
         SaveOnly = 3, // data stores in the cache, but not be reported
         Normal = 4 // resume data reporting
     }
-
-    /// <summary>
-    /// DNS-over-HTTPS service providers (Android / iOS only).
-    /// Ordinals match Android TDConfig.TDDNSService.
-    /// </summary>
-    public enum TDDNSService
-    {
-        CloudFlare = 0,
-        CloudAli = 1,
-        CloudGoogle = 2
-    }
 }

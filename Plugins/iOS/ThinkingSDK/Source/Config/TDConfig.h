@@ -30,9 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// server url
 @property (atomic, copy) NSString *serverUrl;
 
-/// server url list
-@property (atomic, copy) NSArray<NSString *> *backupUrlList;
-
 /// SDK mode
 @property (nonatomic, assign) TDMode mode;
 
@@ -73,8 +70,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *appGroupName;
 
 @property (nonatomic, assign) BOOL enableAutoPush;
-
-@property (nonatomic, assign) BOOL disableRConfig;
 
 /// Enable the automatic time calibration function
 @property (nonatomic, assign) BOOL enableAutoCalibrated;

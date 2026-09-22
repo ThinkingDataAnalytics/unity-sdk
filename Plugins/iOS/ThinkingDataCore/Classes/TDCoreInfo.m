@@ -10,7 +10,7 @@
 @implementation TDCoreInfo
 
 + (NSString *)version {
-    return @"1.3.7";
+    return @"1.3.2";
 }
 
 @end

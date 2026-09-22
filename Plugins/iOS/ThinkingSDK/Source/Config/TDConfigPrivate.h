@@ -28,15 +28,6 @@
 - (NSString *)innerGetMapInstanceToken;
 - (void)innerUpdateIPMap;
 
-/// Whether remote config has confirmed AES-GCM support (`secret_key.mode` == gcm).
-- (BOOL)isEncryptGcmSupported;
-
-/// Parse `data.secret_key.mode` (case-insensitive `"gcm"`).
-+ (BOOL)parseGcmSupportedFromConfigData:(nullable NSDictionary *)data;
-
-/// Whether to log that encrypt was requested but the receiver lacks AES-GCM.
-+ (BOOL)shouldLogEncryptWithoutGcm:(BOOL)enableEncrypt gcmSupported:(BOOL)gcmSupported;
-
 @end
 
 #endif /* TDConfigPrivate_h */

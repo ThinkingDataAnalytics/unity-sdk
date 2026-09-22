@@ -256,13 +256,10 @@ static NSString *g_device_id;
 
 + (NSNumber *)fps {
     static TDCoreFPSMonitor *fpsMonitor = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
+    if (!fpsMonitor) {
         fpsMonitor = [[TDCoreFPSMonitor alloc] init];
-        // setEnable 内部的 startDisplay 会自动切到主线程完成 CADisplayLink 注册，
-        // 即使首次调用发生在后台 track 队列，link 生命周期也不落到后台线程。
         [fpsMonitor setEnable:YES];
-    });
+    }
     return [fpsMonitor getPFS];
 }
 

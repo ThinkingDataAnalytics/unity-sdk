@@ -28,21 +28,14 @@
     if ([self thinkingdata_respondsToSelector:aSelector]) {
         return YES;
     }
-    // NSStringFromSelector / sel_getName on an untrusted SEL can SIGBUS
-    // (iOS 18+ Swift special selectors, os_log flatten, app terminate).
-    // Only AppDelegate / UNUserNotificationCenter.delegate have this set;
-    // compare against known-good names instead of converting the incoming SEL.
-    NSSet<NSString *> *optionalSelectors = self.thinkingdata_optionalSelectors;
-    if (optionalSelectors.count == 0) {
-        return NO;
+    if (@available(iOS 18.0, *)) {
+        char startOfHeader = (char)sel_getName(aSelector);
+        if (startOfHeader == '\x01') {
+            return NO;
+        }
     }
-    for (NSString *selName in optionalSelectors) {
-        if (![selName isKindOfClass:NSString.class] || selName.length == 0) {
-            continue;
-        }
-        if (sel_isEqual(aSelector, NSSelectorFromString(selName))) {
-            return YES;
-        }
+    if ([self.thinkingdata_optionalSelectors containsObject:NSStringFromSelector(aSelector)]) {
+        return YES;
     }
     return NO;
 }

@@ -42,7 +42,7 @@ public class ThinkingAnalyticsProxy {
         TDAnalytics.calibrateTimeWithNtp(ntpServer);
     }
 
-    public static void init(Context context, String appId, String serverUrl, int mode, String name, String timeZone, int version, String publicKey, int[] dnsServices) {
+    public static void init(Context context, String appId, String serverUrl, int mode, String name, String timeZone, int version, String publicKey) {
         try {
             if (context == null || TextUtils.isEmpty(appId) || TextUtils.isEmpty(serverUrl)) {
                 return;
@@ -62,18 +62,6 @@ public class ThinkingAnalyticsProxy {
             }
             if (version > 0 && !TextUtils.isEmpty(publicKey)) {
                 tdConfig.enableEncrypt(version, publicKey);
-            }
-            if (dnsServices != null && dnsServices.length > 0) {
-                List<TDConfig.TDDNSService> list = new ArrayList<>();
-                TDConfig.TDDNSService[] values = TDConfig.TDDNSService.values();
-                for (int s : dnsServices) {
-                    if (s >= 0 && s < values.length) {
-                        list.add(values[s]);
-                    }
-                }
-                if (!list.isEmpty()) {
-                    tdConfig.enableDNSService(list);
-                }
             }
             TDAnalytics.init(tdConfig);
         } catch (Exception ignore) {
@@ -423,21 +411,5 @@ public class ThinkingAnalyticsProxy {
          * @return dynamic properties String
          */
         String eventCallback(int type, String appId, String properties);
-    }
-
-    public interface ErrorCallbackListener {
-        void onSDKErrorCallback(int code, String errorMsg, String ext);
-    }
-
-    public static void registerErrorCallback(final ErrorCallbackListener listener, String appId) {
-        if (listener == null) {
-            return;
-        }
-        TDAnalyticsAPI.registerErrorCallback(new TDAnalytics.TDSendDataErrorCallback() {
-            @Override
-            public void onSDKErrorCallback(int code, String errorMsg, String ext) {
-                listener.onSDKErrorCallback(code, errorMsg, ext);
-            }
-        }, appId);
     }
 }
