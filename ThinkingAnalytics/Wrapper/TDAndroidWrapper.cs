@@ -53,7 +53,7 @@ namespace ThinkingData.Analytics.Wrapper
                     defaultTimeZone = TimeZoneInfo.Local;
                 }
             }
-            sdkClass.CallStatic("init",context,token.appId,token.serverUrl, (int)token.mode,token.name, timeZoneId, token.encryptVersion,token.encryptPublicKey);
+            sdkClass.CallStatic("init",context,token.appId,token.serverUrl, (int)token.mode,token.name, timeZoneId, token.encryptVersion,token.encryptPublicKey, token.GetDNSServiceOrdinals());
         }
 
         private static void flush(string appId)
@@ -581,6 +581,27 @@ namespace ThinkingData.Analytics.Wrapper
         private static void enableThirdPartySharing(TDThirdPartyType shareType, Dictionary<string, object> properties, string appId)
         {
             sdkClass.CallStatic("enableThirdPartySharing", (int)shareType, TDMiniJson.Serialize(properties), appId);
+        }
+
+        private static Dictionary<string, ErrorCallbackAdapter> mErrorCallbackAdapters = new Dictionary<string, ErrorCallbackAdapter>();
+
+        private static void registerErrorCallback(TDErrorCallbackHandler handler, string appId)
+        {
+            ErrorCallbackAdapter listenerAdapter = new ErrorCallbackAdapter(appId);
+            mErrorCallbackAdapters[appId] = listenerAdapter;
+            sdkClass.CallStatic("registerErrorCallback", listenerAdapter, appId);
+        }
+
+        private class ErrorCallbackAdapter : AndroidJavaProxy {
+            private string mAppId;
+            public ErrorCallbackAdapter(string appId) : base("cn.thinkingdata.analytics.ThinkingAnalyticsProxy$ErrorCallbackListener")
+            {
+                mAppId = appId;
+            }
+            public void onSDKErrorCallback(int code, string errorMsg, string ext)
+            {
+                DispatchErrorCallback(mAppId, code, errorMsg, ext);
+            }
         }
 
         //dynamic super properties

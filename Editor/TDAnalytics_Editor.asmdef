@@ -1,7 +1,8 @@
 {
     "name": "ThinkingAnalytics-Editor",
     "references": [
-        "ThinkingAnalytics"
+        "ThinkingAnalytics",
+        "UnityEditor.iOS.Extensions.Xcode"
     ],
     "includePlatforms": [
         "Editor"

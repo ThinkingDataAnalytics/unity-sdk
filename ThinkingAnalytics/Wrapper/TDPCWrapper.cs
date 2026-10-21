@@ -9,6 +9,9 @@ using ThinkingSDK.PC.Config;
 #if TD_WEIXIN_GAME_MODE
 using WeChatWASM;
 using UnityEngine;
+#elif TD_DOUYIN_GAME_MODE && !UNITY_EDITOR
+using TTSDK;
+using UnityEngine;
 #endif
 
 namespace ThinkingData.Analytics.Wrapper
@@ -998,13 +1001,43 @@ namespace ThinkingData.Analytics.Wrapper
                 ThinkingSDKUtil.AddDictionary(properties, eventCallback.GetAutoTrackEventProperties((int)TDAutoTrackEventType.AppStart, properties));
             }
             ThinkingSDKUtil.AddDictionary(properties, selfProperties);
+            LaunchOptionsGame launchOptionsSync = WX.GetLaunchOptionsSync();
+            Dictionary<string, object> start_reason_properties = new Dictionary<string, object>();
+            start_reason_properties["#start_reason"] = JsonUtility.ToJson(launchOptionsSync);
+            ThinkingSDKUtil.AddDictionary(properties, start_reason_properties);
+            ThinkingPCSDK.Track("ta_mg_show", properties, appId);
+            ThinkingPCSDK.TimeEvent("ta_mg_hide", appId);
             WX.OnShow((result =>
             {
                 Dictionary<string, object> start_reason_properties = new Dictionary<string, object>();
                 start_reason_properties["#start_reason"] = JsonUtility.ToJson(result);
                 ThinkingSDKUtil.AddDictionary(properties, start_reason_properties);
                 ThinkingPCSDK.Track("ta_mg_show", properties, appId);
+                ThinkingPCSDK.TimeEvent("ta_mg_hide", appId);
             }));
+            return true;
+#elif TD_DOUYIN_GAME_MODE && !UNITY_EDITOR
+            Dictionary<string, object> properties = new Dictionary<string, object>();
+            ThinkingSDKUtil.AddDictionary(properties, ThinkingPCSDK.GetAutoTrackProperties(ThinkingSDK.PC.Main.TDAutoTrackEventType.AppStart, appId));
+            if (eventCallback != null)
+            {
+                ThinkingSDKUtil.AddDictionary(properties, eventCallback.GetAutoTrackEventProperties((int)TDAutoTrackEventType.AppStart, properties));
+            }
+            ThinkingSDKUtil.AddDictionary(properties, selfProperties);
+            var launchOptionsSync = TT.GetLaunchOptionsSync();
+            Dictionary<string, object> start_reason_properties = new Dictionary<string, object>();
+            start_reason_properties["#start_reason"] = launchOptionsSync != null ? JsonUtility.ToJson(launchOptionsSync) : "";
+            ThinkingSDKUtil.AddDictionary(properties, start_reason_properties);
+            ThinkingPCSDK.Track("ta_mg_show", properties, appId);
+            ThinkingPCSDK.TimeEvent("ta_mg_hide", appId);
+            TT.GetAppLifeCycle().OnShow += (result =>
+            {
+                Dictionary<string, object> show_reason_properties = new Dictionary<string, object>();
+                show_reason_properties["#start_reason"] = result != null ? TDMiniJson.Serialize(result) : "";
+                ThinkingSDKUtil.AddDictionary(properties, show_reason_properties);
+                ThinkingPCSDK.Track("ta_mg_show", properties, appId);
+                ThinkingPCSDK.TimeEvent("ta_mg_hide", appId);
+            });
             return true;
 #else
             return false;
@@ -1025,6 +1058,19 @@ namespace ThinkingData.Analytics.Wrapper
             {
                 ThinkingPCSDK.Track("ta_mg_hide", properties, appId);
             }));
+            return true;
+#elif TD_DOUYIN_GAME_MODE && !UNITY_EDITOR
+            Dictionary<string, object> properties = new Dictionary<string, object>();
+            ThinkingSDKUtil.AddDictionary(properties, ThinkingPCSDK.GetAutoTrackProperties(ThinkingSDK.PC.Main.TDAutoTrackEventType.AppEnd, appId));
+            if (eventCallback != null)
+            {
+                ThinkingSDKUtil.AddDictionary(properties, eventCallback.GetAutoTrackEventProperties((int)TDAutoTrackEventType.AppEnd, properties));
+            }
+            ThinkingSDKUtil.AddDictionary(properties, selfProperties);
+            TT.GetAppLifeCycle().OnHide += (() =>
+            {
+                ThinkingPCSDK.Track("ta_mg_hide", properties, appId);
+            });
             return true;
 #else
             return false;
@@ -1047,6 +1093,20 @@ namespace ThinkingData.Analytics.Wrapper
             start_reason_properties["#start_reason"] = JsonUtility.ToJson(launchOptionsSync);
             ThinkingSDKUtil.AddDictionary(properties, start_reason_properties);
             ThinkingPCSDK.Track("ta_mg_launch", properties, appId);                 
+            return true;
+#elif TD_DOUYIN_GAME_MODE && !UNITY_EDITOR
+            Dictionary<string, object> properties = new Dictionary<string, object>();
+            ThinkingSDKUtil.AddDictionary(properties, ThinkingPCSDK.GetAutoTrackProperties(ThinkingSDK.PC.Main.TDAutoTrackEventType.AppInstall, appId));
+            if (eventCallback != null)
+            {
+                ThinkingSDKUtil.AddDictionary(properties, eventCallback.GetAutoTrackEventProperties((int)TDAutoTrackEventType.AppInstall, properties));
+            }
+            ThinkingSDKUtil.AddDictionary(properties, selfProperties);
+            var launchOptionsSync = TT.GetLaunchOptionsSync();
+            Dictionary<string, object> start_reason_properties = new Dictionary<string, object>();
+            start_reason_properties["#start_reason"] = launchOptionsSync != null ? JsonUtility.ToJson(launchOptionsSync) : "";
+            ThinkingSDKUtil.AddDictionary(properties, start_reason_properties);
+            ThinkingPCSDK.Track("ta_mg_launch", properties, appId);
             return true;
 #else
             return false;
@@ -1097,6 +1157,11 @@ namespace ThinkingData.Analytics.Wrapper
             }
 #endif
             ThinkingSDKLogger.Print("Sharing data is not support on PC: " + shareType + ", " + properties + ", " + appId);
+        }
+
+        private static void registerErrorCallback(TDErrorCallbackHandler handler, string appId)
+        {
+            ThinkingSDKLogger.Print("registerErrorCallback is not support on PC: " + appId);
         }
     }
 }

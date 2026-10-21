@@ -11,6 +11,7 @@ namespace ThinkingData.Analytics.Wrapper
         public static MonoBehaviour sMono;
         private static TDDynamicSuperPropertiesHandler mDynamicSuperProperties;
         private static Dictionary<string, TDAutoTrackEventHandler> mAutoTrackEventCallbacks = new Dictionary<string, TDAutoTrackEventHandler>();
+        private static Dictionary<string, TDErrorCallbackHandler> mErrorCallbacks = new Dictionary<string, TDErrorCallbackHandler>();
         private static Dictionary<string, Dictionary<string, object>> mAutoTrackProperties = new Dictionary<string, Dictionary<string, object>>();
         private static Dictionary<string, TDAutoTrackEventType> mAutoTrackEventInfos = new Dictionary<string, TDAutoTrackEventType>();
         private static System.Random rnd = new System.Random();
@@ -519,6 +520,27 @@ namespace ThinkingData.Analytics.Wrapper
         {
             if (null == properties) properties = new Dictionary<string, object>();
             enableThirdPartySharing(shareType, properties, appId);
+        }
+
+        public static void RegisterErrorCallback(TDErrorCallbackHandler handler, string appId)
+        {
+            if (handler == null)
+            {
+                return;
+            }
+            if (string.IsNullOrEmpty(appId)) appId = default_appId;
+            mErrorCallbacks[appId] = handler;
+            registerErrorCallback(handler, appId);
+        }
+
+        private static void DispatchErrorCallback(string appId, int code, string errorMsg, string ext)
+        {
+            if (string.IsNullOrEmpty(appId)) appId = default_appId;
+            TDErrorCallbackHandler handler;
+            if (!string.IsNullOrEmpty(appId) && mErrorCallbacks.TryGetValue(appId, out handler) && handler != null)
+            {
+                handler.OnSDKErrorCallback(code, errorMsg, ext);
+            }
         }
     }
 }

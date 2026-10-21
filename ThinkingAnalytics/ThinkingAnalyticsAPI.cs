@@ -12,7 +12,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-    SDK VERSION:3.4.6-release.1
+    SDK VERSION:3.5.5
  */
 #if !(UNITY_5_4_OR_NEWER)
 #define DISABLE_TA
@@ -49,6 +49,7 @@ namespace ThinkingAnalytics
             public TDSSLPinningMode pinningMode; // SSL Pinning mode, default is NONE (iOS/Android only)
             public bool allowInvalidCertificates; // allow invalid certificates, default is false (iOS/Android only)
             public bool validatesDomainName; // enable to verify domain name, default is true (iOS/Android only)
+            public TDDNSService[] dnsServices; // DNS-over-HTTPS services, default is disabled (iOS/Android only)
             private string instanceName; // instances name
 
             public Token(string appId, string serverUrl, TAMode mode = TAMode.NORMAL, TATimeZone timeZone = TATimeZone.Local, string timeZoneId = null, string instanceName = null)
@@ -64,6 +65,7 @@ namespace ThinkingAnalytics
                 this.pinningMode = TDSSLPinningMode.NONE;
                 this.allowInvalidCertificates = false;
                 this.validatesDomainName = true;
+                this.dnsServices = null;
                 if (!string.IsNullOrEmpty(instanceName))
                 {
                     instanceName = instanceName.Replace(" ", "");
@@ -130,6 +132,10 @@ namespace ThinkingAnalytics
                 config.name = this.instanceName;
                 if(this.enableEncrypt){
                     config.EnableEncrypt(this.encryptPublicKey, this.encryptVersion);
+                }
+                if (this.dnsServices != null && this.dnsServices.Length > 0)
+                {
+                    config.EnableDNSService(this.dnsServices);
                 }
                 return config;
             }
@@ -1268,6 +1274,29 @@ namespace ThinkingAnalytics
             {
                 System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
                 object[] parameters = new object[] { shareType };
+                eventCaches.Add(new Dictionary<string, object>() {
+                    { "method", method},
+                    { "parameters", parameters}
+                });
+            }
+        }
+
+        /// <summary>
+        /// Register SDK error callback (Android / iOS only).
+        /// Must be called after StartThinkingAnalytics. Later registration for the same appId replaces the previous handler.
+        /// </summary>
+        /// <param name="handler">error callback handler</param>
+        /// <param name="appId">project ID (optional)</param>
+        public static void RegisterErrorCallback(TDErrorCallbackHandler handler, string appId = "")
+        {
+            if (tracking_enabled)
+            {
+                TDWrapper.RegisterErrorCallback(handler, appId);
+            }
+            else
+            {
+                System.Reflection.MethodBase method = System.Reflection.MethodBase.GetCurrentMethod();
+                object[] parameters = new object[] { handler, appId };
                 eventCaches.Add(new Dictionary<string, object>() {
                     { "method", method},
                     { "parameters", parameters}

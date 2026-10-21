@@ -43,10 +43,16 @@ static TYPE *g_##PLIST_KEY = nil; \
 
 #define kTAConfigInfo @"TAConfigInfo"
 
+static NSString * const kTDSecretKeyModeGCM = @"gcm";
+static NSInteger const kTDEncryptGcmUnknown = -1;
+static NSInteger const kTDEncryptGcmUnsupported = 0;
+static NSInteger const kTDEncryptGcmSupported = 1;
+
 static NSDictionary *configInfo;
 
 @interface TDConfig ()
 @property (nonatomic, assign) ThinkingNetworkType innerNetworkType;
+@property (atomic, assign) NSInteger gcmSupport;
 
 @end
 
@@ -67,6 +73,7 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
         _networkTypePolicy = ThinkingNetworkTypeWIFI | ThinkingNetworkType3G  | ThinkingNetworkType4G | ThinkingNetworkType2G | ThinkingNetworkType5G;
         _securityPolicy = [TDSecurityPolicy defaultPolicy];
         _defaultTimeZone = [NSTimeZone localTimeZone];
+        _gcmSupport = kTDEncryptGcmUnknown;
     
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -180,6 +187,12 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
 }
 
 - (void)innerUpdateConfig:(void (^)(NSDictionary *))block {
+    if(self.disableRConfig){
+        if (block) {
+            block(nil);
+        }
+        return;
+    }
     NSString *serverUrlStr = [NSString stringWithFormat:@"%@/config",self.serverUrl];
     TDAnalyticsNetwork *network = [[TDAnalyticsNetwork alloc] init];
     network.serverURL = [NSURL URLWithString:serverUrlStr];
@@ -187,6 +200,12 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
     
     [network fetchRemoteConfig:self.appid handler:^(NSDictionary * _Nonnull result, NSError * _Nullable error) {
         if (!error) {
+            // Decide GCM support before other fields may throw / early-return conceptually:
+            // an old receiver without "mode" must switch encryption off rather than leave it unknown.
+            BOOL gcmSupported = [TDConfig parseGcmSupportedFromConfigData:result];
+            [self updateGcmSupport:gcmSupported];
+            [self logEncryptWithoutGcmIfNeeded:gcmSupported];
+
             NSInteger uploadInterval = [[result objectForKey:@"sync_interval"] integerValue];
             NSInteger uploadSize = [[result objectForKey:@"sync_batch_size"] integerValue];
             if (self.enableAutoCalibrated) {
@@ -214,6 +233,58 @@ TDSDKSETTINGS_PLIST_SETTING_IMPL(NSNumber, ThinkingSDKExpirationDays, _expiratio
             }
         }
     }];
+}
+
++ (BOOL)parseGcmSupportedFromConfigData:(NSDictionary *)data {
+    if (![data isKindOfClass:NSDictionary.class]) {
+        return NO;
+    }
+    id secretKey = data[@"secret_key"];
+    if (![secretKey isKindOfClass:NSDictionary.class]) {
+        return NO;
+    }
+    NSString *mode = secretKey[@"mode"];
+    if (![mode isKindOfClass:NSString.class]) {
+        return NO;
+    }
+    return [mode caseInsensitiveCompare:kTDSecretKeyModeGCM] == NSOrderedSame;
+}
+
++ (BOOL)shouldLogEncryptWithoutGcm:(BOOL)enableEncrypt gcmSupported:(BOOL)gcmSupported {
+    return enableEncrypt && !gcmSupported;
+}
+
+- (void)updateGcmSupport:(BOOL)supported {
+    NSInteger newState = supported ? kTDEncryptGcmSupported : kTDEncryptGcmUnsupported;
+    if (self.gcmSupport == newState) {
+        return;
+    }
+    self.gcmSupport = newState;
+    if (self.appid.length > 0) {
+        TDFile *file = [[TDFile alloc] initWithAppid:self.appid];
+        [file archiveEncryptSupportGcm:@(newState)];
+    }
+}
+
+- (BOOL)isEncryptGcmSupported {
+    // Without remote config there is no way to know what the receiver supports.
+    if (self.disableRConfig) {
+        return NO;
+    }
+    if (self.gcmSupport == kTDEncryptGcmUnknown && self.appid.length > 0) {
+        TDFile *file = [[TDFile alloc] initWithAppid:self.appid];
+        self.gcmSupport = [[file unarchiveEncryptSupportGcm] integerValue];
+    }
+    return self.gcmSupport == kTDEncryptGcmSupported;
+}
+
+- (void)logEncryptWithoutGcmIfNeeded:(BOOL)gcmSupported {
+    if (![TDConfig shouldLogEncryptWithoutGcm:self.innerEnableEncrypt gcmSupported:gcmSupported]) {
+        return;
+    }
+    TDLogError(@"[ThinkingData] Error: Encryption is enabled but the receiver does not support "
+               @"AES-GCM (config secret_key.mode is missing). Please contact technical support "
+               @"to upgrade to the latest AE system version.");
 }
 
 - (void)innerUpdateIPMap {

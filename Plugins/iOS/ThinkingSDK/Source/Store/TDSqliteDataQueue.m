@@ -13,6 +13,7 @@
 @implementation TDSqliteDataQueue {
     sqlite3 *_database;
     NSInteger _allmessageCount;
+    NSRecursiveLock *_dbLock;
 }
 
 - (void) closeDatabase {
@@ -36,10 +37,12 @@
 
 - (id)initWithPath:(NSString *)filePath withAppid:(NSString *)appid {
     self = [super init];
+    _dbLock = [[NSRecursiveLock alloc] init];
+    _dbLock.name = @"com.thinkingdata.sqlite.lock";
     if (sqlite3_initialize() != SQLITE_OK) {
         return nil;
     }
-    if (sqlite3_open_v2([filePath UTF8String], &_database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL) == SQLITE_OK ) {
+    if (sqlite3_open_v2([filePath UTF8String], &_database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL) == SQLITE_OK ) {
         NSString *_sql = @"create table if not exists TDData (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, appid TEXT, creatAt INTEGER)";
         char *errorMsg;
         if (sqlite3_exec(_database, [_sql UTF8String], NULL, NULL, &errorMsg)==SQLITE_OK) {
@@ -66,6 +69,7 @@
 }
 
 - (void)addColumn:(NSString *)appid {
+    [_dbLock lock];
     int epochInterval = [[NSDate date] timeIntervalSince1970];
     NSString *query;
     if (appid.length > 0 && [appid isKindOfClass: [NSString class]])
@@ -80,9 +84,11 @@
     } @catch (NSException *exception) {
         TDLogError(@"addColumn: %@", exception);
     }
+    [_dbLock unlock];
 }
 
 - (void)addColumnText:(NSString *)columnText {
+    [_dbLock lock];
     NSString *query = [NSString stringWithFormat:@"alter table TDData add '%@' TEXT", columnText];;
     char *errMsg;
     @try {
@@ -90,13 +96,16 @@
     } @catch (NSException *exception) {
         TDLogError(@"addColumn: %@", exception);
     }
+    [_dbLock unlock];
 }
 
 - (BOOL)isExistColumnInTable:(NSString *)column {
+    [_dbLock lock];
     sqlite3_stmt *statement = nil;
     NSString *sql = [NSString stringWithFormat:@"PRAGMA table_info(TDData)"];
     if (sqlite3_prepare_v2(_database, [sql UTF8String], -1, &statement, NULL) != SQLITE_OK ) {
         sqlite3_finalize(statement);
+        [_dbLock unlock];
         return NO;
     }
     while (sqlite3_step(statement) == SQLITE_ROW) {
@@ -104,10 +113,12 @@
         
         if ([column isEqualToString:columntem]) {
             sqlite3_finalize(statement);
+            [_dbLock unlock];
             return YES;
         }
     }
     sqlite3_finalize(statement);
+    [_dbLock unlock];
     return NO;
 }
 
@@ -124,6 +135,7 @@
 }
 
 - (NSInteger)addObject:(id)obj withAppid:(NSString *)appid {
+    [_dbLock lock];
     
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -136,7 +148,9 @@
     
     NSString *jsonStr = [TDJSONUtil JSONStringForObject:obj];
     if (!jsonStr) {
-        return [self sqliteCountForAppid:appid];
+        NSInteger count = [self sqliteCountForAppid:appid];
+        [_dbLock unlock];
+        return count;
     }
     NSTimeInterval epochInterval = [[NSDate date] timeIntervalSince1970];
     NSString *query = @"INSERT INTO TDData(content, appid, creatAt) values(?, ?, ?)";
@@ -155,11 +169,15 @@
     }
     
     sqlite3_finalize(insertStatement);
-    return [self sqliteCountForAppid:appid];
+    NSInteger count = [self sqliteCountForAppid:appid];
+    [_dbLock unlock];
+    return count;
 }
 
 - (NSArray<TDEventRecord *> *)getFirstRecords:(NSUInteger)recordSize withAppid:(NSString *)appid {
+    [_dbLock lock];
     if (_allmessageCount == 0) {
+        [_dbLock unlock];
         return @[];
     }
     
@@ -194,33 +212,39 @@
         }
     }
     sqlite3_finalize(stmt);
+    [_dbLock unlock];
     return records;
 }
 
 - (BOOL)removeDataWithuids:(NSArray *)uids {
-
     if (uids.count == 0) {
         return NO;
     }
     
+    [_dbLock lock];
     NSString *query = [NSString stringWithFormat:@"DELETE FROM TDData WHERE uuid IN (%@);", [uids componentsJoinedByString:@","]];
     sqlite3_stmt *stmt;
 
     if (sqlite3_prepare_v2(_database, query.UTF8String, -1, &stmt, NULL) != SQLITE_OK) {
         TDLogError(@"Delete records Error: %s", sqlite3_errmsg(_database));
+        [_dbLock unlock];
         return NO;
     }
-    BOOL success = YES;
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         TDLogError(@"Delete records Error: %s", sqlite3_errmsg(_database));
-        success = NO;
+        sqlite3_finalize(stmt);
+        _allmessageCount = [self sqliteCount];
+        [_dbLock unlock];
+        return NO;
     }
     sqlite3_finalize(stmt);
     _allmessageCount = [self sqliteCount];
+    [_dbLock unlock];
     return YES;
 }
 
 - (BOOL)removeFirstRecords:(NSUInteger)recordSize withAppid:(NSString *)appid {
+    [_dbLock lock];
     NSString *query;
     
     if (appid.length == 0) {
@@ -242,14 +266,17 @@
         rc = sqlite3_step(stmt);
         if (rc != SQLITE_DONE && rc != SQLITE_OK) {
             sqlite3_finalize(stmt);
+            [_dbLock unlock];
             return NO;
         }
     } else {
         sqlite3_finalize(stmt);
+        [_dbLock unlock];
         return NO;
     }
     sqlite3_finalize(stmt);
     _allmessageCount = [self sqliteCount];
+    [_dbLock unlock];
     return YES;
 }
 
@@ -257,6 +284,7 @@
     if (recordIds.count == 0) {
         return @[];
     }
+    [_dbLock lock];
     NSMutableArray *uids = [NSMutableArray arrayWithCapacity:recordIds.count];
     [recordIds enumerateObjectsUsingBlock:^(NSNumber *recordId, NSUInteger idx, BOOL * _Nonnull stop) {
         NSString *uuid = [self rand13NumString];
@@ -265,6 +293,7 @@
             [uids addObject:uuid];
         }
     }];
+    [_dbLock unlock];
     return uids;
 }
 
@@ -285,23 +314,27 @@
 
 
 - (BOOL)execUpdateSQL:(NSString *)sql {
-
+    [_dbLock lock];
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(_database, sql.UTF8String, -1, &stmt, NULL) != SQLITE_OK) {
         TDLogError(@"Update Records Error: %s", sqlite3_errmsg(_database));
         sqlite3_finalize(stmt);
+        [_dbLock unlock];
         return NO;
     }
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         TDLogError(@"Update Records Error: %s", sqlite3_errmsg(_database));
         sqlite3_finalize(stmt);
+        [_dbLock unlock];
         return NO;
     }
     sqlite3_finalize(stmt);
+    [_dbLock unlock];
     return YES;
 }
 
 - (BOOL)removeOldRecords:(int)timestamp {
+    [_dbLock lock];
     NSString *query = @"DELETE FROM TDData WHERE creatAt<?";
     
     sqlite3_stmt *stmt = NULL;
@@ -312,6 +345,7 @@
     }
     sqlite3_finalize(stmt);
     _allmessageCount = [self sqliteCount];
+    [_dbLock unlock];
     return YES;
 }
 
@@ -320,6 +354,7 @@
 }
 
 - (NSInteger)sqliteCountForAppid:(NSString *)appid {
+    [_dbLock lock];
     NSString *query;
     NSInteger count = 0;
     if (appid == nil) {
@@ -341,11 +376,13 @@
     }
     
     sqlite3_finalize(stmt);
+    [_dbLock unlock];
     return count;
 }
 
 - (void)deleteAll:(NSString *)appid {
     if ([appid isKindOfClass:[NSString class]] && appid.length > 0) {
+        [_dbLock lock];
         NSString *query = @"DELETE FROM TDData where appid=? ";
         
         sqlite3_stmt *stmt = NULL;
@@ -357,6 +394,7 @@
         sqlite3_finalize(stmt);
         
         _allmessageCount = [self sqliteCount];
+        [_dbLock unlock];
     }
 }
 

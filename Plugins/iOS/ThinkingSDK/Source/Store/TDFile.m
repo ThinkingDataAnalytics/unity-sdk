@@ -89,6 +89,21 @@
     return uploadInterval;
 }
 
+- (void)archiveEncryptSupportGcm:(NSNumber *)encryptSupportGcm {
+    NSString *filePath = [self encryptSupportGcmFilePath];
+    if (![self archiveObject:encryptSupportGcm withFilePath:filePath]) {
+        TDLogError(@"%@ unable to archive encryptSupportGcm", self);
+    }
+}
+
+- (NSNumber *)unarchiveEncryptSupportGcm {
+    NSNumber *encryptSupportGcm = [self unarchiveFromFile:[self encryptSupportGcmFilePath] asClass:[NSNumber class]];
+    if (!encryptSupportGcm) {
+        encryptSupportGcm = @(-1);
+    }
+    return encryptSupportGcm;
+}
+
 - (void)archiveAccountID:(NSString *)accountID {
     NSString *filePath = [self accountIDFilePath];
     if (![self archiveObject:[accountID copy] withFilePath:filePath]) {
@@ -257,6 +272,10 @@
 
 - (NSString *)uploadIntervalFilePath {
     return [self persistenceFilePath:@"uploadInterval"];
+}
+
+- (NSString *)encryptSupportGcmFilePath {
+    return [self persistenceFilePath:@"encryptSupportGcm"];
 }
 
 - (NSString *)identifyIdFilePath {

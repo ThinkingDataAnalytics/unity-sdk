@@ -551,6 +551,7 @@ namespace ThinkingSDK.PC.Main
         {
             if (!mTimeEvents.ContainsKey(eventName))
             {
+                Debug.Log("========1:" + Environment.TickCount);
                 mTimeEvents.Add(eventName, Environment.TickCount);
             }
         }
@@ -568,6 +569,9 @@ namespace ThinkingSDK.PC.Main
                 for (int i=0; i< eventNames.Length; i++)
                 {
                     string key = eventNames[i];
+                    if (key == "ta_mg_hide") {
+                        continue;
+                    }
                     if (status == true)
                     {
                         int startTime = int.Parse(mTimeEvents[key].ToString());
